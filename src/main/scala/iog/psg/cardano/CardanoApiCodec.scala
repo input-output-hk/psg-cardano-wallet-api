@@ -1,23 +1,17 @@
 package iog.psg.cardano
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.server.Directives.as
+import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
-import de.heikoseeberger.akkahttpcirce.BaseCirceSupport
-import iog.psg.cardano.CardanoApiCodec.NetworkInfo
-import spray.json._
-import io.circe.generic.extras._
-import io.circe.syntax._
-import io.circe.parser.decode
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Encoder
 import io.circe.generic.auto._
+import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
-import io.circe.generic.semiauto.deriveEncoder
+import iog.psg.cardano.CardanoApi.CardanoApiResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object CardanoApiCodec {
 
@@ -27,7 +21,7 @@ object CardanoApiCodec {
     encoder.mapJson(_.dropNullValues)
 
   implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
-  implicit val createListAddrEntityEncoder: Encoder[ListAddresses] = dropNulls(deriveConfiguredEncoder)
+  implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
   type AddressFilter = String
   val Used: AddressFilter = "used"
@@ -35,6 +29,8 @@ object CardanoApiCodec {
 
   type SyncStatus = String
   val ready: SyncStatus = "ready"
+
+  case class ErrorMessage(message: String, code: String)
 
   case class SyncProgress(status: String)
 
@@ -45,8 +41,11 @@ object CardanoApiCodec {
 
   case class NodeTip(height: QuantityUnit)
 
+  case class WalletAddressId(id: String, state: Option[AddressFilter])
 
-  case class ListAddresses(walletId: String, state: Option[AddressFilter])
+  case class CreateTransaction(passphrase: String, payments: Seq[Payment], withdrawal: Option[String])
+
+  case class Payments(payments: Seq[Payment])
 
   case class Payment(address: String, amount: QuantityUnit)
 
@@ -90,6 +89,7 @@ object CardanoApiCodec {
   case class QuantityUnit(quantity: Long, unit: String)
 
   case class Balance(available: QuantityUnit, reward: QuantityUnit, total: QuantityUnit)
+
   case class State(status: String)
 
   trait Address {
@@ -98,35 +98,74 @@ object CardanoApiCodec {
   }
 
   case class InAddress(address: String, amount: QuantityUnit, id: String, index: Int) extends Address
+
   case class OutAddress(address: String, amount: QuantityUnit) extends Address
+
+  @ConfiguredJsonCodec case class StakeAddress(stakeAddress: String, amount: QuantityUnit)
+
+  case class Transaction(inputs: IndexedSeq[InAddress], outputs: Seq[OutAddress])
 
   case class FundPaymentsResponse(inputs: IndexedSeq[InAddress], outputs: Seq[OutAddress])
 
-  @ConfiguredJsonCodec case class WalletAddress(
-                                                         id: String,
-                                                         addressPoolGap: Int,
-                                                         balance: Balance,
-                                                         name: String,
-                                                         state: State,
-                                                         tip: NetworkTip
-                                                       )
+  @ConfiguredJsonCodec case class Block(slotNumber: Int, epochNumber: Int, height: QuantityUnit)
+  @ConfiguredJsonCodec case class TimedBlock(time: String, block: Block)
 
-  implicit class ResponseOps(resp: HttpResponse)(implicit ec: Materializer) {
+  @ConfiguredJsonCodec case class CreateTransactionResponse(
+                                                             id: String,
+                                                             amount: QuantityUnit,
+                                                             insertedAt: TimedBlock,
+                                                             pendingSince: TimedBlock,
+                                                             depth: QuantityUnit,
+                                                             direction: String,
+                                                             inputs: Seq[InAddress],
+                                                             outputs: Seq[OutAddress],
+                                                             withdrawals: Seq[StakeAddress],
+                                                             status: String
+                                                           )
 
-    def toNetworkInfoResponse: Future[NetworkInfo] = Unmarshal(resp.entity).to[NetworkInfo]
+  @ConfiguredJsonCodec case class Wallet(
+                                          id: String,
+                                          addressPoolGap: Int,
+                                          balance: Balance,
+                                          name: String,
+                                          state: State,
+                                          tip: NetworkTip
+                                        )
 
-    def toWalletAddress: Future[WalletAddress] = {
-      println(resp)
-      Unmarshal(resp.entity).to[WalletAddress]
+  implicit class ResponseOps(strictEntity: HttpEntity.Strict)(implicit ec: Materializer) {
+
+    def toNetworkInfoResponse: Future[CardanoApiResponse[NetworkInfo]] = {
+      Unmarshal(strictEntity).to[CardanoApiResponse[NetworkInfo]]
     }
 
-    def toWalletAddresses: Future[Seq[WalletAddress]] = {
-      println(resp)
-      Unmarshal(resp.entity).to[Seq[WalletAddress]]
+    def toWallet: Future[CardanoApiResponse[Wallet]] = {
+      println(strictEntity)
+      Unmarshal(strictEntity).to[CardanoApiResponse[Wallet]]
     }
 
-    def toFundPaymentsResponse: Future[FundPaymentsResponse] =
-      Unmarshal(resp.entity).to[FundPaymentsResponse]
+    def toWallets: Future[CardanoApiResponse[Seq[Wallet]]] = {
+      println(strictEntity)
+      Unmarshal(strictEntity).to[CardanoApiResponse[Seq[Wallet]]]
+    }
+
+
+    def toWalletAddressIds: Future[CardanoApiResponse[Seq[WalletAddressId]]] = {
+      println(strictEntity)
+      Unmarshal(strictEntity).to[CardanoApiResponse[Seq[WalletAddressId]]]
+    }
+
+    def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]] = {
+      (Unmarshal(strictEntity).to[Either[ErrorMessage, FundPaymentsResponse]])
+    }
+
+    def toWalletTransactions: Future[CardanoApiResponse[Seq[Transaction]]] = {
+      (Unmarshal(strictEntity).to[Either[ErrorMessage, Seq[Transaction]]])
+    }
+
+    def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]] = {
+      (Unmarshal(strictEntity).to[Either[ErrorMessage, CreateTransactionResponse]])
+    }
+
   }
 
 
