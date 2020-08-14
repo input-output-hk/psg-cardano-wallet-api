@@ -1,6 +1,8 @@
 
 scalaVersion := "2.13.3"
 
+enablePlugins(GitlabPlugin)
+
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
 val akkaHttpCirce = "1.31.0"
@@ -23,5 +25,7 @@ libraryDependencies ++=  Seq(
 
 javacOptions ++= Seq("-source", "11", "-target", "11")
 
-
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations")
+
+
+com.idbelabs.sbt.gitlab.GitlabPlugin.gitlabProjectId := "20394904"

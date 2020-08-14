@@ -26,7 +26,7 @@ deploy:
   stage: deploy
   script:
     ## node/package makes sure the input to proguard exists
-    - sbt -J-XX:MaxMetaspaceSize=500m clean package
+    - sbt -J-XX:MaxMetaspaceSize=500m clean package gitlabPublishCi
   artifacts:
     paths:
       - ./target/scala-2.13/cardano-api_2.13-0.1.0-SNAPSHOT.jar
