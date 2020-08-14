@@ -1,0 +1,36 @@
+
+stages:
+  - test
+  - deploy
+
+before_script:
+  - apt-get update -y
+  - apt-get install apt-transport-https -y
+  ## Install SBT
+  - echo "deb http://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
+  - apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
+  - apt-get update -y
+  - apt-get install sbt -y
+  - sbt sbtVersion
+
+test:
+  image: openjdk:11
+  stage: test
+  script:
+    - sbt -J-XX:MaxMetaspaceSize=500m clean test 
+  except:
+    - tags
+
+deploy:
+  image: openjdk:11
+  stage: deploy
+  script:
+    ## node/package makes sure the input to proguard exists
+    - sbt -J-XX:MaxMetaspaceSize=500m clean package
+  artifacts:
+    paths:
+      - ./target/scala-2.13/cardano-api_2.13-0.1.0-SNAPSHOT.jar
+    expire_in: 1 week
+  only:
+    - tags
+
