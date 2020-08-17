@@ -3,6 +3,8 @@ scalaVersion := "2.13.3"
 
 enablePlugins(GitlabPlugin)
 
+organization := "iog.psg"
+
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
 val akkaHttpCirce = "1.31.0"
