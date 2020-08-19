@@ -1,5 +1,8 @@
 name: Clean, build, test and package
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 on:
   push:
     branches:
@@ -22,5 +25,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Package
-      run: sbt package
+      run: sbt publish
 

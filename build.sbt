@@ -1,9 +1,13 @@
 
+version := "0.1-SNAPSHOT"
+
 scalaVersion := "2.13.3"
 
-enablePlugins(GitlabPlugin)
-
 organization := "iog.psg"
+
+githubOwner := "input-output-hk"
+
+githubRepository := "psg-cardano-wallet-api"
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
@@ -30,4 +34,3 @@ javacOptions ++= Seq("-source", "11", "-target", "11")
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations")
 
 
-com.idbelabs.sbt.gitlab.GitlabPlugin.gitlabProjectId := "20394904"
