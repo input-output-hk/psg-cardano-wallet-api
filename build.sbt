@@ -1,5 +1,5 @@
 
-version := "0.1-SNAPSHOT"
+version := "0.1.1-SNAPSHOT"
 
 scalaVersion := "2.13.3"
 
@@ -8,6 +8,8 @@ organization := "iog.psg"
 githubOwner := "input-output-hk"
 
 githubRepository := "psg-cardano-wallet-api"
+
+githubTokenSource := TokenSource.GitConfig("github.token")
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
