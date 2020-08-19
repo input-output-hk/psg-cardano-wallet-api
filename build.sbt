@@ -1,3 +1,4 @@
+import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
 
 version := "0.1.1-SNAPSHOT"
 
@@ -9,7 +10,7 @@ githubOwner := "input-output-hk"
 
 githubRepository := "psg-cardano-wallet-api"
 
-githubTokenSource := TokenSource.GitConfig("github.token")
+githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
