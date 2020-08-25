@@ -3,11 +3,11 @@ package iog.psg.cardano
 import java.io.File
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestOps, FutOp}
-import iog.psg.cardano.CardanoApi.{Order, CardanoApiResponse, ErrorMessage, defaultMaxWaitTime}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, IOExecutionContext, Order, defaultMaxWaitTime}
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util.{ArgumentParser, ConsoleTrace, FileTrace, NoOpTrace, Trace}
 
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 object CardanoApiMain {
@@ -19,6 +19,7 @@ object CardanoApiMain {
     val netInfo = "-netInfo"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
+    val getWallet = "-wallet"
     val createWallet = "-createWallet"
     val restoreWallet = "-restoreWallet"
     val name = "-name"
@@ -45,27 +46,27 @@ object CardanoApiMain {
   val defaultTraceFile = "cardano-api.log"
 
   def main(args: Array[String]): Unit = {
+
     val arguments = new ArgumentParser(args)
+    val conTracer = if (arguments.contains(CmdLine.noConsole)) NoOpTrace else ConsoleTrace
+
+    implicit val trace = conTracer.withTrace(
+      if (arguments.contains(CmdLine.traceToFile)) {
+        val fileName = arguments(CmdLine.traceToFile).getOrElse(defaultTraceFile)
+        new FileTrace(new File(fileName))
+      } else NoOpTrace
+    )
+
+    run(arguments)
+
+  }
+
+  private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace): Unit = {
+
 
     if (arguments.noArgs || arguments.contains(CmdLine.help)) {
       showHelp()
     } else {
-      val conTracer = if (arguments.contains(CmdLine.noConsole)) NoOpTrace else ConsoleTrace
-
-      implicit val trace = conTracer.withTrace(
-        if (arguments.contains(CmdLine.traceToFile)) {
-          val fileName = arguments(CmdLine.traceToFile).getOrElse(defaultTraceFile)
-          new FileTrace(new File(fileName))
-        } else NoOpTrace
-      )
-
-
-      /*def getArgument(arg: String): String = {
-        arguments(name).getOrElse {
-          val msg = s"No value provided for $arg"
-          throw new IllegalArgumentException(msg)
-        }
-      }*/
 
       def hasArgument(arg: String): Boolean = {
         val result = arguments.contains(arg)
@@ -73,14 +74,8 @@ object CardanoApiMain {
         result
       }
 
-      def hasArgumentWithValue(arg: String): Boolean = {
-        val result = arguments(arg).isDefined
-        if (result) trace(arg)
-        result
-      }
-
-      implicit val system = ActorSystem("SingleRequest")
-      implicit val context = system.dispatcher
+      implicit val system: ActorSystem = ActorSystem("SingleRequest")
+      implicit val ioEc: IOExecutionContext = IOExecutionContext(system.dispatcher)
 
       Try {
 
@@ -89,24 +84,28 @@ object CardanoApiMain {
         trace(s"baseurl:$url")
 
         val api = new CardanoApi(url)
+        import api.Ops._
 
         if (hasArgument(CmdLine.netInfo)) {
-          val result = unwrap(api.networkInfo.toFuture.executeBlocking)
+          val result = unwrap(api.networkInfo.executeBlocking)
           trace(result.toString)
         } else if (hasArgument(CmdLine.listWallets)) {
-          val result = unwrap(api.listWallets.toFuture.executeBlocking)
+          val result = unwrap(api.listWallets.executeBlocking)
+          result.foreach(trace.apply)
+        } else if (hasArgument(CmdLine.walletId)) {
+          val result = unwrap(api.listWallets.executeBlocking)
           result.foreach(trace.apply)
 
-        } else if (hasArgument(CmdLine.listWalletAddresses)) {
+
+        } else if (hasArgument(CmdLine.getWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
-          val addrState = arguments(CmdLine.state).map(AddressFilter.withName)
-          val result = unwrap(api.listAddresses(walletId, addrState).toFuture.executeBlocking)
-          result.foreach(trace.apply)
+          val result = unwrap(api.getWallet(walletId).executeBlocking)
+          trace(result)
 
         } else if (hasArgument(CmdLine.getTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val txId = arguments.get(CmdLine.getTx)
-          val result = unwrap(api.getTransaction(walletId, txId).toFuture.executeBlocking)
+          val result = unwrap(api.getTransaction(walletId, txId).executeBlocking)
           trace(result)
 
         } else if (hasArgument(CmdLine.createTx)) {
@@ -127,25 +126,25 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           //val startDate = arguments(start)
           //val endDate = arguments(end)
-          val orderOf  = arguments(CmdLine.order).flatMap(s => Try(Order.withName(s)).toOption).getOrElse(Order.descendingOrder)
+          val orderOf = arguments(CmdLine.order).flatMap(s => Try(Order.withName(s)).toOption).getOrElse(Order.descendingOrder)
           val minWithdrawalTx = arguments(CmdLine.minWithdrawal).map(_.toInt).getOrElse(1)
 
           val result = unwrap(api.listTransactions(
             walletId = walletId,
             order = orderOf,
             minWithdrawal = minWithdrawalTx
-          ).toFuture.executeBlocking)
+          ).executeBlocking)
 
-          if(result.isEmpty) {
+          if (result.isEmpty) {
             trace("No txs returned")
           } else {
             result.foreach(trace.apply)
           }
 
         } else if (hasArgument(CmdLine.listWallets)) {
-          val result = unwrap(api.listWallets.toFuture.executeBlocking)
+          val result = unwrap(api.listWallets.executeBlocking)
           result.foreach(trace.apply)
-          
+
         } else if (hasArgument(CmdLine.createWallet) || hasArgument(CmdLine.restoreWallet)) {
           val name = arguments.get(CmdLine.name)
           val passphrase = arguments.get(CmdLine.passphrase)
@@ -180,9 +179,9 @@ object CardanoApiMain {
   }
 
 
-  def unwrap[T](apiResult: Try[CardanoApiResponse[T]])(implicit t: Trace): T = unwrapOpt(apiResult).get
+  def unwrap[T: ClassTag](apiResult: CardanoApiResponse[T])(implicit t: Trace): T = unwrapOpt(Try(apiResult)).get
 
-  def unwrapOpt[T](apiResult: Try[CardanoApiResponse[T]])(implicit trace: Trace): Option[T] = apiResult match {
+  def unwrapOpt[T:ClassTag](apiResult: Try[CardanoApiResponse[T]])(implicit trace: Trace): Option[T] = apiResult match {
     case Success(Left(ErrorMessage(message, code))) =>
       trace(s"API Error message $message, code $code")
       None

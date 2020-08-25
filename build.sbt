@@ -1,6 +1,8 @@
 import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
 
-version := "0.1.1-SNAPSHOT"
+name:= "psg-cardano-wallet-api"
+
+version := "0.1.2-SNAPSHOT"
 
 scalaVersion := "2.13.3"
 

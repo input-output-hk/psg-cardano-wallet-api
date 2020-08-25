@@ -14,6 +14,7 @@ import akka.http.scaladsl.model._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
+import iog.psg.cardano.CardanoApi.IOExecutionContext
 import iog.psg.cardano.CardanoApi.Order.Order
 import iog.psg.cardano.CardanoApiCodec.toErrorMessage
 
@@ -26,6 +27,11 @@ import scala.util.Try
  * so clients will import the Codec also.
  */
 object CardanoApi {
+
+  //Marker class, differenciate between multiple ec's in a client
+  case class IOExecutionContext(ec: ExecutionContext) {
+    implicit val ioEc: ExecutionContext = ec
+  }
 
   case class ErrorMessage(message: String, code: String)
 
@@ -43,40 +49,29 @@ object CardanoApi {
 
   object CardanoApiOps {
 
+    implicit class TransformOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
+      //Cannot call this transform as it clashes with futire
+      def unknot(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
+        case Left(errorMessage) => Future.successful(Left(errorMessage))
+        case Right(vaue) => vaue
+      }
+    }
+
     implicit class FutOp[T](val request: CardanoApiRequest[T]) extends AnyVal {
       def toFuture: Future[CardanoApiRequest[T]] = Future.successful(request)
     }
 
-    implicit class CardanoApiRequestOps[T](requestF: Future[CardanoApiRequest[T]])
-                                          (implicit ec: ExecutionContext,
-                                           as: ActorSystem,
-                                           maxToStrictWaitTime: FiniteDuration
-                                          ) {
-      def execute: Future[CardanoApiResponse[T]] = {
-        requestF flatMap { request =>
-          Http()
-            .singleRequest(request.request)
-            .flatMap(request.mapper)
-        }
-      }
-
-      def executeBlocking(implicit maxWaitTime: Duration): Try[CardanoApiResponse[T]] = Try {
-        Await.result(
-          execute,
-          maxWaitTime
-        )
-      }
-    }
 
   }
 
 }
 
-class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) {
+class CardanoApi(baseUriWithPort: String)(implicit ec: IOExecutionContext, as: ActorSystem) {
 
   import iog.psg.cardano.CardanoApi._
   import iog.psg.cardano.CardanoApiCodec._
   import AddressFilter.AddressFilter
+  import ec.ioEc
 
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
@@ -84,6 +79,31 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
 
+
+  object Ops {
+    //tie execute to ioEc
+    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]]) {
+      def execute: Future[CardanoApiResponse[T]] = {
+        requestF.flatMap(_.execute)
+      }
+
+      def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
+        Await.result(execute, maxWaitTime)
+
+    }
+
+    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T]) {
+      def execute: Future[CardanoApiResponse[T]] = {
+          Http()
+            .singleRequest(request.request)
+            .flatMap(request.mapper)
+        }
+
+      def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
+        Await.result(execute, maxWaitTime)
+    }
+
+  }
   def listWallets: CardanoApiRequest[Seq[Wallet]] = CardanoApiRequest(
     HttpRequest(
       uri = wallets,

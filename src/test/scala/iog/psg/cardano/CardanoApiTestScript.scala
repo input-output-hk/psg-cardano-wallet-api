@@ -6,13 +6,14 @@ import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, SyncState, TxState, Units}
 
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 object CardanoApiTestScript {
 
 
   private implicit val system = ActorSystem("SingleRequest")
-  private implicit val context = system.dispatcher
+  private implicit val context = IOExecutionContext(system.dispatcher)
 
   def main(args: Array[String]): Unit = {
 
@@ -37,9 +38,10 @@ object CardanoApiTestScript {
 
       val api = new CardanoApi(baseUri)
 
+      import api.Ops._
 
-      def waitForTx(txState: TxState, walletId: String, txId: String):Unit = {
-        if(txState == TxState.pending) {
+      def waitForTx(txState: TxState, walletId: String, txId: String): Unit = {
+        if (txState == TxState.pending) {
           println(s"$txState")
           Thread.sleep(5000)
           val txUpdate = unwrap(api.getTransaction(walletId, txId).toFuture.executeBlocking)
@@ -152,6 +154,7 @@ object CardanoApiTestScript {
             None,
           ).executeBlocking)
 
+
           waitForTx(returnTx.status, toWallet.id, returnTx.id)
 
           println(s"Successfully transferred value between 2 wallets")
@@ -180,9 +183,9 @@ object CardanoApiTestScript {
     system.terminate()
   }
 
-  private def unwrap[T](apiResult: Try[CardanoApiResponse[T]]): T = unwrapOpt(apiResult).get
+  private def unwrap[T:ClassTag](apiResult: CardanoApiResponse[T]): T = unwrapOpt(Try(apiResult)).get
 
-  private def unwrapOpt[T](apiResult: Try[CardanoApiResponse[T]]): Option[T] = apiResult match {
+  private def unwrapOpt[T: ClassTag](apiResult: Try[CardanoApiResponse[T]]): Option[T] = apiResult match {
     case Success(Left(ErrorMessage(message, code))) =>
       println(s"API Error message $message, code $code")
       None

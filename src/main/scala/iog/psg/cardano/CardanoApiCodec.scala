@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.model.ContentType.{Binary, WithFixedCharset}
-import akka.http.scaladsl.model.{HttpEntity, HttpResponse, MediaTypes, StatusCodes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
@@ -281,6 +281,9 @@ object CardanoApiCodec {
 
         case Binary(MediaTypes.`application/octet-stream`) =>
           extractErrorResponse[T](strictEntity)
+
+        case c: ContentType =>
+          Future.failed(new RuntimeException(s"Unexpected type ${c.mediaType}, ${c.charsetOption}"))
       }
     }
 
