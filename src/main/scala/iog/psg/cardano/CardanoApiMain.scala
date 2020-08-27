@@ -1,10 +1,11 @@
 package iog.psg.cardano
 
 import java.io.File
+import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, IOExecutionContext, Order, defaultMaxWaitTime}
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units, UpdatePassphrase}
 import iog.psg.cardano.util.{ArgumentParser, ConsoleTrace, FileTrace, NoOpTrace, Trace}
 
 import scala.reflect.ClassTag
@@ -19,10 +20,14 @@ object CardanoApiMain {
     val netInfo = "-netInfo"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
+    val deleteWallet = "-deleteWallet"
     val getWallet = "-wallet"
     val createWallet = "-createWallet"
     val restoreWallet = "-restoreWallet"
+    val estimateFee = "-estimateFee"
     val name = "-name"
+    val updatePassphrase = "-updatePassphrase"
+    val oldPassphrase = "-oldPassphrase"
     val passphrase = "-passphrase"
     val mnemonic = "-mnemonic"
     val addressPoolGap = "-addressPoolGap"
@@ -37,6 +42,7 @@ object CardanoApiMain {
     val createTx = "-createTx"
     val fundTx = "-fundTx"
     val getTx = "-getTx"
+    val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
 
@@ -88,27 +94,65 @@ object CardanoApiMain {
 
         if (hasArgument(CmdLine.netInfo)) {
           val result = unwrap(api.networkInfo.executeBlocking)
-          trace(result.toString)
+          trace(result)
         } else if (hasArgument(CmdLine.listWallets)) {
           val result = unwrap(api.listWallets.executeBlocking)
           result.foreach(trace.apply)
-        } else if (hasArgument(CmdLine.walletId)) {
-          val result = unwrap(api.listWallets.executeBlocking)
-          result.foreach(trace.apply)
 
+        } else if (hasArgument(CmdLine.estimateFee)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val amount = arguments.get(CmdLine.amount).toLong
+          val addr = arguments.get(CmdLine.address)
+          val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
+          val payments = Payments(Seq(singlePayment))
+          val result = unwrap(api.estimateFee(walletId, payments).executeBlocking)
+          trace(result)
 
         } else if (hasArgument(CmdLine.getWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
           val result = unwrap(api.getWallet(walletId).executeBlocking)
           trace(result)
 
+        } else if (hasArgument(CmdLine.updatePassphrase)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val oldPassphrase = arguments.get(CmdLine.oldPassphrase)
+          val newPassphrase = arguments.get(CmdLine.passphrase)
+
+          val result: Unit = unwrap(api.updatePassphrase(walletId, oldPassphrase, newPassphrase).executeBlocking)
+          trace("Unit result from delete wallet")
+
+        } else if (hasArgument(CmdLine.deleteWallet)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val result: Unit = unwrap(api.deleteWallet(walletId).executeBlocking)
+          trace("Unit result from delete wallet")
+
+        } else if (hasArgument(CmdLine.listWalletAddresses)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val addressesState = Some(AddressFilter.withName(arguments.get(CmdLine.state)))
+          val result = unwrap(api.listAddresses(walletId, addressesState).executeBlocking)
+          trace(result)
+
         } else if (hasArgument(CmdLine.getTx)) {
           val walletId = arguments.get(CmdLine.walletId)
-          val txId = arguments.get(CmdLine.getTx)
+          val txId = arguments.get(CmdLine.txId)
           val result = unwrap(api.getTransaction(walletId, txId).executeBlocking)
           trace(result)
 
         } else if (hasArgument(CmdLine.createTx)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val amount = arguments.get(CmdLine.amount).toLong
+          val addr = arguments.get(CmdLine.address)
+          val pass = arguments.get(CmdLine.passphrase)
+          val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
+          val payments = Payments(Seq(singlePayment))
+          val result = unwrap(api.createTransaction(
+            walletId,
+            pass,
+            payments,
+            None
+          ).executeBlocking)
+          trace(result)
+
         } else if (hasArgument(CmdLine.fundTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -124,14 +168,16 @@ object CardanoApiMain {
 
         } else if (hasArgument(CmdLine.listWalletTransactions)) {
           val walletId = arguments.get(CmdLine.walletId)
-          //val startDate = arguments(start)
-          //val endDate = arguments(end)
+          val startDate = arguments(CmdLine.start).map(strToZonedDateTime)
+          val endDate = arguments(CmdLine.end).map(strToZonedDateTime)
           val orderOf = arguments(CmdLine.order).flatMap(s => Try(Order.withName(s)).toOption).getOrElse(Order.descendingOrder)
           val minWithdrawalTx = arguments(CmdLine.minWithdrawal).map(_.toInt).getOrElse(1)
 
           val result = unwrap(api.listTransactions(
-            walletId = walletId,
-            order = orderOf,
+            walletId,
+            startDate,
+            endDate,
+            orderOf,
             minWithdrawal = minWithdrawalTx
           ).executeBlocking)
 
@@ -174,7 +220,11 @@ object CardanoApiMain {
   }
 
 
-  def showHelp(): Unit = {
+  private def strToZonedDateTime(dtStr: String): ZonedDateTime = {
+    ZonedDateTime.parse(dtStr)
+  }
+
+  private def showHelp(): Unit = {
     println("Enter commands, and so on...")
   }
 

@@ -9,6 +9,11 @@ import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, 
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
+/**
+ * This script ran successfully in Aug 2020
+ * It's purpose was to explore how the API works.
+ * It is left as a hint/starting point for developers as to how to use the API basics.
+ */
 object CardanoApiTestScript {
 
 
@@ -23,7 +28,7 @@ object CardanoApiTestScript {
       val walletNameFrom = "alan1"
       val walletToMnem = GenericMnemonicSentence("enforce chicken cactus pupil wagon brother stuff pumpkin hobby noble genius fish air only sign hour apart fruit market acid beach top subway swear")
       val walletNameTo = "cardano-api-to"
-      val walletFromMnem = //GenericMnemonicSentence("sustain noble raise quarter elephant police smile exhibit pass goose acoustic muffin enrich march boy music ostrich maple predict song silk naive trip jump"
+      val walletFromMnem =
         GenericMnemonicSentence("reform illegal victory hurry guard bunker add volume bicycle sock dutch couch target portion soap")
       val walletToPassphrase = "password910"
       val walletFromPassphrase = "1234567890"

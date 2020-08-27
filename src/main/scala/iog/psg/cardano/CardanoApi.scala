@@ -180,7 +180,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: IOExecutionContext, as: A
                        start: Option[ZonedDateTime] = None,
                        end: Option[ZonedDateTime] = None,
                        order: Order = Order.descendingOrder,
-                       minWithdrawal: Int = 1): CardanoApiRequest[Seq[Transaction]] = {
+                       minWithdrawal: Int = 1): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
     val baseUri = Uri(s"${wallets}/${walletId}/transactions")
 
     val queries =
@@ -191,13 +191,15 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: IOExecutionContext, as: A
           case (queryParamName, Some(minWith: Int)) => queryParamName -> minWith.toString
         }
 
+
     val uriWithQueries = baseUri.withQuery(Query(queries: _*))
+
     CardanoApiRequest(
       HttpRequest(
         uri = uriWithQueries,
         method = GET
       ),
-      _.toWalletTransactions
+      _.toCreateTransactionResponses
     )
   }
 

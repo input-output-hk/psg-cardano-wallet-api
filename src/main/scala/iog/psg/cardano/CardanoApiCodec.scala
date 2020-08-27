@@ -93,7 +93,7 @@ object CardanoApiCodec {
 
   case class Payment(address: String, amount: QuantityUnit)
 
-  @ConfiguredJsonCodec case class UpdatePassphrase(oldPassphrase: String, newPassphrase: String)
+  @ConfiguredJsonCodec private[cardano] case class UpdatePassphrase(oldPassphrase: String, newPassphrase: String)
 
   trait MnemonicSentence {
     val mnemonicSentence: IndexedSeq[String]
@@ -183,11 +183,6 @@ object CardanoApiCodec {
                            amount: QuantityUnit
                          )
 
-  case class Transaction(
-                          inputs: IndexedSeq[InAddress],
-                          outputs: Seq[OutAddress]
-                        )
-
   case class FundPaymentsResponse(
                                    inputs: IndexedSeq[InAddress],
                                    outputs: Seq[OutAddress]
@@ -255,7 +250,7 @@ object CardanoApiCodec {
     timeout: FiniteDuration,
     ec: ExecutionContext) {
 
-    private def strictEntity: Future[HttpEntity.Strict] = response.entity.toStrict(timeout)
+    private def strictEntityF: Future[HttpEntity.Strict] = response.entity.toStrict(timeout)
 
 
     private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] = {
@@ -277,10 +272,10 @@ object CardanoApiCodec {
           // Load into memory using toStrict
           // a. no responses utilise streaming and
           // b. the Either unmarshaller requires it
-          strictEntity.flatMap(f)
+          strictEntityF.flatMap(f)
 
         case Binary(MediaTypes.`application/octet-stream`) =>
-          extractErrorResponse[T](strictEntity)
+          extractErrorResponse[T](strictEntityF)
 
         case c: ContentType =>
           Future.failed(new RuntimeException(s"Unexpected type ${c.mediaType}, ${c.charsetOption}"))
@@ -300,8 +295,8 @@ object CardanoApiCodec {
     def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
     = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])
 
-    def toWalletTransactions: Future[CardanoApiResponse[Seq[Transaction]]]
-    = to[Seq[Transaction]](Unmarshal(_).to[CardanoApiResponse[Seq[Transaction]]])
+    def toCreateTransactionResponses: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
+    = to[Seq[CreateTransactionResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[CreateTransactionResponse]]])
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])
@@ -313,7 +308,7 @@ object CardanoApiCodec {
       if (response.status == StatusCodes.NoContent) {
         Future.successful(Right(()))
       } else {
-        extractErrorResponse[Unit](strictEntity)
+        extractErrorResponse[Unit](strictEntityF)
       }
     }
 
