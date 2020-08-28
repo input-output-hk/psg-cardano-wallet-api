@@ -5,8 +5,8 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, IOExecutionContext, Order, defaultMaxWaitTime}
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units, UpdatePassphrase}
-import iog.psg.cardano.util.{ArgumentParser, ConsoleTrace, FileTrace, NoOpTrace, Trace}
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.util._
 
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}

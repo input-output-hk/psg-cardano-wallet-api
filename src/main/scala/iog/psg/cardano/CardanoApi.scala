@@ -2,12 +2,10 @@ package iog.psg.cardano
 
 
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.ContentType.{Binary, WithFixedCharset}
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
@@ -16,11 +14,9 @@ import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
 import iog.psg.cardano.CardanoApi.IOExecutionContext
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApiCodec.toErrorMessage
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
 
 /**
  * Defines the API which wraps the Cardano API, depends on CardanoApiCodec for it's implementation,

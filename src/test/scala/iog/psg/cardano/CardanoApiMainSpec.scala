@@ -48,7 +48,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
 
   "The Cmd line Main" should "support retrieving netInfo" in {
     val results = runCmdLine(CmdLine.netInfo)
-    assert(results.exists(_.contains("ready")), "Testnet API service not ready.")
+    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl'")
   }
 
   it should "not create a wallet with a bad mnemonic" in {
