@@ -1,5 +1,18 @@
+import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
+
+name:= "psg-cardano-wallet-api"
+
+version := "0.1.2-SNAPSHOT"
 
 scalaVersion := "2.13.3"
+
+organization := "iog.psg"
+
+githubOwner := "input-output-hk"
+
+githubRepository := "psg-cardano-wallet-api"
+
+githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
@@ -23,5 +36,6 @@ libraryDependencies ++=  Seq(
 
 javacOptions ++= Seq("-source", "11", "-target", "11")
 
-
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations")
+
+
