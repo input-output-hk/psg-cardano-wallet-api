@@ -18,6 +18,8 @@ val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
 val akkaHttpCirce = "1.31.0"
 val circeVersion = "0.13.0"
+val scalaTestVersion = "3.1.2"
+
 
 /**
  * Don't include a logger binding as this is a library for embedding
@@ -31,8 +33,10 @@ libraryDependencies ++=  Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "io.circe" %% "circe-generic-extras" % circeVersion,
   "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirce,
-  "org.scalatest" %% "scalatest" % "3.1.2" % Test
+  "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+
 )
+
 
 javacOptions ++= Seq("-source", "11", "-target", "11")
 

@@ -45,42 +45,23 @@ object CardanoApi {
 
   object CardanoApiOps {
 
-    implicit class TransformOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
+    implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
       //Cannot call this transform as it clashes with futire
-      def unknot(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
+      def flatten(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
         case Left(errorMessage) => Future.successful(Left(errorMessage))
-        case Right(vaue) => vaue
+        case Right(value) => value
       }
     }
 
     implicit class FutOp[T](val request: CardanoApiRequest[T]) extends AnyVal {
       def toFuture: Future[CardanoApiRequest[T]] = Future.successful(request)
     }
-
-
-  }
-
-}
-
-class CardanoApi(baseUriWithPort: String)(implicit ec: IOExecutionContext, as: ActorSystem) {
-
-  import iog.psg.cardano.CardanoApi._
-  import iog.psg.cardano.CardanoApiCodec._
-  import AddressFilter.AddressFilter
-  import ec.ioEc
-
-  private val wallets = s"${baseUriWithPort}wallets"
-  private val network = s"${baseUriWithPort}network"
-
-  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
-
-
-
-  object Ops {
     //tie execute to ioEc
-    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]]) {
+    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit ioEc: IOExecutionContext, ec: ExecutionContext, as: ActorSystem) {
       def execute: Future[CardanoApiResponse[T]] = {
-        requestF.flatMap(_.execute)
+        requestF
+          .flatMap(r => new CardanoApiRequestOps(r)
+            .execute)
       }
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
@@ -88,18 +69,34 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: IOExecutionContext, as: A
 
     }
 
-    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T]) {
+    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T])(implicit ioEc: IOExecutionContext, as: ActorSystem) {
+
       def execute: Future[CardanoApiResponse[T]] = {
-          Http()
-            .singleRequest(request.request)
-            .flatMap(request.mapper)
-        }
+
+        Http()
+          .singleRequest(request.request)
+          .flatMap(request.mapper)(ioEc.ioEc)
+      }
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
         Await.result(execute, maxWaitTime)
     }
 
   }
+
+}
+
+class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) {
+
+  import iog.psg.cardano.CardanoApi._
+  import iog.psg.cardano.CardanoApiCodec._
+  import AddressFilter.AddressFilter
+
+  private val wallets = s"${baseUriWithPort}wallets"
+  private val network = s"${baseUriWithPort}network"
+
+  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
+
   def listWallets: CardanoApiRequest[Seq[Wallet]] = CardanoApiRequest(
     HttpRequest(
       uri = wallets,

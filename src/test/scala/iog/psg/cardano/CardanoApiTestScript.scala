@@ -41,9 +41,9 @@ object CardanoApiTestScript {
       println(s"Using base url '$baseUri''")
       println(s"Using wallet name '$walletNameFrom''")
 
+      import system.dispatcher
       val api = new CardanoApi(baseUri)
 
-      import api.Ops._
 
       def waitForTx(txState: TxState, walletId: String, txId: String): Unit = {
         if (txState == TxState.pending) {

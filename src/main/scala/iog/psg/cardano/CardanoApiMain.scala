@@ -4,6 +4,7 @@ import java.io.File
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, IOExecutionContext, Order, defaultMaxWaitTime}
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util._
@@ -82,6 +83,7 @@ object CardanoApiMain {
 
       implicit val system: ActorSystem = ActorSystem("SingleRequest")
       implicit val ioEc: IOExecutionContext = IOExecutionContext(system.dispatcher)
+      import system.dispatcher //the
 
       Try {
 
@@ -90,7 +92,7 @@ object CardanoApiMain {
         trace(s"baseurl:$url")
 
         val api = new CardanoApi(url)
-        import api.Ops._
+
 
         if (hasArgument(CmdLine.netInfo)) {
           val result = unwrap(api.networkInfo.executeBlocking)
