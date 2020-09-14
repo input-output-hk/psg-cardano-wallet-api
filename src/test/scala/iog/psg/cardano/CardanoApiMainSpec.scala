@@ -6,8 +6,10 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
+import org.scalatest.Ignore
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
 
@@ -48,7 +50,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
 
   "The Cmd line Main" should "support retrieving netInfo" in {
     val results = runCmdLine(CmdLine.netInfo)
-    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl'")
+    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $results")
   }
 
   it should "not create a wallet with a bad mnemonic" in {

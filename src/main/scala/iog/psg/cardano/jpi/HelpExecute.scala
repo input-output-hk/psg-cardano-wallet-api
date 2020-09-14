@@ -31,19 +31,5 @@ class HelpExecute(implicit ioEc: IOExecutionContext, ec: ExecutionContext, as: A
     FutureConverters.asJava(request.execute.map(unwrapResponse))
   }
 
-  @throws(classOf[CardanoApiException])
-  def executeBlocking[T](
-                          request: iog.psg.cardano.CardanoApi.CardanoApiRequest[T]
-                        ): T = {
-    unwrapResponse(request.executeBlocking)
-  }
-
-  @throws(classOf[CardanoApiException])
-  def executeBlocking[T](
-                          request: iog.psg.cardano.CardanoApi.CardanoApiRequest[T],
-                          maxWaitMilliSeconds: Long
-                        ): T = {
-    unwrapResponse(request.executeBlocking(FiniteDuration(maxWaitMilliSeconds, TimeUnit.MILLISECONDS)))
-  }
 
 }

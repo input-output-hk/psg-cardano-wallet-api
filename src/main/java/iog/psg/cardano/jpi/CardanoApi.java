@@ -43,14 +43,30 @@ public class CardanoApi {
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
-            CardanoApiCodec.Payments payments,
-            Optional<String> withdrawal) throws CardanoApiException {
+            List<CardanoApiCodec.Payment> payments,
+            String withdrawal
+            ) throws CardanoApiException {
 
         return helpExecute.execute(
-                api.createTransaction(fromWalletId, passphrase, payments, option(withdrawal))
+                api.createTransaction(fromWalletId, passphrase,
+                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()), option(withdrawal))
         );
     }
 
+    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
+            String fromWalletId,
+            String passphrase,
+            List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
+
+        return createTransaction(fromWalletId, passphrase, payments, "self");
+    }
+
+    public CompletionStage<CardanoApiCodec.Wallet> getWallet(
+            String fromWalletId) throws CardanoApiException {
+
+        return helpExecute.execute(
+                api.getWallet(fromWalletId));
+    }
 
     public CompletionStage<Void> deleteWallet(
             String fromWalletId) throws CardanoApiException {
@@ -67,15 +83,22 @@ public class CardanoApi {
     }
 
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
-            String walletId, CardanoApiCodec.Payments payments, String withdrawal) throws CardanoApiException {
-        return helpExecute.execute(
-                api.estimateFee(walletId, payments, withdrawal));
+            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
+        return estimateFee(walletId, payments, "self");
     }
 
-    public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
-            String walletId, CardanoApiCodec.Payments payments) throws CardanoApiException {
+    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
+            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal) throws CardanoApiException {
         return helpExecute.execute(
-                api.fundPayments(walletId, payments));
+                api.estimateFee(walletId,
+                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
+                        withdrawal));
+    }
+    public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
+            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
+        return helpExecute.execute(
+                api.fundPayments(walletId,
+                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq())));
     }
 
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(

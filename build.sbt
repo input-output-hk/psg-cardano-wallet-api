@@ -2,7 +2,7 @@ import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
 
 name:= "psg-cardano-wallet-api"
 
-version := "0.1.2-SNAPSHOT"
+version := "0.1.3-SNAPSHOT"
 
 scalaVersion := "2.13.3"
 
@@ -42,4 +42,5 @@ javacOptions ++= Seq("-source", "11", "-target", "11")
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations")
 
+parallelExecution in Test := false
 
