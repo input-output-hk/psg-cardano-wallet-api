@@ -1,12 +1,14 @@
 package iog.psg.cardano.jpi;
 
 import iog.psg.cardano.CardanoApiCodec;
+
 import scala.Some;
 import scala.jdk.javaapi.CollectionConverters;
 
 import scala.Enumeration;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -44,21 +46,29 @@ public class CardanoApi {
             String fromWalletId,
             String passphrase,
             List<CardanoApiCodec.Payment> payments,
+            Map<Long, String> metadata,
             String withdrawal
             ) throws CardanoApiException {
 
-        return helpExecute.execute(
-                api.createTransaction(fromWalletId, passphrase,
-                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()), option(withdrawal))
-        );
+        scala.Option<scala.collection.immutable.Map<Long, String>> massaged =
+                metadata.isEmpty() ?
+                        option(Optional.empty()):
+                        option(helpExecute.toScalaImmutable(metadata)
+                                );
+
+        return helpExecute.execute(api.createTransaction(fromWalletId, passphrase,
+                new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
+                massaged,
+                option(withdrawal)));
     }
 
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
-            List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
+            List<CardanoApiCodec.Payment> payments,
+            Map<Long, String> metadata) throws CardanoApiException {
 
-        return createTransaction(fromWalletId, passphrase, payments, "self");
+        return createTransaction(fromWalletId, passphrase, payments, metadata, "self");
     }
 
     public CompletionStage<CardanoApiCodec.Wallet> getWallet(
@@ -123,7 +133,7 @@ public class CardanoApi {
                         option(builder.getStartTime()),
                         option(builder.getEndTime()),
                         builder.getOrder(),
-                        builder.getMinwithdrawal()))
+                        option(builder.getMinwithdrawal())))
                 .thenApply(CollectionConverters::asJava);
     }
 

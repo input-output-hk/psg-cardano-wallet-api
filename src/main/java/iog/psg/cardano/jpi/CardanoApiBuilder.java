@@ -65,8 +65,7 @@ public class CardanoApiBuilder {
         ExecutionContext ec = ExecutionContext.fromExecutorService(executorService);
         ExecutionContext ioEc = ExecutionContext.fromExecutorService(ioExecutorService);
         iog.psg.cardano.CardanoApi api = new iog.psg.cardano.CardanoApi(url, ec, actorSystem);
-        iog.psg.cardano.CardanoApi.IOExecutionContext ioExec = new iog.psg.cardano.CardanoApi.IOExecutionContext(ioEc);
-        HelpExecute helpExecute = new HelpExecute(ioExec, ec, actorSystem);
+        HelpExecute helpExecute = new HelpExecute(ec, actorSystem);
         return new CardanoApi(api, helpExecute);
     }
 

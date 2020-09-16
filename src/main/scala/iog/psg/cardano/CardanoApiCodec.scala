@@ -15,7 +15,7 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, TxMetadata}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
@@ -86,7 +86,11 @@ object CardanoApiCodec {
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
-  private[cardano] case class CreateTransaction(passphrase: String, payments: Seq[Payment], withdrawal: Option[String])
+  private[cardano] case class CreateTransaction(
+                                                 passphrase: String,
+                                                 payments: Seq[Payment],
+                                                 metadata: Option[TxMetadata],
+                                                 withdrawal: Option[String])
 
   private[cardano] case class EstimateFee(payments: Seq[Payment], withdrawal: String)
 
@@ -220,7 +224,8 @@ object CardanoApiCodec {
                                         inputs: Seq[InAddress],
                                         outputs: Seq[OutAddress],
                                         withdrawals: Seq[StakeAddress],
-                                        status: TxState
+                                        status: TxState,
+                                        metadata: Option[TxMetadata]
                                       )
 
   @ConfiguredJsonCodec

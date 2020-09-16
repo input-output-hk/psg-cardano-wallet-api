@@ -5,7 +5,7 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, IOExecutionContext, Order, defaultMaxWaitTime}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, TxMetadata, defaultMaxWaitTime}
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util._
 
@@ -30,6 +30,7 @@ object CardanoApiMain {
     val updatePassphrase = "-updatePassphrase"
     val oldPassphrase = "-oldPassphrase"
     val passphrase = "-passphrase"
+    val metadata = "-metadata"
     val mnemonic = "-mnemonic"
     val addressPoolGap = "-addressPoolGap"
     val listWalletAddresses = "-listAddresses"
@@ -68,6 +69,16 @@ object CardanoApiMain {
 
   }
 
+  def toMetaMap(mapAsStringOpt: Option[String]): Option[TxMetadata] = mapAsStringOpt flatMap { str =>
+    Try {
+      if(str.nonEmpty) { Option(
+        str.split(":").grouped(2).map {
+          case Array(k, v) => k.toLong -> v
+        }.toMap)
+      } else None
+    }.getOrElse(fail(s"I can't parse '$str' to map, use format 'k:v:k1:v1:k2:v2' where all keys are numbers" ))
+  }
+
   private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace): Unit = {
 
 
@@ -82,7 +93,6 @@ object CardanoApiMain {
       }
 
       implicit val system: ActorSystem = ActorSystem("SingleRequest")
-      implicit val ioEc: IOExecutionContext = IOExecutionContext(system.dispatcher)
       import system.dispatcher //the
 
       Try {
@@ -145,12 +155,14 @@ object CardanoApiMain {
           val amount = arguments.get(CmdLine.amount).toLong
           val addr = arguments.get(CmdLine.address)
           val pass = arguments.get(CmdLine.passphrase)
+          val metadata = toMetaMap(arguments(CmdLine.metadata))
           val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
           val payments = Payments(Seq(singlePayment))
           val result = unwrap(api.createTransaction(
             walletId,
             pass,
             payments,
+            metadata,
             None
           ).executeBlocking)
           trace(result)
@@ -173,7 +185,7 @@ object CardanoApiMain {
           val startDate = arguments(CmdLine.start).map(strToZonedDateTime)
           val endDate = arguments(CmdLine.end).map(strToZonedDateTime)
           val orderOf = arguments(CmdLine.order).flatMap(s => Try(Order.withName(s)).toOption).getOrElse(Order.descendingOrder)
-          val minWithdrawalTx = arguments(CmdLine.minWithdrawal).map(_.toInt).getOrElse(1)
+          val minWithdrawalTx = arguments(CmdLine.minWithdrawal).map(_.toInt)
 
           val result = unwrap(api.listTransactions(
             walletId,

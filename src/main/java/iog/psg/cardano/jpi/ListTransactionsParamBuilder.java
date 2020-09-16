@@ -11,7 +11,7 @@ import java.util.Objects;
 public class ListTransactionsParamBuilder {
 
     private final String walletId;
-    private int minwithdrawal = 1;
+    private Integer minwithdrawal = null;
     private ZonedDateTime startTime = null;
     private Order order = null;
 
@@ -28,7 +28,7 @@ public class ListTransactionsParamBuilder {
         return result;
     }
 
-    public int getMinwithdrawal() {
+    public Integer getMinwithdrawal() {
         return minwithdrawal;
     }
 

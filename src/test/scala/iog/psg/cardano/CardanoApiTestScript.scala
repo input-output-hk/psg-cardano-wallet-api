@@ -18,7 +18,6 @@ object CardanoApiTestScript {
 
 
   private implicit val system = ActorSystem("SingleRequest")
-  private implicit val context = IOExecutionContext(system.dispatcher)
 
   def main(args: Array[String]): Unit = {
 
@@ -128,6 +127,7 @@ object CardanoApiTestScript {
             fromWallet.id,
             walletFromPassphrase,
             payments,
+            None, //TODO add metadata
             None,
           ).executeBlocking)
 
@@ -156,7 +156,8 @@ object CardanoApiTestScript {
             toWallet.id,
             walletToPassphrase,
             returnPayments2,
-            None,
+            Some(Map(1L -> "")), //todo ADD metadata
+            None
           ).executeBlocking)
 
 
@@ -188,7 +189,7 @@ object CardanoApiTestScript {
     system.terminate()
   }
 
-  private def unwrap[T:ClassTag](apiResult: CardanoApiResponse[T]): T = unwrapOpt(Try(apiResult)).get
+  private def unwrap[T: ClassTag](apiResult: CardanoApiResponse[T]): T = unwrapOpt(Try(apiResult)).get
 
   private def unwrapOpt[T: ClassTag](apiResult: Try[CardanoApiResponse[T]]): Option[T] = apiResult match {
     case Success(Left(ErrorMessage(message, code))) =>

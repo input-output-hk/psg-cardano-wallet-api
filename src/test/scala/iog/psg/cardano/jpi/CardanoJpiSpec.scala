@@ -1,5 +1,6 @@
 package iog.psg.cardano.jpi
 
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 import iog.psg.cardano.CardanoApiCodec.GenericMnemonicSentence
@@ -8,7 +9,7 @@ import org.scalatest.Ignore
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
 
 class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
@@ -23,8 +24,8 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
   private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
   private val testAmountToTransfer = config.getString("cardano.wallet.amount")
-  private val timeoutValue: Long = 2
-  private val timeoutUnits = TimeUnit.MINUTES
+  private val timeoutValue: Long = 10
+  private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi,timeoutValue, timeoutUnits)
 
   "NetworkInfo status" should "be 'ready'" in {
@@ -62,12 +63,23 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
     sut.fundPayments(testWalletId, testAmountToTransfer.toInt)
   }
 
-  it should "transact from a to a" in {
-    val createTxResponse = sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.toInt)
+  it should "transact from a to a with metadata" in {
+
+    val metadata: Map[String, String] = Map(
+      Long.box(Long.MaxValue).toString -> "0" * 64,
+      Long.box(Long.MaxValue - 1).toString -> "1" * 64
+    )
+
+    val createTxResponse =
+      sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.toInt, metadata.asJava)
     val id = createTxResponse.id
     val getTxResponse = sut.getTx(testWalletId, createTxResponse.id)
     assert(createTxResponse.id == getTxResponse.id)
     assert(createTxResponse.amount == getTxResponse.amount)
+    assert(createTxResponse.metadata.isDefined)
+    assert(createTxResponse.metadata.get.size == 2)
+    assert(createTxResponse.metadata.get.apply(Long.MaxValue) == "0" * 64)
+    assert(createTxResponse.metadata.get.apply(Long.MaxValue - 1) == "1" * 64)
   }
 
 
