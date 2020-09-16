@@ -7,6 +7,7 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, TxMetadata, defaultMaxWaitTime}
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
 
 import scala.reflect.ClassTag
@@ -69,15 +70,7 @@ object CardanoApiMain {
 
   }
 
-  def toMetaMap(mapAsStringOpt: Option[String]): Option[TxMetadata] = mapAsStringOpt flatMap { str =>
-    Try {
-      if(str.nonEmpty) { Option(
-        str.split(":").grouped(2).map {
-          case Array(k, v) => k.toLong -> v
-        }.toMap)
-      } else None
-    }.getOrElse(fail(s"I can't parse '$str' to map, use format 'k:v:k1:v1:k2:v2' where all keys are numbers" ))
-  }
+
 
   private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace): Unit = {
 
