@@ -1,8 +1,6 @@
 package iog.psg.cardano.jpi;
 
 import iog.psg.cardano.CardanoApi;
-import iog.psg.cardano.CardanoApi$;
-import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 
 import java.time.ZonedDateTime;

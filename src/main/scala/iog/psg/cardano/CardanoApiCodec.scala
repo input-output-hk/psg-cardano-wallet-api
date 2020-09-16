@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import akka.http.scaladsl.model.ContentType.{Binary, WithFixedCharset, WithMissingCharset}
+import akka.http.scaladsl.model.ContentType.WithFixedCharset
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller

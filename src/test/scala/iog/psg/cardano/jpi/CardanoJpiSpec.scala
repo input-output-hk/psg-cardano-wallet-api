@@ -1,11 +1,9 @@
 package iog.psg.cardano.jpi
 
-import java.util.Date
 import java.util.concurrent.TimeUnit
 
 import iog.psg.cardano.CardanoApiCodec.GenericMnemonicSentence
 import iog.psg.cardano.util.Configure
-import org.scalatest.Ignore
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -31,36 +29,48 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   "NetworkInfo status" should "be 'ready'" in {
     val info = sut.jpi.networkInfo().toCompletableFuture.get(timeoutValue, timeoutUnits)
     val networkState = JpiResponseCheck.get(info)
-    assert(networkState == "ready")
+    networkState shouldBe "ready"
   }
 
   "Bad wallet creation" should "be prevented" in {
-    intercept[IllegalArgumentException](sut.createBadWallet())
+    an [IllegalArgumentException] shouldBe thrownBy (sut.createBadWallet())
   }
 
   "Test wallet" should "exist or be created" in {
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
-    assert(sut.findOrCreateTestWallet(testWalletId, testWalletName, testWalletPassphrase, mnem.mnemonicSentence.asJava, 10))
+    sut
+      .findOrCreateTestWallet(
+        testWalletId,
+        testWalletName,
+        testWalletPassphrase,
+        mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
   it should "get our wallet" in {
-    assert(sut.getWallet(testWalletId))
+    sut.getWallet(testWalletId) shouldBe true
   }
 
   it should "create r find wallet 2" in {
     val mnem = GenericMnemonicSentence(testWallet2Mnemonic)
-    assert(sut.findOrCreateTestWallet(testWallet2Id, testWallet2Name, testWallet2Passphrase, mnem.mnemonicSentence.asJava, 10))
+    sut
+      .findOrCreateTestWallet(
+        testWallet2Id,
+        testWallet2Name,
+        testWallet2Passphrase,
+        mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
   it should "allow password change in wallet 2" in {
     sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase)
     //now this is the wrong password
-    intercept[Exception](sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
+    an [Exception] shouldBe thrownBy(sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
+
     sut.passwordChange(testWallet2Id, testWalletPassphrase, testWallet2Passphrase)
   }
 
   it should "fund payments" in {
-    sut.fundPayments(testWalletId, testAmountToTransfer.toInt)
+    val response = sut.fundPayments(testWalletId, testAmountToTransfer.toInt)
+
   }
 
   it should "transact from a to a with metadata" in {
@@ -74,18 +84,18 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
       sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.toInt, metadata.asJava)
     val id = createTxResponse.id
     val getTxResponse = sut.getTx(testWalletId, createTxResponse.id)
-    assert(createTxResponse.id == getTxResponse.id)
-    assert(createTxResponse.amount == getTxResponse.amount)
-    assert(createTxResponse.metadata.isDefined)
-    assert(createTxResponse.metadata.get.size == 2)
-    assert(createTxResponse.metadata.get.apply(Long.MaxValue) == "0" * 64)
-    assert(createTxResponse.metadata.get.apply(Long.MaxValue - 1) == "1" * 64)
+
+    createTxResponse.id shouldBe getTxResponse.id
+    createTxResponse.amount shouldBe getTxResponse.amount
+    createTxResponse.metadata.get.size shouldBe 2
+    createTxResponse.metadata.get.apply(Long.MaxValue) shouldBe "0" * 64
+    createTxResponse.metadata.get.apply(Long.MaxValue - 1) shouldBe "1" * 64
   }
 
 
   it should "delete wallet 2" in {
     sut.deleteWallet(testWallet2Id)
-    intercept[Exception](sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
+    an [Exception] shouldBe thrownBy (sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
   }
 }
 

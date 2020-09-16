@@ -35,5 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Package
-        run: sbt publish
+        uses: actions/setup-java@v1.4.2
+          with:
+            java-version: '11.0.8'
+      - run: sbt publish
 

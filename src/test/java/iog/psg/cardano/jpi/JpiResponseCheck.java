@@ -59,12 +59,13 @@ public class JpiResponseCheck {
     }
 
 
-    public void fundPayments(String walletId, long amountToTransfer) throws Exception {
+    public CardanoApiCodec.FundPaymentsResponse fundPayments(String walletId, long amountToTransfer) throws Exception {
         List<CardanoApiCodec.WalletAddressId> unused = jpi.listAddresses(walletId, AddressFilter.UNUSED).toCompletableFuture().get(timeout, timeoutUnit);
         String unusedAddrId = unused.get(0).id();
         CardanoApiCodec.QuantityUnit amount = new CardanoApiCodec.QuantityUnit(amountToTransfer, CardanoApiCodec.Units$.MODULE$.lovelace());
         CardanoApiCodec.Payment p = new CardanoApiCodec.Payment(unusedAddrId, amount);
         CardanoApiCodec.FundPaymentsResponse response = jpi.fundPayments(walletId, List.of(p)).toCompletableFuture().get(timeout, timeoutUnit);
+        return response;
     }
 
     public void deleteWallet(String walletId) throws Exception {
