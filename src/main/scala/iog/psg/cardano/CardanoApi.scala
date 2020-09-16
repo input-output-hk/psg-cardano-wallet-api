@@ -42,8 +42,8 @@ object CardanoApi {
   object CardanoApiOps {
 
     implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
-      //Cannot call this transform as it clashes with futire
-      def flatten(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
+      
+      def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
         case Left(errorMessage) => Future.successful(Left(errorMessage))
         case Right(value) => value
       }
