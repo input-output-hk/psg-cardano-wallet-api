@@ -17,9 +17,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Run tests
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1.4.2
+      - name: Run tests
+        uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
       - run: sbt coverage test coverageReport
