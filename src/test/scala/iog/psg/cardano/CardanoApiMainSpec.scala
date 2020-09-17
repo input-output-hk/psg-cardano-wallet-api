@@ -6,15 +6,19 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
+import org.scalatest.Ignore
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
+import scala.concurrent.{Future, blocking}
+
+
+class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures {
 
 
   private implicit val system = ActorSystem("SingleRequest")
   private implicit val context = system.dispatcher
-  private implicit val ioEc = IOExecutionContext(context)
   private val baseUrl = config.getString("cardano.wallet.baseUrl")
   private val testWalletName = config.getString("cardano.wallet.name")
   private val testWallet2Name = config.getString("cardano.wallet2.name")
@@ -25,6 +29,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
   private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
   private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
   private val testAmountToTransfer = config.getString("cardano.wallet.amount")
+  private val testMetadata = config.getString("cardano.wallet.metadata")
 
   private val defaultArgs = Array(CmdLine.baseUrl, baseUrl)
 
@@ -48,7 +53,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
 
   "The Cmd line Main" should "support retrieving netInfo" in {
     val results = runCmdLine(CmdLine.netInfo)
-    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl'")
+    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $results")
   }
 
   it should "not create a wallet with a bad mnemonic" in {
@@ -122,7 +127,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
       CmdLine.address, getUnusedAddressWallet2,
       CmdLine.walletId, testWalletId)
 
-    assert(results.last.contains("FundPaymentsResponse"), "FundPaymentsResponse failed?")
+    assert(results.last.contains("FundPaymentsResponse") ||
+      results.mkString("").contains("cannot_cover_fee"), s"$results")
     //results.foreach(println)
   }
 
@@ -148,7 +154,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
     cleanedUp.head
   }
 
-  it should "transact from a to a" in {
+  it should "transact from a to a with metadata" in {
 
     val unusedAddr = getUnusedAddressWallet1
 
@@ -161,12 +167,13 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
 
     //estimateResults.foreach(println)
 
-    val preTxTime = ZonedDateTime.now().minusMinutes(10)
+    val preTxTime = ZonedDateTime.now().minusMinutes(1)
 
     val resultsCreateTx = runCmdLine(
       CmdLine.createTx,
       CmdLine.passphrase, testWalletPassphrase,
       CmdLine.amount, testAmountToTransfer,
+      CmdLine.metadata, testMetadata,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
 
@@ -182,34 +189,18 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
     assert(resultsGetTx.last.contains(txId), "The getTx result didn't contain the id")
     //list Txs
 
-    val postTxTime = ZonedDateTime.now().plusMinutes(50)
+    val postTxTime = ZonedDateTime.now().plusMinutes(5)
 
     def listWalletTxs: Seq[String] = runCmdLine(
       CmdLine.listWalletTransactions,
-      CmdLine.minWithdrawal, "1",
       CmdLine.start, preTxTime.toString,
+      CmdLine.`end`, postTxTime.toString,
       CmdLine.walletId, testWalletId)
 
-    var resultsListTxs = listWalletTxs
-    // Disable the retry for CI, there is a question mark around whether the
-    // wallet will always return the txId, hence the fudge.
-    var retryCount = 0
-    if(retryCount > 0) {
-      val sleepInterval: Long = 1000 * 60
-      println(s"Looking for $txId, this could take $retryCount * $sleepInterval ms...")
 
-      while (!resultsListTxs.exists(_.contains(txId)) && retryCount > 0) {
-        resultsListTxs = listWalletTxs
-        retryCount -= 1
-        resultsListTxs.foreach(println)
-        //It seems the wallet can be slow to react sometimes.
-        Thread.sleep(sleepInterval)
-      }
+    val foundTx = listWalletTxs.exists(_.contains(txId))
+    assert(foundTx, s"Couldn't find txId $txId in transactions ")
 
-      assert(resultsListTxs.exists(_.contains(txId)), "TxId never shows up in list?")
-    } else if (!resultsListTxs.exists(_.contains(txId))) {
-      println(s"Warning: $txId NOT found in listTransactions.")
-    }
   }
 
   def extractTxId(toStringCreateTransactionResult: String): String = {
@@ -228,5 +219,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure {
     assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
 
   }
+
 
 }

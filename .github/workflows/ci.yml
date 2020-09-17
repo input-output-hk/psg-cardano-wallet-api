@@ -19,7 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run tests
-        run: sbt coverage test coverageReport
+        uses: actions/setup-java@v1.4.2
+        with:
+          java-version: '11.0.8'
+      - run: sbt coverage test coverageReport
         env:
           BASE_URL: http://cardano-wallet-testnet.iog.solutions:8090/v2/
       - name: Archive code coverage results
@@ -32,5 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Package
-        run: sbt publish
+        uses: actions/setup-java@v1.4.2
+        with:
+            java-version: '11.0.8'
+      - run: sbt publish
 

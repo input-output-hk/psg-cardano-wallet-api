@@ -1,9 +1,10 @@
 package iog.psg.cardano
 
+import java.nio.charset.StandardCharsets
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import akka.http.scaladsl.model.ContentType.{Binary, WithFixedCharset}
+import akka.http.scaladsl.model.ContentType.WithFixedCharset
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
@@ -14,7 +15,7 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, TxMetadata}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
@@ -27,35 +28,35 @@ import scala.util.{Failure, Success, Try}
 
 object CardanoApiCodec {
 
-  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
+  private implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
+  private[cardano] def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
     encoder.mapJson(_.dropNullValues)
 
-  implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
-  implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
-  implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
+  private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
     stringToZonedDate(s) match {
       case Success(goodDateTime) => Right(goodDateTime)
       case Failure(exception) => Left(exception.toString)
     }
   }
 
-  implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
-  implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
+  private[cardano] implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
+  private[cardano] implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
 
-  implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
-  implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
+  private[cardano] implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
+  private[cardano] implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
 
-  implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
-  implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
+  private[cardano] implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
+  private[cardano] implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
 
-  implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
-  implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
+  private[cardano] implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
+  private[cardano] implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
 
-  implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
-  implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
+  private[cardano] implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
+  private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
 
   object AddressFilter extends Enumeration {
     type AddressFilter = Value
@@ -85,7 +86,11 @@ object CardanoApiCodec {
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
-  private[cardano] case class CreateTransaction(passphrase: String, payments: Seq[Payment], withdrawal: Option[String])
+  private[cardano] case class CreateTransaction(
+                                                 passphrase: String,
+                                                 payments: Seq[Payment],
+                                                 metadata: Option[TxMetadata],
+                                                 withdrawal: Option[String])
 
   private[cardano] case class EstimateFee(payments: Seq[Payment], withdrawal: String)
 
@@ -116,19 +121,19 @@ object CardanoApiCodec {
 
   @ConfiguredJsonCodec
   case class NetworkInfo(
-                                               syncProgress: SyncStatus,
-                                               networkTip: NetworkTip,
-                                               nodeTip: NodeTip,
-                                               nextEpoch: NextEpoch
-                                             )
+                          syncProgress: SyncStatus,
+                          networkTip: NetworkTip,
+                          nodeTip: NodeTip,
+                          nextEpoch: NextEpoch
+                        )
 
   @ConfiguredJsonCodec
   case class CreateRestore(
-                                                 name: String,
-                                                 passphrase: String,
-                                                 mnemonicSentence: IndexedSeq[String],
-                                                 addressPoolGap: Option[Int] = None
-                                               ) {
+                            name: String,
+                            passphrase: String,
+                            mnemonicSentence: IndexedSeq[String],
+                            addressPoolGap: Option[Int] = None
+                          ) {
     require(
       mnemonicSentence.length == 15 ||
         mnemonicSentence.length == 21 ||
@@ -219,7 +224,8 @@ object CardanoApiCodec {
                                         inputs: Seq[InAddress],
                                         outputs: Seq[OutAddress],
                                         withdrawals: Seq[StakeAddress],
-                                        status: TxState
+                                        status: TxState,
+                                        metadata: Option[TxMetadata]
                                       )
 
   @ConfiguredJsonCodec
@@ -255,7 +261,8 @@ object CardanoApiCodec {
 
     private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] = {
       strictEntity.map(e => toErrorMessage(e.data) match {
-        case Left(err) => Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
+        case Left(err) => Left(ErrorMessage(err.getMessage,
+          Try(new String(e.data.toArray, StandardCharsets.UTF_8)).getOrElse("UNPARSEABLE")))
         case Right(v) => Left(v)
       })
 
@@ -274,7 +281,10 @@ object CardanoApiCodec {
           // b. the Either unmarshaller requires it
           strictEntityF.flatMap(f)
 
-        case Binary(MediaTypes.`application/octet-stream`) =>
+        case c: ContentType
+          if c.mediaType == MediaTypes.`text/plain` ||
+            c.mediaType == MediaTypes.`application/octet-stream`=>
+
           extractErrorResponse[T](strictEntityF)
 
         case c: ContentType =>
