@@ -320,8 +320,7 @@ object CardanoApiCodec {
 
     private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] = {
       strictEntity.map(e => toErrorMessage(e.data) match {
-        case Left(err) => Left(ErrorMessage(err.getMessage,
-          Try(new String(e.data.toArray, StandardCharsets.UTF_8)).getOrElse("UNPARSEABLE")))
+        case Left(err) => Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
         case Right(v) => Left(v)
       })
 

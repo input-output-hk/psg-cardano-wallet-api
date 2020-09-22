@@ -42,7 +42,7 @@ object CardanoApi {
 
       def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
         case Left(errorMessage) => Future.successful(Left(errorMessage))
-        case Right(value) => value
+        case Right(vaue) => vaue
       }
     }
 
@@ -51,11 +51,9 @@ object CardanoApi {
     }
 
     //tie execute to ioEc
-    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit ec: ExecutionContext, as: ActorSystem) {
+    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]]) {
       def execute: Future[CardanoApiResponse[T]] = {
-        requestF
-          .flatMap(r => new CardanoApiRequestOps(r)
-            .execute)
+        requestF.flatMap(_.execute)
       }
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
@@ -167,11 +165,11 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                        start: Option[ZonedDateTime] = None,
                        end: Option[ZonedDateTime] = None,
                        order: Order = Order.descendingOrder,
-                       minWithdrawal: Option[Int] = None): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
+                       minWithdrawal: Int = 1): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
     val baseUri = Uri(s"${wallets}/${walletId}/transactions")
 
     val queries =
-      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
+      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, Some(minWithdrawal)))
         .collect {
           case (queryParamName, Some(o: Order)) => queryParamName -> o.toString
           case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
