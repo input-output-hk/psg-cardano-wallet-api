@@ -2,10 +2,6 @@ name: Clean, build, test and package
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  WALLET_1_MNEM: ${{ secrets.WALLET_1_MNEM }}
-  WALLET_2_MNEM: ${{ secrets.WALLET_2_MNEM }}
-  WALLET_1_PASS: ${{ secrets.WALLET_1_PASS }}
-  WALLET_2_PASS: ${{ secrets.WALLET_2_PASS }}
 
 on:
   push:
@@ -29,6 +25,11 @@ jobs:
       - run: sbt coverage test coverageReport
         env:
           BASE_URL: http://cardano-wallet-testnet.iog.solutions:8090/v2/
+          WALLET_1_MNEM: ${{ secrets.WALLET_1_MNEM }}
+          WALLET_2_MNEM: ${{ secrets.WALLET_2_MNEM }}
+          WALLET_1_PASS: ${{ secrets.WALLET_1_PASS }}
+          WALLET_2_PASS: ${{ secrets.WALLET_2_PASS }}
+
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
         with:
