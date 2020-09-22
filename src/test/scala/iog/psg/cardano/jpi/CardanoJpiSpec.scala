@@ -26,7 +26,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
 
-  /*"NetworkInfo status" should "be 'ready'" in {
+  "NetworkInfo status" should "be 'ready'" in {
     val info = sut.jpi.networkInfo().toCompletableFuture.get(timeoutValue, timeoutUnits)
     val networkState = JpiResponseCheck.get(info)
     networkState shouldBe "ready"
@@ -103,6 +103,6 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   it should "delete wallet 2" in {
     sut.deleteWallet(testWallet2Id)
     an[Exception] shouldBe thrownBy(sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
-  }*/
+  }
 }
 
