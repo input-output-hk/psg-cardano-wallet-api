@@ -121,6 +121,8 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
                          ): Future[CardanoApiRequest[Wallet]] = {
 
+    println(s"NAME $name, SENTENCE $mnemonicSentence")
+
     val createRestore =
       CreateRestore(
         name,
@@ -190,11 +192,11 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
 
   def createTransaction(fromWalletId: String,
-                                                      passphrase: String,
-                                                      payments: Payments,
-                                                      metadata: Option[TxMetadataIn],
-                                                      withdrawal: Option[String]
-                                            ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
+                        passphrase: String,
+                        payments: Payments,
+                        metadata: Option[TxMetadataIn],
+                        withdrawal: Option[String]
+                       ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
 
 
     val createTx = CreateTransaction(passphrase, payments.payments, metadata, withdrawal)

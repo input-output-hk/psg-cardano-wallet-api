@@ -43,7 +43,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
     val aryLen2 = testWallet2Mnemonic.split(" ").length
     println(s"WALLET 1 words ${aryLen} <-")
     println(s"WALLET 2 words ${aryLen2} <-")
-    
+
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut
       .findOrCreateTestWallet(
