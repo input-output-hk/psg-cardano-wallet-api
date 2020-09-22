@@ -51,7 +51,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     results.reverse
   }
 
-  /*"The Cmd line Main" should "support retrieving netInfo" in {
+  "The Cmd line Main" should "support retrieving netInfo" in {
     val results = runCmdLine(CmdLine.netInfo)
     assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $results")
   }
@@ -218,7 +218,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
     assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
 
-  }*/
+  }
 
 
 }
