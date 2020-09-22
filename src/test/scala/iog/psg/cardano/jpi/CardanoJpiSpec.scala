@@ -87,9 +87,9 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
 
     createTxResponse.id shouldBe getTxResponse.id
     createTxResponse.amount shouldBe getTxResponse.amount
-    createTxResponse.metadata.get.size shouldBe 2
-    createTxResponse.metadata.get.apply(Long.MaxValue) shouldBe "0" * 64
-    createTxResponse.metadata.get.apply(Long.MaxValue - 1) shouldBe "1" * 64
+    val Right(mapOut) = createTxResponse.metadata.get.json.as[Map[Long, String]]
+    mapOut(Long.MaxValue) shouldBe "0" * 64
+    mapOut(Long.MaxValue - 1) shouldBe "1" * 64
   }
 
 

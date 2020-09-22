@@ -5,7 +5,7 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, TxMetadata, defaultMaxWaitTime}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
@@ -69,7 +69,6 @@ object CardanoApiMain {
     run(arguments)
 
   }
-
 
 
   private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace): Unit = {
@@ -238,7 +237,7 @@ object CardanoApiMain {
 
   def unwrap[T: ClassTag](apiResult: CardanoApiResponse[T])(implicit t: Trace): T = unwrapOpt(Try(apiResult)).get
 
-  def unwrapOpt[T:ClassTag](apiResult: Try[CardanoApiResponse[T]])(implicit trace: Trace): Option[T] = apiResult match {
+  def unwrapOpt[T: ClassTag](apiResult: Try[CardanoApiResponse[T]])(implicit trace: Trace): Option[T] = apiResult match {
     case Success(Left(ErrorMessage(message, code))) =>
       trace(s"API Error message $message, code $code")
       None

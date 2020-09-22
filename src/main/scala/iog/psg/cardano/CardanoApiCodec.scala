@@ -5,25 +5,27 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.model.ContentType.WithFixedCharset
-import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, TxMetadata}
+import io.circe.syntax.EncoderOps
+import io.circe._
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
 import iog.psg.cardano.CardanoApiCodec.Units.Units
+import org.apache.commons.codec.binary.Hex
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 object CardanoApiCodec {
@@ -58,6 +60,63 @@ object CardanoApiCodec {
   private[cardano] implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
   private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
 
+
+  case class TxMetadataOut(json: Json) {
+    def toMapMetadataStr: Decoder.Result[Map[Long, String]] = json.as[Map[Long, String]]
+  }
+
+  private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut)
+  private[cardano] implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
+
+  sealed trait MetadataValue
+
+  sealed trait MetadataKey extends MetadataValue
+
+  sealed trait TxMetadataIn
+
+  case class TxMetadataMapIn[K <: Long](m: Map[K, MetadataValue]) extends TxMetadataIn
+
+  object JsonMetadata {
+    def apply(str: String): JsonMetadata = JsonMetadata(str.asJson)
+  }
+
+  case class JsonMetadata(metadataCompliantJson: Json) extends TxMetadataIn
+
+  case class MetadataValueLong(l: Long) extends MetadataKey
+
+  case class MetadataValueStr(s: String) extends MetadataKey
+
+  case class MetadataValueArray(ary: Seq[MetadataValue]) extends MetadataValue
+
+  case class MetadataValueByteArray(ary: ByteString) extends MetadataValue
+
+  case class MetadataValueObject(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
+
+  implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
+    case MetadataValueLong(l) => l.toString
+    case MetadataValueStr(s) => s
+  }
+
+  def toMetadataHex(bs: ByteString): Json = {
+    val asHex = Hex.encodeHex(bs.toArray[Byte])
+    asHex.asJson
+  }
+
+  implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
+    case MetadataValueLong(s) => s.asJson
+    case MetadataValueStr(s) => s.asJson
+    case MetadataValueArray(s) => s.asJson
+    case MetadataValueObject(s) => s.asJson
+    case MetadataValueByteArray(ary: ByteString) => toMetadataHex(ary)
+  }
+
+  implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
+    case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
+    case TxMetadataMapIn(s) => s.asJson
+
+  }
+
+
   object AddressFilter extends Enumeration {
     type AddressFilter = Value
 
@@ -89,7 +148,7 @@ object CardanoApiCodec {
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
                                                  payments: Seq[Payment],
-                                                 metadata: Option[TxMetadata],
+                                                 metadata: Option[TxMetadataIn],
                                                  withdrawal: Option[String])
 
   private[cardano] case class EstimateFee(payments: Seq[Payment], withdrawal: String)
@@ -225,7 +284,7 @@ object CardanoApiCodec {
                                         outputs: Seq[OutAddress],
                                         withdrawals: Seq[StakeAddress],
                                         status: TxState,
-                                        metadata: Option[TxMetadata]
+                                        metadata: Option[TxMetadataOut]
                                       )
 
   @ConfiguredJsonCodec
@@ -283,7 +342,7 @@ object CardanoApiCodec {
 
         case c: ContentType
           if c.mediaType == MediaTypes.`text/plain` ||
-            c.mediaType == MediaTypes.`application/octet-stream`=>
+            c.mediaType == MediaTypes.`application/octet-stream` =>
 
           extractErrorResponse[T](strictEntityF)
 

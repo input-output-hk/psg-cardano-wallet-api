@@ -5,10 +5,7 @@ import iog.psg.cardano.jpi.*;
 import iog.psg.cardano.jpi.CardanoApi;
 import scala.Enumeration;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,16 +43,22 @@ public class TestMain {
             Map<Long, String> meta = new HashMap();
             String l = Long.toString(Long.MAX_VALUE);
             meta.put(Long.MAX_VALUE, "hello world");
+
             //9223372036854775807
             //meta.put(l, "0123456789012345678901234567890123456789012345678901234567890123");
 
-            List<CardanoApiCodec.Payment> pays = List.of(new CardanoApiCodec.Payment(unusedAddr.id(), new CardanoApiCodec.QuantityUnit(1000000, lovelace)));
+            List<CardanoApiCodec.Payment> pays =
+                    Arrays.asList(
+                            new CardanoApiCodec.Payment(unusedAddr.id(),
+                                    new CardanoApiCodec.QuantityUnit(1000000, lovelace)
+                            )
+                    );
             CardanoApiCodec.CreateTransactionResponse resp =
                     api.createTransaction(
                             wallet.id(),
                             passphrase,
                             pays,
-                            meta,
+                            MetadataBuilder.withMap(meta),
                             "self").toCompletableFuture().get();
             System.out.println(resp.status().toString());
             System.out.println(resp.id());
