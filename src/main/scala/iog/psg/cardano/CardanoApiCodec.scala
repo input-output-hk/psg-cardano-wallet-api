@@ -61,7 +61,7 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
 
 
-  case class TxMetadataOut(json: Json) {
+  final case class TxMetadataOut(json: Json) {
     def toMapMetadataStr: Decoder.Result[Map[Long, String]] = json.as[Map[Long, String]]
   }
 
@@ -74,23 +74,23 @@ object CardanoApiCodec {
 
   sealed trait TxMetadataIn
 
-  case class TxMetadataMapIn[K <: Long](m: Map[K, MetadataValue]) extends TxMetadataIn
+  final case class TxMetadataMapIn[K <: Long](m: Map[K, MetadataValue]) extends TxMetadataIn
 
   object JsonMetadata {
     def apply(str: String): JsonMetadata = JsonMetadata(str.asJson)
   }
 
-  case class JsonMetadata(metadataCompliantJson: Json) extends TxMetadataIn
+  final case class JsonMetadata(metadataCompliantJson: Json) extends TxMetadataIn
 
-  case class MetadataValueLong(l: Long) extends MetadataKey
+  final case class MetadataValueLong(l: Long) extends MetadataKey
 
-  case class MetadataValueStr(s: String) extends MetadataKey
+  final case class MetadataValueStr(s: String) extends MetadataKey
 
-  case class MetadataValueArray(ary: Seq[MetadataValue]) extends MetadataValue
+  final case class MetadataValueArray(ary: Seq[MetadataValue]) extends MetadataValue
 
-  case class MetadataValueByteArray(ary: ByteString) extends MetadataValue
+  final case class MetadataValueByteArray(ary: ByteString) extends MetadataValue
 
-  case class MetadataValueObject(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
+  final case class MetadataValueObject(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
 
   implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
     case MetadataValueLong(l) => l.toString

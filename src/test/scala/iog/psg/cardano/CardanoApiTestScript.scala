@@ -113,7 +113,7 @@ object CardanoApiTestScript {
 
           val finalTx = waitForTx(tx, fromWallet.id, tx.id)
 
-          //println(s"Last Tx in stream ${finalTx.metadata}")
+          println(s"Last Tx in stream ${finalTx.metadata}")
           val back = finalTx.metadata.get.json.as[Map[Long, Array[Byte]]]
           back match {
             case Left(err) =>
@@ -121,7 +121,7 @@ object CardanoApiTestScript {
               val good = util.Arrays.equals(s(6),inAry)
               println(good)
           }
-          //finalTx.metadata.get.foreach(kv => println(s"(${kv._1} -> ${kv._2.mkString})"))
+
           println(s"Successfully transferred value from wallet to wallet")
 
           val refreshedFromWallet = unwrap(api.getWallet(fromWallet.id).toFuture.executeBlocking)
