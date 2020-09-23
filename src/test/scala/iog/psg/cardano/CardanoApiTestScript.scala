@@ -1,13 +1,18 @@
 package iog.psg.cardano
 
+import java.util
+
 import akka.actor.ActorSystem
+import akka.util.ByteString
 import iog.psg.cardano.CardanoApi.CardanoApiOps._
 import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, SyncState, TxState, Units}
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse, GenericMnemonicSentence, MetadataValueArray, MetadataValueByteArray, MetadataValueLong, MetadataValueStr, Payment, Payments, QuantityUnit, SyncState, TxMetadataMapIn, TxState, Units}
+import org.apache.commons.codec.binary.Hex
 
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 /**
  * This script ran successfully in Aug 2020
@@ -18,6 +23,7 @@ object CardanoApiTestScript {
 
 
   private implicit val system = ActorSystem("SingleRequest")
+
 
   def main(args: Array[String]): Unit = {
 
@@ -44,14 +50,16 @@ object CardanoApiTestScript {
       val api = new CardanoApi(baseUri)
 
 
-      def waitForTx(txState: TxState, walletId: String, txId: String): Unit = {
-        if (txState == TxState.pending) {
-          println(s"$txState")
+      @tailrec
+      def waitForTx(txCreateResponse: CreateTransactionResponse, walletId: String, txId: String): CreateTransactionResponse = {
+        if (txCreateResponse.status == TxState.pending) {
+          println(s"Wait for ${TxState.inLedger} ${txCreateResponse.status}")
           Thread.sleep(5000)
           val txUpdate = unwrap(api.getTransaction(walletId, txId).toFuture.executeBlocking)
-          waitForTx(txUpdate.status, walletId, txId)
+          waitForTx(txUpdate, walletId, txId)
+        } else {
+          txCreateResponse
         }
-        println(s"$txState !!")
       }
 
 
@@ -62,10 +70,6 @@ object CardanoApiTestScript {
       if (netInfo.syncProgress.status == SyncState.ready) {
         val walletAddresses = unwrap(api.listWallets.toFuture.executeBlocking)
 
-        walletAddresses.foreach(addr => {
-          println(s"Name: ${addr.name} balance: ${addr.balance}")
-          println(s"Id: ${addr.id} pool gap: ${addr.addressPoolGap}")
-        })
 
         val walletsOfInterest = walletAddresses.filter(w => walletsNamesOfInterest.contains(w.name))
         val fromWallet = walletsOfInterest.find(_.name == walletNameFrom).getOrElse {
@@ -73,46 +77,12 @@ object CardanoApiTestScript {
           unwrap(api.createRestoreWallet(walletNameFrom, walletFromPassphrase, walletFromMnem).executeBlocking)
         }
 
-        val unitResult = unwrap(
-          api.
-            updatePassphrase(
-              fromWallet.id,
-              walletFromPassphrase,
-              newWalletPassword)
-            .executeBlocking
-        )
-
-        /*val fromWalletFromNewPassword = unwrap(
-          api.
-            createRestoreWallet(
-              walletNameFrom,
-              newWalletPassword,
-              walletFromMnem)
-            .executeBlocking
-        )*/
-
-        val unitResultPutItBack = unwrap(
-          api.
-            updatePassphrase(
-              fromWallet.id,
-              newWalletPassword,
-              walletFromPassphrase)
-            .executeBlocking
-        )
-
         println(s"From wallet name, id, balance ${fromWallet.name}, ${fromWallet.id}, ${fromWallet.balance}")
 
-        val toWallet = walletsOfInterest.find(_.name == walletNameTo).getOrElse {
-          println("Generating 'to' wallet...")
-          unwrap(api.createRestoreWallet(walletNameTo, walletToPassphrase, walletToMnem).executeBlocking)
-        }
-
-        println(s"To wallet name, id, balance ${toWallet.name}, ${toWallet.id}, ${toWallet.balance}")
         if (fromWallet.balance.available.quantity > 2) {
 
           val toWalletAddresses =
-            unwrap(api.listAddresses(toWallet.id, Some(AddressFilter.unUsed)).toFuture.executeBlocking)
-
+            unwrap(api.listAddresses(fromWallet.id, Some(AddressFilter.unUsed)).toFuture.executeBlocking)
 
           val paymentTo = toWalletAddresses.headOption.getOrElse(fail("No unused addresses in the To wallet?"))
 
@@ -122,54 +92,41 @@ object CardanoApiTestScript {
             )
           )
 
+          val hexAry = Hex.encodeHex(("" + ("1" * 12)).getBytes())
+          val h = new String(hexAry)
+          val inAry = Array.fill(1024 * 5)(Random.nextBytes(1).head)
+          val ha = MetadataValueArray(inAry.toSeq.map(MetadataValueLong(_)))
+          MetadataValueStr(h)
+          val meta = TxMetadataMapIn(
+            Map(6L ->
+              ha
+            )
+          )
 
           val tx = unwrap(api.createTransaction(
             fromWallet.id,
             walletFromPassphrase,
             payments,
-            None, //TODO add metadata
+            Some(meta),
             None,
           ).executeBlocking)
 
-          waitForTx(tx.status, fromWallet.id, tx.id)
+          val finalTx = waitForTx(tx, fromWallet.id, tx.id)
 
+          println(s"Last Tx in stream ${finalTx.metadata}")
+          val back = finalTx.metadata.get.json.as[Map[Long, Array[Byte]]]
+          back match {
+            case Left(err) =>
+            case Right(s) =>
+              val good = util.Arrays.equals(s(6),inAry)
+              println(good)
+          }
 
-          val fromWalletAddresses =
-            unwrap(api.listAddresses(fromWallet.id, Some(AddressFilter.unUsed)).toFuture.executeBlocking)
+          println(s"Successfully transferred value from wallet to wallet")
 
-          val paymentBack = fromWalletAddresses.headOption.getOrElse(fail("No unused addresses in the From wallet?"))
-          //transfer back
-          val returnPayments = Payments(
-            Seq(
-              Payment(paymentBack.id, QuantityUnit(lovelaceToTransfer, Units.lovelace))
-            )
-          )
-
-          val estimate = unwrap(api.estimateFee(toWallet.id, returnPayments).executeBlocking)
-          val returnPayments2 = Payments(
-            Seq(
-              Payment(paymentBack.id, QuantityUnit(lovelaceToTransfer - estimate.estimatedMax.quantity, Units.lovelace))
-            )
-          )
-
-          val returnTx = unwrap(api.createTransaction(
-            toWallet.id,
-            walletToPassphrase,
-            returnPayments2,
-            Some(Map(1L -> "")), //todo ADD metadata
-            None
-          ).executeBlocking)
-
-
-          waitForTx(returnTx.status, toWallet.id, returnTx.id)
-
-          println(s"Successfully transferred value between 2 wallets")
-          val refreshedToWallet = unwrap(api.getWallet(toWallet.id).toFuture.executeBlocking)
           val refreshedFromWallet = unwrap(api.getWallet(fromWallet.id).toFuture.executeBlocking)
           val fromDiffBalance = refreshedFromWallet.balance.available.quantity - fromWallet.balance.available.quantity
-          val toDiffBalance = refreshedToWallet.balance.available.quantity - toWallet.balance.available.quantity
           println(s"Balance of 'from' wallet is now ${refreshedFromWallet.balance} diff: $fromDiffBalance")
-          println(s"Balance of 'to' wallet is now ${refreshedToWallet.balance} diff $toDiffBalance")
 
         } else {
           println(s"From wallet ${fromWallet.name} balance ${fromWallet.balance} is too low, cannot continue")

@@ -24,7 +24,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   private val testAmountToTransfer = config.getString("cardano.wallet.amount")
   private val timeoutValue: Long = 10
   private val timeoutUnits = TimeUnit.SECONDS
-  private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi,timeoutValue, timeoutUnits)
+  private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
 
   "NetworkInfo status" should "be 'ready'" in {
     val info = sut.jpi.networkInfo().toCompletableFuture.get(timeoutValue, timeoutUnits)
@@ -33,10 +33,17 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   }
 
   "Bad wallet creation" should "be prevented" in {
-    an [IllegalArgumentException] shouldBe thrownBy (sut.createBadWallet())
+    an[IllegalArgumentException] shouldBe thrownBy(sut.createBadWallet())
   }
 
   "Test wallet" should "exist or be created" in {
+
+    println(s"WALLET $baseUrl")
+    val aryLen = testWalletMnemonic.split(" ").length
+    val aryLen2 = testWallet2Mnemonic.split(" ").length
+    println(s"WALLET 1 words ${aryLen} <-")
+    println(s"WALLET 2 words ${aryLen2} <-")
+
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut
       .findOrCreateTestWallet(
@@ -63,7 +70,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
   it should "allow password change in wallet 2" in {
     sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase)
     //now this is the wrong password
-    an [Exception] shouldBe thrownBy(sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
+    an[Exception] shouldBe thrownBy(sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
 
     sut.passwordChange(testWallet2Id, testWalletPassphrase, testWallet2Passphrase)
   }
@@ -87,15 +94,15 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
 
     createTxResponse.id shouldBe getTxResponse.id
     createTxResponse.amount shouldBe getTxResponse.amount
-    createTxResponse.metadata.get.size shouldBe 2
-    createTxResponse.metadata.get.apply(Long.MaxValue) shouldBe "0" * 64
-    createTxResponse.metadata.get.apply(Long.MaxValue - 1) shouldBe "1" * 64
+    val Right(mapOut) = createTxResponse.metadata.get.json.as[Map[Long, String]]
+    mapOut(Long.MaxValue) shouldBe "0" * 64
+    mapOut(Long.MaxValue - 1) shouldBe "1" * 64
   }
 
 
   it should "delete wallet 2" in {
     sut.deleteWallet(testWallet2Id)
-    an [Exception] shouldBe thrownBy (sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
+    an[Exception] shouldBe thrownBy(sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
   }
 }
 

@@ -13,7 +13,6 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
 import iog.psg.cardano.CardanoApi.Order.Order
-
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -26,8 +25,6 @@ object CardanoApi {
   case class ErrorMessage(message: String, code: String)
 
   type CardanoApiResponse[T] = Either[ErrorMessage, T]
-
-  type TxMetadata = Map[Long, String]
 
   case class CardanoApiRequest[T](request: HttpRequest, mapper: HttpResponse => Future[CardanoApiResponse[T]])
 
@@ -42,22 +39,21 @@ object CardanoApi {
   object CardanoApiOps {
 
     implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
-      
+
       def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
         case Left(errorMessage) => Future.successful(Left(errorMessage))
-        case Right(value) => value
+        case Right(vaue) => vaue
       }
     }
 
     implicit class FutOp[T](val request: CardanoApiRequest[T]) extends AnyVal {
       def toFuture: Future[CardanoApiRequest[T]] = Future.successful(request)
     }
+
     //tie execute to ioEc
     implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit ec: ExecutionContext, as: ActorSystem) {
       def execute: Future[CardanoApiResponse[T]] = {
-        requestF
-          .flatMap(r => new CardanoApiRequestOps(r)
-            .execute)
+        requestF.flatMap(_.execute)
       }
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
@@ -192,18 +188,16 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     )
   }
 
-  def createTransaction[K <: Long](fromWalletId: String,
+
+  def createTransaction(fromWalletId: String,
                         passphrase: String,
                         payments: Payments,
-                        metadata: Option[Map[K, String]],
+                        metadata: Option[TxMetadataIn],
                         withdrawal: Option[String]
                        ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
 
-    val keyAsLongs = metadata.map(_.map {
-      case (k, v) => (k.longValue(), v)
-    })
 
-    val createTx = CreateTransaction(passphrase, payments.payments, keyAsLongs, withdrawal)
+    val createTx = CreateTransaction(passphrase, payments.payments, metadata, withdrawal)
 
     Marshal(createTx).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
@@ -218,9 +212,9 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   }
 
   def estimateFee(fromWalletId: String,
-                        payments: Payments,
-                        withdrawal: String = "self"
-                       ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
+                  payments: Payments,
+                  withdrawal: String = "self"
+                 ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 
     val estimateFees = EstimateFee(payments.payments, withdrawal)
 
@@ -250,9 +244,9 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     }
   }
 
-  def getTransaction(
-                      walletId: String,
-                      transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
+  def getTransaction[T <: TxMetadataIn](
+                                         walletId: String,
+                                         transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
 
     val uri = Uri(s"${wallets}/${walletId}/transactions/${transactionId}")
 
@@ -270,19 +264,19 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                         oldPassphrase: String,
                         newPassphrase: String): Future[CardanoApiRequest[Unit]] = {
 
-      val uri = Uri(s"${wallets}/${walletId}/passphrase")
-      val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
+    val uri = Uri(s"${wallets}/${walletId}/passphrase")
+    val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
 
-      Marshal(updater).to[RequestEntity] map { marshalled => {
-        CardanoApiRequest(
-          HttpRequest(
-            uri = uri,
-            method = PUT,
-            entity = marshalled
-          ),
-          _.toUnit
-        )
-      }
+    Marshal(updater).to[RequestEntity] map { marshalled => {
+      CardanoApiRequest(
+        HttpRequest(
+          uri = uri,
+          method = PUT,
+          entity = marshalled
+        ),
+        _.toUnit
+      )
+    }
     }
   }
 

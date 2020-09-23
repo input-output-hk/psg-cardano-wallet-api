@@ -1,14 +1,11 @@
 package iog.psg.cardano.jpi;
 
 import iog.psg.cardano.CardanoApiCodec;
-
+import scala.Enumeration;
 import scala.Some;
 import scala.jdk.javaapi.CollectionConverters;
 
-import scala.Enumeration;
-
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -42,33 +39,27 @@ public class CardanoApi {
         );
     }
 
-    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
+   public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
             List<CardanoApiCodec.Payment> payments,
-            Map<Long, String> metadata,
+            CardanoApiCodec.TxMetadataIn metadata,
             String withdrawal
             ) throws CardanoApiException {
 
-        scala.Option<scala.collection.immutable.Map<Long, String>> massaged =
-                metadata.isEmpty() ?
-                        option(Optional.empty()):
-                        option(helpExecute.toScalaImmutable(metadata)
-                                );
-
         return helpExecute.execute(api.createTransaction(fromWalletId, passphrase,
                 new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                massaged,
+                option(metadata),
                 option(withdrawal)));
     }
 
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
-            List<CardanoApiCodec.Payment> payments,
-            Map<Long, String> metadata) throws CardanoApiException {
+            List<CardanoApiCodec.Payment> payments
+            ) throws CardanoApiException {
 
-        return createTransaction(fromWalletId, passphrase, payments, metadata, "self");
+        return createTransaction(fromWalletId, passphrase, payments, null, "self");
     }
 
     public CompletionStage<CardanoApiCodec.Wallet> getWallet(
@@ -104,6 +95,7 @@ public class CardanoApi {
                         new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
                         withdrawal));
     }
+
     public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
         return helpExecute.execute(
@@ -158,7 +150,7 @@ public class CardanoApi {
 
 
     private static <T> scala.Option<T> option(final T value) {
-        return (value != null)?new Some<T>(value):scala.Option.apply((T) null);
+        return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }
 
     private static <T> scala.Option<T> option(final Optional<T> value) {

@@ -1,5 +1,6 @@
 package iog.psg.cardano.util
 
+import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -9,7 +10,11 @@ import org.scalatest.matchers.should.Matchers
 class StringToMapParserSpec extends AnyFlatSpec with Matchers {
 
   "MetaMapParser" should "parse simple map" in {
-    toMetaMap(Some("1:a:2:b")) shouldBe Some(Map((1 -> "a"), 2 -> "b"))
+    toMetaMap(Some("1:a:2:b")) shouldBe Some(
+      TxMetadataMapIn[Long](
+        Map(1L -> MetadataValueStr("a"), 2L -> MetadataValueStr("b"))
+      )
+    )
   }
 
   it should "correctly parse an empty string" in {

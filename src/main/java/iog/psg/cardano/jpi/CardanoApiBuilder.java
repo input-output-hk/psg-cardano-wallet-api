@@ -11,7 +11,6 @@ public class CardanoApiBuilder {
 
     final private String url;
     private ExecutorService executorService;
-    private ExecutorService ioExecutorService;
     private ActorSystem actorSystem;
 
     private CardanoApiBuilder() {
@@ -34,12 +33,6 @@ public class CardanoApiBuilder {
         return this;
     }
 
-    public CardanoApiBuilder withIOExecutorService(ExecutorService ioExecutorService) {
-        this.ioExecutorService = ioExecutorService;
-        Objects.requireNonNull(ioExecutorService, "IO ExecutorService is 'null'");
-        return this;
-    }
-
 
     public CardanoApiBuilder withActorSystem(ActorSystem actorSystem) {
         this.actorSystem = actorSystem;
@@ -53,17 +46,11 @@ public class CardanoApiBuilder {
             actorSystem = ActorSystem.create("Cardano JPI ActorSystem");
         }
 
-        if (ioExecutorService == null && executorService == null) {
-            ioExecutorService = Executors.newCachedThreadPool();
-            executorService = ioExecutorService;
-        } else if(ioExecutorService == null) {
-            ioExecutorService = executorService;
-        } else if (executorService == null){
-            executorService = ioExecutorService;
+        if (executorService == null) {
+            executorService = Executors.newCachedThreadPool();
         }
 
         ExecutionContext ec = ExecutionContext.fromExecutorService(executorService);
-        ExecutionContext ioEc = ExecutionContext.fromExecutorService(ioExecutorService);
         iog.psg.cardano.CardanoApi api = new iog.psg.cardano.CardanoApi(url, ec, actorSystem);
         HelpExecute helpExecute = new HelpExecute(ec, actorSystem);
         return new CardanoApi(api, helpExecute);

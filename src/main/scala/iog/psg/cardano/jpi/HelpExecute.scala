@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
+import iog.psg.cardano.CardanoApiCodec.{MetadataValue, MetadataValueStr, TxMetadataMapIn}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
@@ -12,6 +13,17 @@ import scala.jdk.javaapi.FutureConverters
 
 
 class CardanoApiException(message: String, code: String) extends Exception(s"Message: $message, Code: $code")
+
+object HelpExecute {
+
+  def toScalaImmutable[B](in: java.util.Map[java.lang.Long, String]): Map[java.lang.Long, String] = in.asScala.toMap
+
+  def toMetadataMap(in: java.util.Map[java.lang.Long, String]): Map[Long, MetadataValue] = {
+    in.asScala.map {
+      case (k, v) => k.toLong -> MetadataValueStr (v)
+    }
+  }.toMap
+}
 
 class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) {
 
@@ -32,6 +44,7 @@ class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) {
     FutureConverters.asJava(request.execute.map(unwrapResponse))
   }
 
-  def toScalaImmutable[B](in: java.util.Map[java.lang.Long,String]): Map[java.lang.Long, String] = in.asScala.toMap
+  def toScalaImmutable[B](in: java.util.Map[java.lang.Long, String]): Map[java.lang.Long, String] =
+    HelpExecute.toScalaImmutable(in)
 
 }
