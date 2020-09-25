@@ -3,21 +3,32 @@
 _For consultancy services email [enterprise.solutions@iohk.io](mailto:enterprise.solutions@iohk.io)_
 ### Scala and Java client for the Cardano Wallet API
 
-[Post](#metacmd)
-The Cardano Node exposes a [REST like API](https://github.com/input-output-hk/cardano-wallet) 
-allowing clients to perform a variety of tasks such as creating or restoring a wallet, submitting 
-a transaction, submitting [metadata](https://github.com/input-output-hk/cardano-wallet/wiki/TxMetadata) or checking on the syncing status of the node.
+The Cardano node exposes a [REST like API](https://github.com/input-output-hk/cardano-wallet) 
+allowing clients to perform a variety of tasks including 
+ - creating or restoring a wallet
+ - submitting a transaction with or without [metadata](https://github.com/input-output-hk/cardano-wallet/wiki/TxMetadata) 
+ - checking on the status of the node
+ - listing transactions
+ - listing wallets
 
 The full list of capabilities can be found [here](https://input-output-hk.github.io/cardano-wallet/api/edge/). 
      
 This artefact wraps calls to that API to make them easily accessible to Java or Scala developers.
 
-It also provides an executable jar to provide very rudimentary command line access. 
+It also provides an executable jar to provide rudimentary command line access. 
 
 
-#### Building 
+- [Building](#building)
+- [Usage](#usage)
+    - [scala](#usagescala)
+    - [java](#usagejava)
+- [Command line executable jar](#cmdline)
+- [Examples](#examples)
+        
 
-This is an `sbt` project, so the usual commands apply.
+### <a name="building"></a> Building 
+
+This is an `sbt` project, so the usual `sbt` commands apply.
 
 Clone the [repository](https://github.com/input-output-hk/psg-cardano-wallet-api) 
 
@@ -35,24 +46,24 @@ To build the command line executable jar skipping tests, use
 
 This will create a jar in the `target/scala-2.13` folder. 
 
-#### Implementation Details
+#### Implementation
 
 The jar is part of an Akka streaming ecosystem and unsurprisingly uses [Akka Http](https://doc.akka.io/docs/akka-http/current/introduction.html) to make the http requests, 
 it also uses [circe](https://circe.github.io/circe/) to marshal and unmarshal the json.
 
-#### Usage 
+### Usage 
 
 The jar is published in Maven Central, the command line executable jar can be downloaded from the releases section 
 of the [github repository](https://github.com/input-output-hk/psg-cardano-wallet-api)
     
-##### Scala
+#### Scala
 
 Add the library to your dependencies 
 
 `libraryDependencies += "iog.psg" %% "psg-cardano-wallet-api" % "0.4.1"`
 
 The api calls return a HttpRequest set up to the correct url and a mapper to take the entity result and 
-map it from Json to the corresponding case classes.
+map it from Json to the corresponding case classes. Using `networkInfo` as an example...
 
 ```
 import iog.psg.cardano.CardanoApi.CardanoApiOps._
@@ -76,9 +87,9 @@ networkInfo match {
 }
 ```
  
-##### Java
+#### Java
 
-First, add the library to your dependencies, then 
+First, add the library to your dependencies, then using `getWallet` as an example...
 
 ```
 import iog.psg.cardano.jpi.*;
@@ -92,20 +103,22 @@ CardanoApiBuilder builder =
 
 CardanoApi api = builder.build();
 
-String walletId = "";
+String walletId = "<PUT WALLET ID HERE>";
 CardanoApiCodec.Wallet  wallet =
             api.getWallet(walletId).toCompletableFuture().get();
 
 ```
 
-##### Command Line 
+#### <a name="cmdline"></a>Command Line 
 
-To see the minimal help, use    
+To see the usage instructions, use    
 
 `java -jar psg-cardano-wallet-api-assembly-x.x.x-SNAPSHOT.jar`
 
-To see the [network information](https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Network) use 
+For example, to see the [network information](https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Network) use 
 
 `java -jar psg-cardano-wallet-api-assembly-x.x.x-SNAPSHOT.jar -baseUrl http://localhost:8090/v2/ -netInfo`
   
-#### <a name="metacmd"></a> Posting metadata from the command line
+#### <a name="examples"></a> Examples
+
+The best place to find working examples is in the [test](https://github.com/input-output-hk/psg-cardano-wallet-api/tree/develop/src/test) folder 
