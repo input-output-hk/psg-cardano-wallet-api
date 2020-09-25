@@ -1,11 +1,12 @@
 # PSG Cardano Wallet API
 
-_[To talk about consultancy services contact enterprise.solutions@iohk.io](mailto:enterprise.solutions@iohk.io)_
+_For consultancy services email [enterprise.solutions@iohk.io](mailto:enterprise.solutions@iohk.io)_
 ### Scala and Java client for the Cardano Wallet API
 
+[Post](#metacmd)
 The Cardano Node exposes a [REST like API](https://github.com/input-output-hk/cardano-wallet) 
 allowing clients to perform a variety of tasks such as creating or restoring a wallet, submitting 
-a transaction or checking on the syncing status of the node.
+a transaction, submitting [metadata](https://github.com/input-output-hk/cardano-wallet/wiki/TxMetadata) or checking on the syncing status of the node.
 
 The full list of capabilities can be found [here](https://input-output-hk.github.io/cardano-wallet/api/edge/). 
      
@@ -16,19 +17,19 @@ It also provides an executable jar to provide very rudimentary command line acce
 
 #### Building 
 
-Clone the [repository](https://github.com/input-output-hk/psg-cardano-wallet-api) 
+This is an `sbt` project, so the usual commands apply.
 
-This is an `sbt` project, so the usual commands apply. 
+Clone the [repository](https://github.com/input-output-hk/psg-cardano-wallet-api) 
 
 To build and publish the project to your local repository use 
 
 `sbt publish`
 
-To build the command line 'all in one' jar use
+To build the command line executable jar use
 
 `sbt assembly`  
 
-To build the 'all in one' jar skipping tests, use
+To build the command line executable jar skipping tests, use
 
 `sbt 'set test in assembly := {}' assembly`
 
@@ -77,7 +78,7 @@ networkInfo match {
  
 ##### Java
 
-Add the library to your dependencies
+First, add the library to your dependencies, then 
 
 ```
 import iog.psg.cardano.jpi.*;
@@ -107,4 +108,4 @@ To see the [network information](https://input-output-hk.github.io/cardano-walle
 
 `java -jar psg-cardano-wallet-api-assembly-x.x.x-SNAPSHOT.jar -baseUrl http://localhost:8090/v2/ -netInfo`
   
-   
+#### <a name="metacmd"></a> Posting metadata from the command line
