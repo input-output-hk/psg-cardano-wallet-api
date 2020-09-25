@@ -51,12 +51,12 @@ This will create a jar in the `target/scala-2.13` folder.
 The jar is part of an Akka streaming ecosystem and unsurprisingly uses [Akka Http](https://doc.akka.io/docs/akka-http/current/introduction.html) to make the http requests, 
 it also uses [circe](https://circe.github.io/circe/) to marshal and unmarshal the json.
 
-### <a name="usage"</a>Usage 
+### <a name="usage"></a>Usage 
 
 The jar is published in Maven Central, the command line executable jar can be downloaded from the releases section 
 of the [github repository](https://github.com/input-output-hk/psg-cardano-wallet-api)
     
-#### <a name="usagescala"</a>Scala
+#### <a name="usagescala"></a>Scala
 
 Add the library to your dependencies 
 
@@ -87,7 +87,7 @@ networkInfo match {
 }
 ```
  
-#### <a name="usagejava"</a>Java
+#### <a name="usagejava"></a>Java
 
 First, add the library to your dependencies, then using `getWallet` as an example...
 
