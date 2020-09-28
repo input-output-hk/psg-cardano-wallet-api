@@ -24,11 +24,10 @@ jobs:
           java-version: '11.0.8'
       - run: sbt coverage test coverageReport
         env:
-          BASE_URL: http://cardano-wallet-testnet.iog.solutions:8090/v2/
-          WALLET_1_MNEM: ${{ secrets.WALLET_1_MNEM }}
-          WALLET_2_MNEM: ${{ secrets.WALLET_2_MNEM }}
-          WALLET_1_PASS: ${{ secrets.WALLET_1_PASS }}
-          WALLET_2_PASS: ${{ secrets.WALLET_2_PASS }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CARDANO_API_WALLET_1_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}
+          CARDANO_API_WALLET_1_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}
+          CARDANO_API_WALLET_2_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_2_MNEMONIC }}
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
@@ -36,6 +35,7 @@ jobs:
           name: code-coverage-report
           path: target/scala-2.13/scoverage-report
   package:
+    if: contains(github.ref, 'release')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
