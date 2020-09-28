@@ -35,7 +35,7 @@ jobs:
           name: code-coverage-report
           path: target/scala-2.13/scoverage-report
   package:
-    if: contains(github.ref, "release")
+    if: contains(github.ref, 'release')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
