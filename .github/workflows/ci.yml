@@ -40,6 +40,7 @@ jobs:
           name: code-coverage-report
           path: target/scala-2.13/scoverage-report
   package:
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
