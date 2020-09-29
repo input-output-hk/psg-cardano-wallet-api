@@ -3,6 +3,7 @@ package iog.psg.cardano.jpi
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
+import iog.psg.cardano.ApiRequestExecutor
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.{MetadataValue, MetadataValueStr, TxMetadataMapIn}
@@ -25,7 +26,7 @@ object HelpExecute {
   }.toMap
 }
 
-class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) {
+class HelpExecute(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) {
 
   @throws(classOf[CardanoApiException])
   private def unwrapResponse[T](resp: CardanoApiResponse[T]): T = resp match {

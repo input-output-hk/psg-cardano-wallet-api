@@ -1,6 +1,8 @@
 package iog.psg.cardano.jpi;
 
 import akka.actor.ActorSystem;
+import iog.psg.cardano.ApiRequestExecutor;
+import iog.psg.cardano.ApiRequestExecutorImpl;
 import scala.concurrent.ExecutionContext;
 
 import java.util.Objects;
@@ -52,7 +54,8 @@ public class CardanoApiBuilder {
 
         ExecutionContext ec = ExecutionContext.fromExecutorService(executorService);
         iog.psg.cardano.CardanoApi api = new iog.psg.cardano.CardanoApi(url, ec, actorSystem);
-        HelpExecute helpExecute = new HelpExecute(ec, actorSystem);
+        ApiRequestExecutor apiRequestExecutor = new ApiRequestExecutorImpl();
+        HelpExecute helpExecute = new HelpExecute(apiRequestExecutor, ec, actorSystem);
         return new CardanoApi(api, helpExecute);
     }
 

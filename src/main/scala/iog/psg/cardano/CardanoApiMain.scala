@@ -85,6 +85,7 @@ object CardanoApiMain {
 
       implicit val system: ActorSystem = ActorSystem("SingleRequest")
       import system.dispatcher //the
+      implicit val apiRequestExecutor: ApiRequestExecutor = new ApiRequestExecutorImpl
 
       Try {
 
