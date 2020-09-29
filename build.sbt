@@ -16,14 +16,21 @@ publishMavenStyle := true
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "A java/scala wrapper for the cardano wallet backend API"
 
+pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toArray)
+
 // publish to the sonatype repository
-publishTo := sonatypePublishTo.value
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
 
-githubOwner := "input-output-hk"
+//githubOwner := "input-output-hk"
 
-githubRepository := "psg-cardano-wallet-api"
+//githubRepository := "psg-cardano-wallet-api"
 
-githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
+//githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
