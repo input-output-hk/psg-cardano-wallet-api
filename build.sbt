@@ -4,7 +4,7 @@ name:= "psg-cardano-wallet-api"
 
 scalaVersion := "2.13.3"
 
-organization := "solutions.iog.psg"
+organization := "solutions.iog"
 
 homepage := Some(url("https://github.com/input-output-hk/psg-cardano-wallet-api"))
 scmInfo := Some(ScmInfo(url("https://github.com/input-output-hk/psg-cardano-wallet-api"), "git@github.com:input-output-hk/psg-cardano-wallet-api.git"))
