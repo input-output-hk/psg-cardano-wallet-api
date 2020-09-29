@@ -10,7 +10,6 @@ on:
 
 jobs:
   package:
-    if: contains(github.ref, 'PSGS-38')
     runs-on: ubuntu-latest
     steps:
       - name: Configure GPG Key
