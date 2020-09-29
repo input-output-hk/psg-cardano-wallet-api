@@ -2,6 +2,8 @@ name: Publish to Maven
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SONA_USER: ${{ secrets.SONA_USER }}
+  SONA_PASS: ${{ secrets.SONA_PASS }}
 
 on:
   push:

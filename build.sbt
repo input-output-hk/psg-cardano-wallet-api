@@ -25,6 +25,11 @@ publishTo := Some(
     Opts.resolver.sonatypeStaging
 )
 
+credentials += Credentials("Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  sys.env.getOrElse("SONA_USER", ""),
+  sys.env.getOrElse("SONA_PASS", ""))
+
 //githubOwner := "input-output-hk"
 
 //githubRepository := "psg-cardano-wallet-api"
