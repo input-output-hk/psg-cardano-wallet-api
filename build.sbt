@@ -30,7 +30,7 @@ publishTo := Some(
 
 //githubRepository := "psg-cardano-wallet-api"
 
-//githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
+githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
