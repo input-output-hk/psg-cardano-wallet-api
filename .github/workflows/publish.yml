@@ -1,0 +1,29 @@
+name: Publish to Maven
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  package:
+    if: contains(github.ref, 'PSGS-38')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure GPG Key
+          run: |
+            mkdir -p ~/.gnupg/
+            printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
+            gpg --import ~/.gnupg/private.key
+          env:
+            GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      - uses: actions/checkout@v2
+      - name: Package
+        uses: actions/setup-java@v1.4.2
+        with:
+            java-version: '11.0.8'
+      - run: sbt publishSigned
+

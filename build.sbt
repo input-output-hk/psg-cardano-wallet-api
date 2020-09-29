@@ -2,11 +2,22 @@ import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
 
 name:= "psg-cardano-wallet-api"
 
-version := "0.1.3-SNAPSHOT"
-
 scalaVersion := "2.13.3"
 
-organization := "iog.psg"
+organization := "solutions.iog.psg"
+
+homepage := Some(url("https://github.com/input-output-hk/psg-cardano-wallet-api"))
+scmInfo := Some(ScmInfo(url("https://github.com/input-output-hk/psg-cardano-wallet-api"), "git@github.com:input-output-hk/psg-cardano-wallet-api.git"))
+developers := List(
+  Developer("mcsherrylabs", "Alan McSherry", "alan.mcsherry@iohk.io", url("https://github.com/mcsherrylabs")),
+  Developer("maciejbak85", "Maciej Bak", "maciej.bak@iohk.io", url("https://github.com/maciejbak85"))
+)
+publishMavenStyle := true
+licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+description := "A java/scala wrapper for the cardano wallet backend API"
+
+// publish to the sonatype repository
+publishTo := sonatypePublishTo.value
 
 githubOwner := "input-output-hk"
 
