@@ -2,7 +2,7 @@ name: Publish to Maven
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PGP_PASSPHRASE: ${{ secrets.PSP_PASSPHRASE }}
+  PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
 
 on:
   push:
