@@ -16,7 +16,6 @@ publishMavenStyle := true
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "A java/scala wrapper for the cardano wallet backend API"
 
-pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toArray)
 
 // publish to the sonatype repository
 publishTo := Some(
