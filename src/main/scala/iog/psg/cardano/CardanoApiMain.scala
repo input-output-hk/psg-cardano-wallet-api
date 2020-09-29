@@ -48,7 +48,6 @@ object CardanoApiMain {
     val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
-
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -230,10 +229,161 @@ object CardanoApiMain {
     ZonedDateTime.parse(dtStr)
   }
 
-  private def showHelp(): Unit = {
-    println("Enter commands, and so on...")
-  }
+  private def showHelp()(implicit trace: Trace): Unit = {
+    val exampleWalletId = "1234567890123456789012345678901234567890"
+    val exampleTxd = "ABCDEF1234567890"
+    val exampleAddress = "addr12345678901234567890123456789012345678901234567890123456789012345678901234567890"
+    val exampleMetadata = "0:0123456789012345678901234567890123456789012345678901234567890123:2:TESTINGCARDANOAPI"
+    val exampleMnemonic = "ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad"
 
+    trace("This super simple tool allows developers to access a cardano wallet backend from the command line\n")
+    trace("Usage:")
+    trace("export CMDLINE='java -jar psg-cardano-wallet-api-assembly-<VER>.jar'")
+    trace("$CMDLINE [command] [arguments]\n")
+
+    def beautifyTrace(commandRunDesc: String, description: String, examples: List[String], apiDocOperation: String = ""): Unit = {
+      val docsUrl = if (apiDocOperation.nonEmpty) s" [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/$apiDocOperation ]\n" else ""
+      val examplesStr = s" Examples:\n ${examples.map("$CMDLINE "+_).mkString("\n ")}"
+      trace(s"$commandRunDesc\n $description\n$docsUrl\n$examplesStr\n")
+    }
+
+    trace("Optional commands:")
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.traceToFile} [filename] [command]",
+      description = s"write logs into a defined file ( default file name: ${CardanoApiMain.defaultTraceFile} )",
+      examples = List(
+        s"${CmdLine.traceToFile} wallets.log ${CmdLine.listWallets}"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.baseUrl} [url] [command]",
+      description = s"define different api url ( default : ${CardanoApiMain.defaultBaseUrl} )",
+      examples = List(
+        s"${CmdLine.baseUrl} http://cardano-wallet-testnet.mydomain:8090/v2/ ${CmdLine.listWallets}"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.noConsole} [command]",
+      description = "run a command without any logging",
+      examples = List(
+        s"${CmdLine.noConsole} ${CmdLine.deleteWallet} ${CmdLine.walletId} $exampleWalletId"
+      )
+    )
+
+    trace("Commands:")
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.netInfo}",
+      description = "Show network information",
+      apiDocOperation = "getNetworkInformation",
+      examples = List(
+        s"${CmdLine.netInfo}"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.listWallets}",
+      description = "Return a list of known wallets, ordered from oldest to newest",
+      apiDocOperation = "listWallets",
+      examples = List(
+        s"${CmdLine.listWallets}"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.estimateFee} ${CmdLine.walletId} [walletId] ${CmdLine.amount} [amount] ${CmdLine.address} [address]",
+      description = "Estimate fee for the transaction",
+      apiDocOperation = "postTransactionFee",
+      examples = List(
+        s"${CmdLine.estimateFee} ${CmdLine.walletId} $exampleWalletId ${CmdLine.amount} 20000 ${CmdLine.address} $exampleAddress"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.getWallet} ${CmdLine.walletId} [walletId]",
+      description = "Get wallet by id",
+      apiDocOperation = "getWallet",
+      examples = List(
+        s"${CmdLine.getWallet} ${CmdLine.walletId} $exampleWalletId"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.updatePassphrase} ${CmdLine.walletId} [walletId] ${CmdLine.oldPassphrase} [oldPassphrase] ${CmdLine.passphrase} [newPassphrase]",
+      description = "Update passphrase",
+      apiDocOperation = "putWalletPassphrase",
+      examples = List(
+        s"${CmdLine.updatePassphrase} ${CmdLine.walletId} $exampleWalletId ${CmdLine.oldPassphrase} OldPassword12345! ${CmdLine.passphrase} NewPassword12345!]"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.deleteWallet} ${CmdLine.walletId} [walletId]",
+      description = "Delete wallet by id",
+      apiDocOperation = "deleteWallet",
+      examples = List(
+        s"${CmdLine.deleteWallet} ${CmdLine.walletId} $exampleWalletId"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} [walletId] ${CmdLine.state} [state]",
+      description = "Return a list of known addresses, ordered from newest to oldest, state: used, unused",
+      apiDocOperation = "listAddresses",
+      examples = List(
+        s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} $exampleWalletId ${CmdLine.state} ${AddressFilter.used}",
+        s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} $exampleWalletId ${CmdLine.state} ${AddressFilter.unUsed}"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.getTx} ${CmdLine.walletId} [walletId] ${CmdLine.txId} [txId]",
+      description = "Get transaction by id",
+      apiDocOperation = "getTransaction",
+      examples = List(
+        s"${CmdLine.getTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.createTx} ${CmdLine.walletId} [walletId] ${CmdLine.amount} [amount] ${CmdLine.address} [address] ${CmdLine.passphrase} [passphrase] ${CmdLine.metadata} [metadata](optional)",
+      description = "Create and send transaction from the wallet",
+      apiDocOperation = "postTransaction",
+      examples = List(
+        s"${CmdLine.createTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.amount} 20000 ${CmdLine.address} $exampleAddress ${CmdLine.passphrase} Password12345!",
+        s"${CmdLine.createTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.amount} 20000 ${CmdLine.address} $exampleAddress ${CmdLine.passphrase} Password12345! ${CmdLine.metadata} $exampleMetadata",
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.fundTx} ${CmdLine.walletId} [walletId] ${CmdLine.amount} [amount] ${CmdLine.address} [address]",
+      description = "Select coins to cover the given set of payments",
+      apiDocOperation = "selectCoins",
+      examples = List(
+        s"${CmdLine.fundTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.amount} 20000 ${CmdLine.address} $exampleAddress"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} [walletId] ${CmdLine.start} [start_date](optional) ${CmdLine.end} [end_date](optional) ${CmdLine.order} [order](optional) ${CmdLine.minWithdrawal} [minWithdrawal](optional)",
+      description = "Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )",
+      apiDocOperation = "listTransactions",
+      examples = List(
+        s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} $exampleWalletId",
+        s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} $exampleWalletId ${CmdLine.start} 2020-01-02T10:15:30+01:00",
+        s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} $exampleWalletId ${CmdLine.start} 2020-01-02T10:15:30+01:00 ${CmdLine.end} 2020-09-30T12:00:00+01:00",
+        s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} $exampleWalletId ${CmdLine.order} ${Order.ascendingOrder}",
+        s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} $exampleWalletId ${CmdLine.minWithdrawal} 1"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.createWallet} ${CmdLine.name} [walletName] ${CmdLine.passphrase} [passphrase] ${CmdLine.mnemonic} [mnemonic] ${CmdLine.addressPoolGap} [address_pool_gap](optional)",
+      description = "Create new wallet",
+      apiDocOperation = "postWallet",
+      examples = List(
+        s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic'",
+        s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.addressPoolGap} 10"
+      )
+    )
+    beautifyTrace(
+      commandRunDesc = s"${CmdLine.restoreWallet} ${CmdLine.name} [walletName] ${CmdLine.passphrase} [passphrase] ${CmdLine.mnemonic} [mnemonic] ${CmdLine.addressPoolGap} [address_pool_gap](optional)",
+      description = "Restore wallet",
+      apiDocOperation = "postWallet",
+      examples = List(
+        s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic''",
+        s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.addressPoolGap} 10"
+      )
+    )
+  }
 
   def unwrap[T: ClassTag](apiResult: CardanoApiResponse[T])(implicit t: Trace): T = unwrapOpt(Try(apiResult)).get
 
