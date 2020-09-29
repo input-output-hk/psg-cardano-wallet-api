@@ -41,7 +41,9 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
-      override def apply(s: Object): Unit = results = s.toString +: results
+      override def apply(s: Object): Unit = {
+        results = s.toString +: results
+      }
 
       override def close(): Unit = ()
     }
@@ -218,6 +220,137 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
     assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
 
+  }
+
+  "--help" should "show possible commands" in {
+    val results = runCmdLine(CmdLine.help)
+
+    results.mkString("\n") shouldBe
+      """This super simple tool allows developers to access a cardano wallet backend from the command line
+        |
+        |Usage:
+        |export CMDLINE='java -jar psg-cardano-wallet-api-assembly-<VER>.jar'
+        |$CMDLINE [command] [arguments]
+        |
+        |Optional commands:
+        |-trace [filename] [command]
+        | write logs into a defined file ( default file name: cardano-api.log )
+        |
+        | Examples:
+        | $CMDLINE -trace wallets.log -wallets
+        |
+        |-baseUrl [url] [command]
+        | define different api url ( default : http://127.0.0.1:8090/v2/ )
+        |
+        | Examples:
+        | $CMDLINE -baseUrl http://cardano-wallet-testnet.mydomain:8090/v2/ -wallets
+        |
+        |-noConsole [command]
+        | run a command without any logging
+        |
+        | Examples:
+        | $CMDLINE -noConsole -deleteWallet -walletId 1234567890123456789012345678901234567890
+        |
+        |Commands:
+        |-netInfo
+        | Show network information
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation ]
+        |
+        | Examples:
+        | $CMDLINE -netInfo
+        |
+        |-wallets
+        | Return a list of known wallets, ordered from oldest to newest
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets ]
+        |
+        | Examples:
+        | $CMDLINE -wallets
+        |
+        |-estimateFee -walletId [walletId] -amount [amount] -address [address]
+        | Estimate fee for the transaction
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee ]
+        |
+        | Examples:
+        | $CMDLINE -estimateFee -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        |
+        |-wallet -walletId [walletId]
+        | Get wallet by id
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet ]
+        |
+        | Examples:
+        | $CMDLINE -wallet -walletId 1234567890123456789012345678901234567890
+        |
+        |-updatePassphrase -walletId [walletId] -oldPassphrase [oldPassphrase] -passphrase [newPassphrase]
+        | Update passphrase
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase ]
+        |
+        | Examples:
+        | $CMDLINE -updatePassphrase -walletId 1234567890123456789012345678901234567890 -oldPassphrase OldPassword12345! -passphrase NewPassword12345!]
+        |
+        |-deleteWallet -walletId [walletId]
+        | Delete wallet by id
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet ]
+        |
+        | Examples:
+        | $CMDLINE -deleteWallet -walletId 1234567890123456789012345678901234567890
+        |
+        |-listAddresses -walletId [walletId] -state [state]
+        | Return a list of known addresses, ordered from newest to oldest, state: used, unused
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listAddresses ]
+        |
+        | Examples:
+        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state used
+        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state unused
+        |
+        |-getTx -walletId [walletId] -txId [txId]
+        | Get transaction by id
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction ]
+        |
+        | Examples:
+        | $CMDLINE -getTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890
+        |
+        |-createTx -walletId [walletId] -amount [amount] -address [address] -passphrase [passphrase] -metadata [metadata](optional)
+        | Create and send transaction from the wallet
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction ]
+        |
+        | Examples:
+        | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345!
+        | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345! -metadata 0:0123456789012345678901234567890123456789012345678901234567890123:2:TESTINGCARDANOAPI
+        |
+        |-fundTx -walletId [walletId] -amount [amount] -address [address]
+        | Select coins to cover the given set of payments
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/selectCoins ]
+        |
+        | Examples:
+        | $CMDLINE -fundTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        |
+        |-listTxs -walletId [walletId] -start [start_date](optional) -end [end_date](optional) -order [order](optional) -minWithdrawal [minWithdrawal](optional)
+        | Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions ]
+        |
+        | Examples:
+        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890
+        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00
+        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00 -end 2020-09-30T12:00:00+01:00
+        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -order ascending
+        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -minWithdrawal 1
+        |
+        |-createWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
+        | Create new wallet
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+        |
+        | Examples:
+        | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
+        | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
+        |
+        |-restoreWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
+        | Restore wallet
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+        |
+        | Examples:
+        | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad''
+        | $CMDLINE -restoreWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
+        |""".stripMargin
   }
 
 
