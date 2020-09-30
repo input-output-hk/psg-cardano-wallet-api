@@ -1,16 +1,17 @@
 package iog.psg.cardano.jpi
 
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
-import iog.psg.cardano.CardanoApiCodec.GenericMnemonicSentence
-import iog.psg.cardano.util.Configure
+import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.util.{Configure, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
 
-class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
+class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare {
 
   private val baseUrl = config.getString("cardano.wallet.baseUrl")
   private val testWalletName = config.getString("cardano.wallet.name")
@@ -43,6 +44,22 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
         10
       ).toCompletableFuture.get();
     wallet.id shouldBe "id"
+
+    val delegation = wallet.delegation.getOrElse(fail("Missing delegation"))
+    val properDelegation = Delegation(
+      DelegationActive(
+        DelegationStatus.delegating,
+        Some("1234567890")
+      ),
+      List(DelegationNext(
+        DelegationStatus.notDelegating,
+        Some(NextEpoch(
+          epochStartTime = ZonedDateTime.parse("2000-01-02T10:01:02+01:00"), epochNumber = 10
+        ))
+      ))
+    )
+
+    compareDelegation(delegation, properDelegation)
   }
 
   "Bad wallet creation" should "be prevented" in {

@@ -4,14 +4,14 @@ import java.time.ZonedDateTime
 
 import io.circe.Decoder
 import io.circe.parser._
-import io.circe.syntax._
 import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.util.ModelCompare
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.io.Source
 
-class CardanoApiCodecSpec extends AnyFlatSpec with Matchers {
+class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
 
   "Wallet" should "be decoded properly" in {
     val decoded = decodeJsonFile[Wallet]("wallet.json")
@@ -84,117 +84,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers {
   private def decodeJsonFile[T](file: String)(implicit dec: Decoder[T]) = {
     val jsonStr = getJsonFromFile(file)
     decode[T](jsonStr).getOrElse(fail("Could not decode wallet"))
-  }
-
-  private def compareInAddress(decoded: InAddress, proper: InAddress) = {
-    decoded.address shouldBe proper.address
-    compareQuantityUnitOpts(decoded.amount, proper.amount)
-    decoded.id shouldBe proper.id
-    decoded.index shouldBe proper.index
-  }
-
-  private def compareOutAddress(decoded: OutAddress, proper: OutAddress) = {
-    decoded.address shouldBe proper.address
-    compareQuantityUnit(decoded.amount, proper.amount)
-  }
-
-  private def compareInputs(decoded: Seq[InAddress], proper: Seq[InAddress]) =
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareInAddress(decodedAddress, properAddress)
-    }
-
-  private def compareOutputs(decoded: Seq[OutAddress], proper: Seq[OutAddress]) =
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareOutAddress(decodedAddress, properAddress)
-    }
-
-  private def compareFundPaymentsResponse(decoded: FundPaymentsResponse, proper: FundPaymentsResponse) = {
-    compareInputs(decoded.inputs, proper.inputs)
-    compareOutputs(decoded.outputs, proper.outputs)
-  }
-
-  private def compareEstimateFeeResponse(decoded: EstimateFeeResponse, proper: EstimateFeeResponse) = {
-    compareQuantityUnit(decoded.estimatedMax, proper.estimatedMax)
-    compareQuantityUnit(decoded.estimatedMin, proper.estimatedMin)
-  }
-
-  private def compareStakeAddress(decoded: StakeAddress, proper: StakeAddress) = {
-    compareQuantityUnit(decoded.amount, proper.amount)
-    decoded.stakeAddress shouldBe proper.stakeAddress
-  }
-
-  private def compareStakeAddresses(decoded: Seq[StakeAddress], proper: Seq[StakeAddress]) = {
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareStakeAddress(decodedAddress, properAddress)
-    }
-  }
-
-  private def compareTransaction(decoded: CreateTransactionResponse, proper: CreateTransactionResponse) = {
-    decoded.id shouldBe proper.id
-    compareQuantityUnit(decoded.amount, proper.amount)
-    decoded.insertedAt shouldBe proper.insertedAt
-    decoded.pendingSince shouldBe proper.pendingSince
-    decoded.depth shouldBe proper.depth
-    decoded.direction shouldBe proper.direction
-    compareInputs(decoded.inputs, proper.inputs)
-    compareOutputs(decoded.outputs, proper.outputs)
-    compareStakeAddresses(decoded.withdrawals, proper.withdrawals)
-    decoded.status shouldBe proper.status
-    decoded.metadata shouldBe proper.metadata
-  }
-
-  private def compareAddress(decoded: WalletAddressId, proper: WalletAddressId) = {
-    decoded.id shouldBe proper.id
-    decoded.state shouldBe proper.state
-  }
-
-  private def compareNetworkInformation(decoded: NetworkInfo, proper: NetworkInfo) = {
-    decoded.nextEpoch shouldBe proper.nextEpoch
-    decoded.nodeTip shouldBe proper.nodeTip
-    decoded.networkTip shouldBe proper.networkTip
-    decoded.syncProgress.status.toString shouldBe proper.syncProgress.status.toString
-
-    compareQuantityUnitOpts(decoded.syncProgress.progress, proper.syncProgress.progress)
-  }
-
-  private def compareQuantityUnitOpts(decoded: Option[QuantityUnit], proper: Option[QuantityUnit]) = {
-    if (decoded.isEmpty && proper.isEmpty) assert(true)
-    else for {
-      decodedQU <- decoded
-      properQU <- proper
-    } yield compareQuantityUnit(decodedQU, properQU)
-  }
-
-  private def compareQuantityUnit(decoded: QuantityUnit, proper: QuantityUnit) = {
-    decoded.unit.toString shouldBe proper.unit.toString
-    decoded.quantity shouldBe proper.quantity
-  }
-
-  private def compareBalance(decoded: Balance, proper: Balance) = {
-    decoded.available.quantity shouldBe proper.available.quantity
-    decoded.available.unit.toString shouldBe proper.available.unit.toString
-
-    decoded.reward.quantity shouldBe proper.reward.quantity
-    decoded.reward.unit.toString shouldBe proper.reward.unit.toString
-
-    decoded.total.quantity shouldBe proper.total.quantity
-    decoded.total.unit.toString shouldBe proper.total.unit.toString
-  }
-
-  private def compareState(decoded: SyncStatus, proper: SyncStatus) = {
-    decoded.status.toString shouldBe proper.status.toString
-    decoded.progress shouldBe proper.progress
-  }
-
-  private def compareWallets(decoded: Wallet, proper: Wallet) = {
-    decoded.id shouldBe proper.id
-    decoded.addressPoolGap shouldBe proper.addressPoolGap
-    compareBalance(decoded.balance, proper.balance)
-    decoded.delegation shouldBe proper.delegation
-    decoded.name shouldBe proper.name
-    decoded.passphrase shouldBe proper.passphrase
-    compareState(decoded.state, proper.state)
-    decoded.tip shouldBe proper.tip
   }
 
   private final lazy val wallet = Wallet(
