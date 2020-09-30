@@ -86,26 +86,59 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers {
     decode[T](jsonStr).getOrElse(fail("Could not decode wallet"))
   }
 
+  private def compareInAddress(decoded: InAddress, proper: InAddress) = {
+    decoded.address shouldBe proper.address
+    compareQuantityUnitOpts(decoded.amount, proper.amount)
+    decoded.id shouldBe proper.id
+    decoded.index shouldBe proper.index
+  }
+
+  private def compareOutAddress(decoded: OutAddress, proper: OutAddress) = {
+    decoded.address shouldBe proper.address
+    compareQuantityUnit(decoded.amount, proper.amount)
+  }
+
+  private def compareInputs(decoded: Seq[InAddress], proper: Seq[InAddress]) =
+    decoded.zip(proper).map {
+      case (decodedAddress, properAddress) => compareInAddress(decodedAddress, properAddress)
+    }
+
+  private def compareOutputs(decoded: Seq[OutAddress], proper: Seq[OutAddress]) =
+    decoded.zip(proper).map {
+      case (decodedAddress, properAddress) => compareOutAddress(decodedAddress, properAddress)
+    }
+
   private def compareFundPaymentsResponse(decoded: FundPaymentsResponse, proper: FundPaymentsResponse) = {
-    decoded.inputs shouldBe proper.inputs
-    decoded.outputs shouldBe proper.outputs
+    compareInputs(decoded.inputs, proper.inputs)
+    compareOutputs(decoded.outputs, proper.outputs)
   }
 
   private def compareEstimateFeeResponse(decoded: EstimateFeeResponse, proper: EstimateFeeResponse) = {
-    decoded.estimatedMax shouldBe proper.estimatedMax
-    decoded.estimatedMin shouldBe proper.estimatedMin
+    compareQuantityUnit(decoded.estimatedMax, proper.estimatedMax)
+    compareQuantityUnit(decoded.estimatedMin, proper.estimatedMin)
+  }
+
+  private def compareStakeAddress(decoded: StakeAddress, proper: StakeAddress) = {
+    compareQuantityUnit(decoded.amount, proper.amount)
+    decoded.stakeAddress shouldBe proper.stakeAddress
+  }
+
+  private def compareStakeAddresses(decoded: Seq[StakeAddress], proper: Seq[StakeAddress]) = {
+    decoded.zip(proper).map {
+      case (decodedAddress, properAddress) => compareStakeAddress(decodedAddress, properAddress)
+    }
   }
 
   private def compareTransaction(decoded: CreateTransactionResponse, proper: CreateTransactionResponse) = {
     decoded.id shouldBe proper.id
-    decoded.amount shouldBe proper.amount
+    compareQuantityUnit(decoded.amount, proper.amount)
     decoded.insertedAt shouldBe proper.insertedAt
     decoded.pendingSince shouldBe proper.pendingSince
     decoded.depth shouldBe proper.depth
     decoded.direction shouldBe proper.direction
-    decoded.inputs shouldBe proper.inputs
-    decoded.outputs shouldBe proper.outputs
-    decoded.withdrawals shouldBe proper.withdrawals
+    compareInputs(decoded.inputs, proper.inputs)
+    compareOutputs(decoded.outputs, proper.outputs)
+    compareStakeAddresses(decoded.withdrawals, proper.withdrawals)
     decoded.status shouldBe proper.status
     decoded.metadata shouldBe proper.metadata
   }
@@ -119,7 +152,22 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers {
     decoded.nextEpoch shouldBe proper.nextEpoch
     decoded.nodeTip shouldBe proper.nodeTip
     decoded.networkTip shouldBe proper.networkTip
-    decoded.syncProgress shouldBe proper.syncProgress
+    decoded.syncProgress.status.toString shouldBe proper.syncProgress.status.toString
+
+    compareQuantityUnitOpts(decoded.syncProgress.progress, proper.syncProgress.progress)
+  }
+
+  private def compareQuantityUnitOpts(decoded: Option[QuantityUnit], proper: Option[QuantityUnit]) = {
+    if (decoded.isEmpty && proper.isEmpty) assert(true)
+    else for {
+      decodedQU <- decoded
+      properQU <- proper
+    } yield compareQuantityUnit(decodedQU, properQU)
+  }
+
+  private def compareQuantityUnit(decoded: QuantityUnit, proper: QuantityUnit) = {
+    decoded.unit.toString shouldBe proper.unit.toString
+    decoded.quantity shouldBe proper.quantity
   }
 
   private def compareBalance(decoded: Balance, proper: Balance) = {
