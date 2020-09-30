@@ -1,4 +1,3 @@
-import sbtghpackages.TokenSource.{GitConfig,Or,Environment}
 
 name:= "psg-cardano-wallet-api"
 
@@ -7,7 +6,7 @@ scalaVersion := "2.13.3"
 organization := "solutions.iog"
 
 homepage := Some(url("https://github.com/input-output-hk/psg-cardano-wallet-api"))
-scmInfo := Some(ScmInfo(url("https://github.com/input-output-hk/psg-cardano-wallet-api"), "git@github.com:input-output-hk/psg-cardano-wallet-api.git"))
+scmInfo := Some(ScmInfo(url("https://github.com/input-output-hk/psg-cardano-wallet-api"), "scm:git@github.com:input-output-hk/psg-cardano-wallet-api.git"))
 developers := List(
   Developer("mcsherrylabs", "Alan McSherry", "alan.mcsherry@iohk.io", url("https://github.com/mcsherrylabs")),
   Developer("maciejbak85", "Maciej Bak", "maciej.bak@iohk.io", url("https://github.com/maciejbak85"))
@@ -15,14 +14,17 @@ developers := List(
 publishMavenStyle := true
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "A java/scala wrapper for the cardano wallet backend API"
+usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F")
 
 
 // publish to the sonatype repository
+val sonaUrl = "https://oss.sonatype.org/"
+
 publishTo := Some(
   if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
+    "snapshots" at sonaUrl + "content/repositories/snapshots"
   else
-    Opts.resolver.sonatypeStaging
+    "releases" at sonaUrl + "service/local/staging/deploy/maven2"
 )
 
 credentials += Credentials("Sonatype Nexus Repository Manager",
@@ -30,11 +32,7 @@ credentials += Credentials("Sonatype Nexus Repository Manager",
   sys.env.getOrElse("SONA_USER", ""),
   sys.env.getOrElse("SONA_PASS", ""))
 
-//githubOwner := "input-output-hk"
-
-//githubRepository := "psg-cardano-wallet-api"
-
-githubTokenSource := Or(GitConfig("github.token"), Environment("GITHUB_TOKEN"))
+dynverSonatypeSnapshots in ThisBuild := true
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
