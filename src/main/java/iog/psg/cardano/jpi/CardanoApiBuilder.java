@@ -1,7 +1,6 @@
 package iog.psg.cardano.jpi;
 
 import akka.actor.ActorSystem;
-import iog.psg.cardano.ApiRequestExecutor$;
 import scala.concurrent.ExecutionContext;
 
 import java.util.Objects;
@@ -64,9 +63,9 @@ public class CardanoApiBuilder {
         HelpExecute helpExecute;
 
         if(apiRequestExecutor == null) {
-            helpExecute = new HelpExecute(ApiRequestExecutor$.MODULE$, ec, actorSystem);
+            helpExecute = new HelpExecute(ec, actorSystem);
         } else {
-            helpExecute = new HelpExecute(ApiRequestExecutor$.MODULE$, ec, actorSystem) {
+            helpExecute = new HelpExecute(ec, actorSystem) {
                 @Override
                 public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
                     return apiRequestExecutor.execute(request);

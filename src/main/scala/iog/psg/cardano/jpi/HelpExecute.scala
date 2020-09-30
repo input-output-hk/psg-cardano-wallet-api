@@ -27,7 +27,9 @@ object HelpExecute {
   }.toMap
 }
 
-class HelpExecute(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) extends JApiRequestExecutor {
+class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) extends JApiRequestExecutor {
+
+  implicit val executor: ApiRequestExecutor = ApiRequestExecutor
 
   @throws(classOf[CardanoApiException])
   private def unwrapResponse[T](resp: CardanoApiResponse[T]): T = resp match {
