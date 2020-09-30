@@ -12,6 +12,7 @@ on:
 
 jobs:
   package:
+    if: contains(github.ref, 'master') || contains(github.ref, 'develop')
     runs-on: ubuntu-latest
     steps:
       - name: Configure GPG Key
@@ -26,5 +27,5 @@ jobs:
         uses: actions/setup-java@v1.4.2
         with:
             java-version: '11.0.8'
-      - run: sbt publishSigned
+      - run: sbt publishSigned sonatypeRelease
 

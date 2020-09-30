@@ -17,15 +17,15 @@ description := "A java/scala wrapper for the cardano wallet backend API"
 usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F")
 
 
-// publish to the sonatype repository
-val sonaUrl = "https://oss.sonatype.org/"
 
-publishTo := Some(
+publishTo := Some {
+  // publish to the sonatype repository
+  val sonaUrl = "https://oss.sonatype.org/"
   if (isSnapshot.value)
     "snapshots" at sonaUrl + "content/repositories/snapshots"
   else
     "releases" at sonaUrl + "service/local/staging/deploy/maven2"
-)
+}
 
 credentials += Credentials("Sonatype Nexus Repository Manager",
   "oss.sonatype.org",
