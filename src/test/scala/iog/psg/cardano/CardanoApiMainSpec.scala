@@ -334,7 +334,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -minWithdrawal 1
         |
         |-createWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Create new wallet
+        | Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
         |
         | Examples:
@@ -342,7 +342,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
         |
         |-restoreWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Restore wallet
+        | Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
         |
         | Examples:

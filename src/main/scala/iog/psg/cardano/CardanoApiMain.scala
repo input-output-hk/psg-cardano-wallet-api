@@ -367,7 +367,7 @@ object CardanoApiMain {
     )
     beautifyTrace(
       commandRunDesc = s"${CmdLine.createWallet} ${CmdLine.name} [walletName] ${CmdLine.passphrase} [passphrase] ${CmdLine.mnemonic} [mnemonic] ${CmdLine.addressPoolGap} [address_pool_gap](optional)",
-      description = "Create new wallet",
+      description = "Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )",
       apiDocOperation = "postWallet",
       examples = List(
         s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic'",
@@ -376,7 +376,7 @@ object CardanoApiMain {
     )
     beautifyTrace(
       commandRunDesc = s"${CmdLine.restoreWallet} ${CmdLine.name} [walletName] ${CmdLine.passphrase} [passphrase] ${CmdLine.mnemonic} [mnemonic] ${CmdLine.addressPoolGap} [address_pool_gap](optional)",
-      description = "Restore wallet",
+      description = "Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )",
       apiDocOperation = "postWallet",
       examples = List(
         s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic''",
