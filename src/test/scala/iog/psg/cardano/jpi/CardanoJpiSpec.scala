@@ -2,7 +2,7 @@ package iog.psg.cardano.jpi
 
 import java.util.concurrent.TimeUnit
 
-import iog.psg.cardano.CardanoApiCodec.{GenericMnemonicSentence, Wallet}
+import iog.psg.cardano.CardanoApiCodec.GenericMnemonicSentence
 import iog.psg.cardano.util.Configure
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
