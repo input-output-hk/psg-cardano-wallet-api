@@ -122,14 +122,30 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers {
     decoded.syncProgress shouldBe proper.syncProgress
   }
 
+  private def compareBalance(decoded: Balance, proper: Balance) = {
+    decoded.available.quantity shouldBe proper.available.quantity
+    decoded.available.unit.toString shouldBe proper.available.unit.toString
+
+    decoded.reward.quantity shouldBe proper.reward.quantity
+    decoded.reward.unit.toString shouldBe proper.reward.unit.toString
+
+    decoded.total.quantity shouldBe proper.total.quantity
+    decoded.total.unit.toString shouldBe proper.total.unit.toString
+  }
+
+  private def compareState(decoded: SyncStatus, proper: SyncStatus) = {
+    decoded.status.toString shouldBe proper.status.toString
+    decoded.progress shouldBe proper.progress
+  }
+
   private def compareWallets(decoded: Wallet, proper: Wallet) = {
     decoded.id shouldBe proper.id
     decoded.addressPoolGap shouldBe proper.addressPoolGap
-    decoded.balance shouldBe proper.balance
+    compareBalance(decoded.balance, proper.balance)
     decoded.delegation shouldBe proper.delegation
     decoded.name shouldBe proper.name
     decoded.passphrase shouldBe proper.passphrase
-    decoded.state shouldBe proper.state
+    compareState(decoded.state, proper.state)
     decoded.tip shouldBe proper.tip
   }
 

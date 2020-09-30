@@ -4,6 +4,7 @@ import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Option;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -111,12 +112,14 @@ public class JpiResponseCheck {
                             sync,
                             Option.apply(null)
                     );
-                    CardanoApiCodec.NetworkTip tip = new CardanoApiCodec.NetworkTip(3,4,Option.apply(null));
+                    CardanoApiCodec.NetworkTip tip = new CardanoApiCodec.NetworkTip(3,4,Option.apply(null), Option.apply(10));
                     result.complete((T) new CardanoApiCodec.Wallet(
                             "id",
                             10,
                             new CardanoApiCodec.Balance(dummy, dummy, dummy),
+                            Option.apply(null),
                             "name",
+                            new CardanoApiCodec.Passphrase(ZonedDateTime.now()),
                             state,
                             tip));
                     return result.toCompletableFuture();
