@@ -1,9 +1,11 @@
 package iog.psg.cardano.jpi;
 
 import akka.actor.ActorSystem;
+import iog.psg.cardano.ApiRequestExecutor$;
 import scala.concurrent.ExecutionContext;
 
 import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,6 +14,7 @@ public class CardanoApiBuilder {
     final private String url;
     private ExecutorService executorService;
     private ActorSystem actorSystem;
+    private ApiRequestExecutor apiRequestExecutor;
 
     private CardanoApiBuilder() {
         url = null;
@@ -40,10 +43,16 @@ public class CardanoApiBuilder {
         return this;
     }
 
+    public CardanoApiBuilder withApiExecutor(ApiRequestExecutor apiExecutor) {
+        this.apiRequestExecutor = apiExecutor;
+        Objects.requireNonNull(apiExecutor, "apiExecutor is 'null'");
+        return this;
+    }
+
     public CardanoApi build() {
 
         if (actorSystem == null) {
-            actorSystem = ActorSystem.create("Cardano JPI ActorSystem");
+            actorSystem = ActorSystem.create("CardanoJPIActorSystem");
         }
 
         if (executorService == null) {
@@ -51,8 +60,22 @@ public class CardanoApiBuilder {
         }
 
         ExecutionContext ec = ExecutionContext.fromExecutorService(executorService);
+
+        HelpExecute helpExecute;
+
+        if(apiRequestExecutor == null) {
+            helpExecute = new HelpExecute(ApiRequestExecutor$.MODULE$, ec, actorSystem);
+        } else {
+            helpExecute = new HelpExecute(ApiRequestExecutor$.MODULE$, ec, actorSystem) {
+                @Override
+                public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
+                    return apiRequestExecutor.execute(request);
+                }
+            };
+        }
+
         iog.psg.cardano.CardanoApi api = new iog.psg.cardano.CardanoApi(url, ec, actorSystem);
-        HelpExecute helpExecute = new HelpExecute(ec, actorSystem);
+
         return new CardanoApi(api, helpExecute);
     }
 

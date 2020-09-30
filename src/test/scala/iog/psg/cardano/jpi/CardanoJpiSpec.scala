@@ -2,7 +2,7 @@ package iog.psg.cardano.jpi
 
 import java.util.concurrent.TimeUnit
 
-import iog.psg.cardano.CardanoApiCodec.GenericMnemonicSentence
+import iog.psg.cardano.CardanoApiCodec.{GenericMnemonicSentence, Wallet}
 import iog.psg.cardano.util.Configure
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,6 +30,19 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure {
     val info = sut.jpi.networkInfo().toCompletableFuture.get(timeoutValue, timeoutUnits)
     val networkState = JpiResponseCheck.get(info)
     networkState shouldBe "ready"
+  }
+
+  "Jpi CardanoAPI" should "allow override of execute" in {
+    val api = JpiResponseCheck.buildWithDummyApiExecutor()
+    val mnem = GenericMnemonicSentence(testWalletMnemonic)
+    val wallet = api
+      .createRestore(
+        testWalletName,
+        testWalletPassphrase,
+        mnem.mnemonicSentence.asJava,
+        10
+      ).toCompletableFuture.get();
+    wallet.id shouldBe "id"
   }
 
   "Bad wallet creation" should "be prevented" in {

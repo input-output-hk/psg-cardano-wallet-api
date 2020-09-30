@@ -3,15 +3,11 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
-import org.scalatest.Ignore
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.concurrent.{Future, blocking}
 
 
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures {
@@ -334,7 +330,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -minWithdrawal 1
         |
         |-createWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Create new wallet
+        | Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
         |
         | Examples:
@@ -342,7 +338,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
         |
         |-restoreWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Restore wallet
+        | Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
         |
         | Examples:
