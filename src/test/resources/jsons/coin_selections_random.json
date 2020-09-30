@@ -1,0 +1,22 @@
+{
+  "inputs": [
+    {
+      "address": "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      "amount": {
+        "quantity": 42000000,
+        "unit": "lovelace"
+      },
+      "id": "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
+      "index": 0
+    }
+  ],
+  "outputs": [
+    {
+      "address": "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      "amount": {
+        "quantity": 42000000,
+        "unit": "lovelace"
+      }
+    }
+  ]
+}

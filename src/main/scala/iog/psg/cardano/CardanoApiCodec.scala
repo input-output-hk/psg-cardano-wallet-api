@@ -1,6 +1,5 @@
 package iog.psg.cardano
 
-import java.nio.charset.StandardCharsets
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -11,13 +10,14 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
 import io.circe.syntax.EncoderOps
-import io.circe._
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
+import iog.psg.cardano.CardanoApiCodec.DelegationStatus.DelegationStatus
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
@@ -36,7 +36,6 @@ object CardanoApiCodec {
     encoder.mapJson(_.dropNullValues)
 
   private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
   private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
     stringToZonedDate(s) match {
@@ -60,6 +59,8 @@ object CardanoApiCodec {
   private[cardano] implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
   private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
 
+  private[cardano] implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
+  private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
 
   final case class TxMetadataOut(json: Json) {
     def toMapMetadataStr: Decoder.Result[Map[Long, String]] = json.as[Map[Long, String]]
@@ -135,15 +136,24 @@ object CardanoApiCodec {
 
   }
 
+  object DelegationStatus extends Enumeration {
+    type DelegationStatus = Value
+    val delegating: DelegationStatus = Value("delegating")
+    val notDelegating: DelegationStatus = Value("not_delegating")
+  }
+  final case class DelegationActive(status: DelegationStatus, target: Option[String])
+  @ConfiguredJsonCodec final case class DelegationNext(status: DelegationStatus, changesAt: Option[NextEpoch])
+  final case class Delegation(active: DelegationActive, next: List[DelegationNext])
 
   @ConfiguredJsonCodec case class NetworkTip(
                                               epochNumber: Long,
                                               slotNumber: Long,
-                                              height: Option[QuantityUnit])
+                                              height: Option[QuantityUnit],
+                                              absoluteSlotNumber: Option[Long])
 
-  case class NodeTip(height: QuantityUnit)
+  @ConfiguredJsonCodec case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
-  case class WalletAddressId(id: String, state: Option[AddressFilter])
+  @ConfiguredJsonCodec case class WalletAddressId(id: String, state: Option[AddressFilter])
 
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
@@ -247,6 +257,7 @@ object CardanoApiCodec {
                            amount: QuantityUnit
                          )
 
+  @ConfiguredJsonCodec
   case class FundPaymentsResponse(
                                    inputs: IndexedSeq[InAddress],
                                    outputs: Seq[OutAddress]
@@ -256,7 +267,8 @@ object CardanoApiCodec {
   case class Block(
                     slotNumber: Int,
                     epochNumber: Int,
-                    height: QuantityUnit
+                    height: QuantityUnit,
+                    absoluteSlotNumber: Option[Long]
                   )
 
   @ConfiguredJsonCodec
@@ -288,11 +300,16 @@ object CardanoApiCodec {
                                       )
 
   @ConfiguredJsonCodec
+  case class Passphrase(lastUpdatedAt: ZonedDateTime)
+
+  @ConfiguredJsonCodec
   case class Wallet(
                      id: String,
                      addressPoolGap: Int,
                      balance: Balance,
+                     delegation: Option[Delegation],
                      name: String,
+                     passphrase: Passphrase,
                      state: SyncStatus,
                      tip: NetworkTip
                    )
