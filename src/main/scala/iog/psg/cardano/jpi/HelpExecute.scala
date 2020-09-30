@@ -2,10 +2,12 @@ package iog.psg.cardano.jpi
 
 import java.util.concurrent.CompletionStage
 
+import iog.psg.cardano.ApiRequestExecutor
+import iog.psg.cardano.jpi.{ApiRequestExecutor => JApiRequestExecutor}
 import akka.actor.ActorSystem
-import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
+import iog.psg.cardano.CardanoApi.CardanoApiOps.CardanoApiRequestOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
-import iog.psg.cardano.CardanoApiCodec.{MetadataValue, MetadataValueStr, TxMetadataMapIn}
+import iog.psg.cardano.CardanoApiCodec.{MetadataValue, MetadataValueStr}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
@@ -25,7 +27,7 @@ object HelpExecute {
   }.toMap
 }
 
-class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) {
+class HelpExecute(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) extends JApiRequestExecutor {
 
   @throws(classOf[CardanoApiException])
   private def unwrapResponse[T](resp: CardanoApiResponse[T]): T = resp match {
@@ -41,7 +43,7 @@ class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) {
 
   @throws(classOf[CardanoApiException])
   def execute[T](request: Future[iog.psg.cardano.CardanoApi.CardanoApiRequest[T]]): CompletionStage[T] = {
-    FutureConverters.asJava(request.execute.map(unwrapResponse))
+    FutureConverters.asJava(request).thenCompose(request => this.execute(request))
   }
 
   def toScalaImmutable[B](in: java.util.Map[java.lang.Long, String]): Map[java.lang.Long, String] =

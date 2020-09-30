@@ -1,11 +1,11 @@
 package iog.psg.cardano.jpi;
 
 import iog.psg.cardano.CardanoApiCodec;
+import scala.Enumeration;
+import scala.Option;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class JpiResponseCheck {
 
@@ -91,5 +91,42 @@ public class JpiResponseCheck {
 
     public CardanoApiCodec.CreateTransactionResponse getTx(String walletId, String txId) throws Exception {
         return jpi.getTransaction(walletId, txId).toCompletableFuture().get(timeout, timeoutUnit);
+    }
+
+    public static CardanoApi buildWithDummyApiExecutor() {
+        CardanoApiBuilder builder = CardanoApiBuilder.create("http://fake/").withApiExecutor(new ApiRequestExecutor() {
+            @Override
+            public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
+                CompletableFuture<T> result = new CompletableFuture<>();
+
+                System.out.println(request.request().uri().path());
+                System.out.println(request.request().uri().fragment());
+                System.out.println(request.request().uri());
+
+                if(request.request().uri().path().endsWith("wallets", true)) {
+                    Enumeration.Value lovelace = CardanoApiCodec.Units$.MODULE$.Value(CardanoApiCodec.Units$.MODULE$.lovelace().toString());
+                    Enumeration.Value sync = CardanoApiCodec.SyncState$.MODULE$.Value(CardanoApiCodec.SyncState$.MODULE$.ready().toString());
+                    CardanoApiCodec.QuantityUnit dummy = new CardanoApiCodec.QuantityUnit(1, lovelace);
+                    CardanoApiCodec.SyncStatus state = new CardanoApiCodec.SyncStatus(
+                            sync,
+                            Option.apply(null)
+                    );
+                    CardanoApiCodec.NetworkTip tip = new CardanoApiCodec.NetworkTip(3,4,Option.apply(null));
+                    result.complete((T) new CardanoApiCodec.Wallet(
+                            "id",
+                            10,
+                            new CardanoApiCodec.Balance(dummy, dummy, dummy),
+                            "name",
+                            state,
+                            tip));
+                    return result.toCompletableFuture();
+                } else {
+                    throw new CardanoApiException("Unexpected", "request");
+                }
+            }
+
+        });
+
+        return builder.build();
     }
 }

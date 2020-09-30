@@ -51,7 +51,7 @@ object CardanoApi {
     }
 
     //tie execute to ioEc
-    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit ec: ExecutionContext, as: ActorSystem) {
+    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) {
       def execute: Future[CardanoApiResponse[T]] = {
         requestF.flatMap(_.execute)
       }
@@ -61,14 +61,9 @@ object CardanoApi {
 
     }
 
-    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T])(implicit ec: ExecutionContext, as: ActorSystem) {
+    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T])(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) {
 
-      def execute: Future[CardanoApiResponse[T]] = {
-
-        Http()
-          .singleRequest(request.request)
-          .flatMap(request.mapper)
-      }
+      def execute: Future[CardanoApiResponse[T]] = executor.execute(request)
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
         Await.result(execute, maxWaitTime)
