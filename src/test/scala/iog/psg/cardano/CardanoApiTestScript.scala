@@ -3,10 +3,8 @@ package iog.psg.cardano
 import java.util
 
 import akka.actor.ActorSystem
-import akka.util.ByteString
 import iog.psg.cardano.CardanoApi.CardanoApiOps._
 import iog.psg.cardano.CardanoApi._
-import iog.psg.cardano.CardanoApiCodec.TxState.TxState
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse, GenericMnemonicSentence, MetadataValueArray, MetadataValueByteArray, MetadataValueLong, MetadataValueStr, Payment, Payments, QuantityUnit, SyncState, TxMetadataMapIn, TxState, Units}
 import org.apache.commons.codec.binary.Hex
 
@@ -48,7 +46,7 @@ object CardanoApiTestScript {
 
       import system.dispatcher
       val api = new CardanoApi(baseUri)
-      implicit val apiRequestExecutor: ApiRequestExecutor = new ApiRequestExecutorImpl
+      implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
 
       @tailrec
       def waitForTx(txCreateResponse: CreateTransactionResponse, walletId: String, txId: String): CreateTransactionResponse = {

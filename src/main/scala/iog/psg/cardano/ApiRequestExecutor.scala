@@ -6,9 +6,9 @@ import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ApiRequestExecutorImpl extends ApiRequestExecutor
+object ApiRequestExecutor extends ApiRequestExecutor
 
-sealed trait ApiRequestExecutor {
+trait ApiRequestExecutor {
 
   def execute[T](request: CardanoApiRequest[T])(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] =
     Http()

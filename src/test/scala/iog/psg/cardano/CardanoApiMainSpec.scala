@@ -3,15 +3,11 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.CardanoApi._
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
-import org.scalatest.Ignore
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.concurrent.{Future, blocking}
 
 
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures {
