@@ -115,8 +115,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
     tip = networkTip
   )
 
-  private final lazy val nextEpoch =
-    NextEpoch(epochStartTime = ZonedDateTime.parse("2020-01-22T10:06:39.037Z"), epochNumber = 14)
   private final lazy val networkTip = NetworkTip(
     epochNumber = 14,
     slotNumber = 1337,

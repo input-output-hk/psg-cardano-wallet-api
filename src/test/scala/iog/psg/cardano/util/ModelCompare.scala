@@ -117,11 +117,16 @@ trait ModelCompare extends Matchers {
     }
   }
 
+  final def compareDelegationOpts(decoded: Option[Delegation], proper: Option[Delegation]): Seq[Assertion] = {
+    if (decoded.nonEmpty && proper.nonEmpty) compareDelegation(decoded.get, proper.get)
+    else Seq(assert(false, "one of delegations is none"))
+  }
+
   final def compareWallets(decoded: Wallet, proper: Wallet): Assertion = {
     decoded.id shouldBe proper.id
     decoded.addressPoolGap shouldBe proper.addressPoolGap
     compareBalance(decoded.balance, proper.balance)
-    decoded.delegation shouldBe proper.delegation
+    compareDelegationOpts(decoded.delegation, proper.delegation)
     decoded.name shouldBe proper.name
     decoded.passphrase shouldBe proper.passphrase
     compareState(decoded.state, proper.state)
