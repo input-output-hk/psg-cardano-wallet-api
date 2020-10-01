@@ -5,7 +5,7 @@ import java.util
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps._
 import iog.psg.cardano.CardanoApi._
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse, GenericMnemonicSentence, MetadataValueArray, MetadataValueByteArray, MetadataValueLong, MetadataValueStr, Payment, Payments, QuantityUnit, SyncState, TxMetadataMapIn, TxState, Units}
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse, GenericMnemonicSentence, MetadataValueArray, MetadataValueLong, MetadataValueStr, Payment, Payments, QuantityUnit, SyncState, TxMetadataMapIn, TxState, Units}
 import org.apache.commons.codec.binary.Hex
 
 import scala.annotation.tailrec

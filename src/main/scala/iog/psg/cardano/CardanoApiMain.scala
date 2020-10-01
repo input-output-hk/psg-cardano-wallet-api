@@ -65,13 +65,13 @@ object CardanoApiMain {
       } else NoOpTrace
     )
 
-    run(arguments)
+    implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
 
+    run(arguments)
   }
 
 
-  private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace): Unit = {
-
+  private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace, apiRequestExecutor: ApiRequestExecutor): Unit = {
 
     if (arguments.noArgs || arguments.contains(CmdLine.help)) {
       showHelp()
@@ -84,8 +84,7 @@ object CardanoApiMain {
       }
 
       implicit val system: ActorSystem = ActorSystem("SingleRequest")
-      import system.dispatcher //the
-      implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
+      import system.dispatcher
 
       Try {
 

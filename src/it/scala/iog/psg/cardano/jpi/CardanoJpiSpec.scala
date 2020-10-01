@@ -42,24 +42,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
         testWalletPassphrase,
         mnem.mnemonicSentence.asJava,
         10
-      ).toCompletableFuture.get();
-
-
-    wallet.id shouldBe "id"
-
-    val delegation = wallet.delegation.getOrElse(fail("Missing delegation"))
-    val properDelegation = Delegation(
-      DelegationActive(
-        DelegationStatus.delegating,
-        Some("1234567890")
-      ),
-      List(DelegationNext(
-        DelegationStatus.notDelegating,
-        Some(NextEpoch(
-          epochStartTime = ZonedDateTime.parse("2000-01-02T10:01:02+01:00"), epochNumber = 10
-        ))
-      ))
-    )
+      ).toCompletableFuture.get()
 
     val networkTip = NetworkTip(
       epochNumber = 3,
@@ -109,8 +92,8 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     println(s"WALLET $baseUrl")
     val aryLen = testWalletMnemonic.split(" ").length
     val aryLen2 = testWallet2Mnemonic.split(" ").length
-    println(s"WALLET 1 words ${aryLen} <-")
-    println(s"WALLET 2 words ${aryLen2} <-")
+    println(s"WALLET 1 words $aryLen <-")
+    println(s"WALLET 2 words $aryLen2 <-")
 
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut

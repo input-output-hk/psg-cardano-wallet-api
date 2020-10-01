@@ -48,6 +48,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       override def close(): Unit = ()
     }
 
+    implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
+
     CardanoApiMain.run(arguments)
 
     results.reverse
@@ -102,6 +104,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.passphrase, testWallet2Passphrase,
       CmdLine.name, testWallet2Name,
       CmdLine.mnemonic, testWallet2Mnemonic)
+
+    println("create wallet: "+results)
 
     assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
   }
