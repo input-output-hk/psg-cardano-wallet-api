@@ -44,7 +44,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
       override def apply(s: Object): Unit = results = s.toString +: results
-
       override def close(): Unit = ()
     }
 
