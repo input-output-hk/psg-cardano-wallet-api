@@ -5,16 +5,14 @@ import java.time.ZonedDateTime
 import io.circe.Decoder
 import io.circe.parser._
 import io.circe.generic.auto._
-
 import iog.psg.cardano.CardanoApiCodec._
-import iog.psg.cardano.util.ModelCompare
-
+import iog.psg.cardano.util.{DummyModel, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.io.Source
 
-class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
+class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare with DummyModel {
 
   "Wallet" should "be decoded properly" in {
     val decoded = decodeJsonFile[Wallet]("wallet.json")
@@ -34,12 +32,7 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
 
     compareNetworkInformation(
       decoded,
-      NetworkInfo(
-        syncProgress = SyncStatus(SyncState.ready, None),
-        networkTip = networkTip.copy(height = None),
-        nodeTip = nodeTip,
-        nextEpoch = NextEpoch(ZonedDateTime.parse("2019-02-27T14:46:45.000Z"), 14)
-      )
+      networkInfo.copy(nextEpoch = networkInfo.nextEpoch.copy(epochStartTime = ZonedDateTime.parse("2019-02-27T14:46:45Z")))
     )
 
   }
@@ -116,20 +109,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
     passphrase = Passphrase(lastUpdatedAt = ZonedDateTime.parse("2019-02-27T14:46:45.000Z")),
     state = SyncStatus(SyncState.ready, None),
     tip = networkTip
-  )
-
-  private final lazy val networkTip = NetworkTip(
-    epochNumber = 14,
-    slotNumber = 1337,
-    height = Some(QuantityUnit(1337, Units.block)),
-    absoluteSlotNumber = Some(8086)
-  )
-
-  private final lazy val nodeTip = NodeTip(
-    epochNumber = 14,
-    slotNumber = 1337,
-    height = QuantityUnit(1337, Units.block),
-    absoluteSlotNumber = Some(8086)
   )
 
   private final lazy val timedBlock = TimedBlock(
