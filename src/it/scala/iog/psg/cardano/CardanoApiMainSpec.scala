@@ -105,8 +105,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.name, testWallet2Name,
       CmdLine.mnemonic, testWallet2Mnemonic)
 
-    println("create wallet: "+results)
-
     assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
   }
 

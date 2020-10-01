@@ -2,11 +2,13 @@ package iog.psg.cardano
 
 import java.time.ZonedDateTime
 
-import io.circe.{Decoder, Json}
+import io.circe.Decoder
 import io.circe.parser._
 import io.circe.generic.auto._
+
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.ModelCompare
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -72,14 +74,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
     val decoded = decodeJsonFile[FundPaymentsResponse]("coin_selections_random.json")
 
     compareFundPaymentsResponse(decoded, fundPaymentsResponse)
-  }
-
-  "TxMetadataOut toMapMetaDataStr" should "parse json to map" in {
-    println(txMetadataMapJson)
-    val txMetadata = TxMetadataOut(json = txMetadataMapJson)
-    println(txMetadata.toMapMetadataStr)
-    val metadataMap = txMetadata.toMapMetadataStr.getOrElse(fail("Could not parse metadata json"))
-    metadataMap shouldBe Map.empty //TODO
   }
 
   private def getJsonFromFile(file: String): String = {
@@ -167,7 +161,52 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
         )
       ),
       status = TxState.pending,
-      metadata = Some(TxMetadataOut(json = txMetadataMapJson))
+      metadata = Some(TxMetadataOut(json = parse("""
+                                                   |{
+                                                   |      "0": {
+                                                   |        "string": "cardano"
+                                                   |      },
+                                                   |      "1": {
+                                                   |        "int": 14
+                                                   |      },
+                                                   |      "2": {
+                                                   |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                                   |      },
+                                                   |      "3": {
+                                                   |        "list": [
+                                                   |          {
+                                                   |            "int": 14
+                                                   |          },
+                                                   |          {
+                                                   |            "int": 42
+                                                   |          },
+                                                   |          {
+                                                   |            "string": "1337"
+                                                   |          }
+                                                   |        ]
+                                                   |      },
+                                                   |      "4": {
+                                                   |        "map": [
+                                                   |          {
+                                                   |            "k": {
+                                                   |              "string": "key"
+                                                   |            },
+                                                   |            "v": {
+                                                   |              "string": "value"
+                                                   |            }
+                                                   |          },
+                                                   |          {
+                                                   |            "k": {
+                                                   |              "int": 14
+                                                   |            },
+                                                   |            "v": {
+                                                   |              "int": 42
+                                                   |            }
+                                                   |          }
+                                                   |        ]
+                                                   |      }
+                                                   |    }
+                                                   |""".stripMargin).getOrElse(fail("Invalid metadata json"))))
     )
   }
 
@@ -192,54 +231,5 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
 
   private final lazy val addressIdStr =
     "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g"
-
-  private final lazy val txMetadataMapJson: Json = parse(txMetadataMapJsonStr).getOrElse(fail("Invalid metadata json"))
-
-  private final lazy val txMetadataMapJsonStr = """
-                                           |{
-                                           |      "0": {
-                                           |        "string": "cardano"
-                                           |      },
-                                           |      "1": {
-                                           |        "int": 14
-                                           |      },
-                                           |      "2": {
-                                           |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                           |      },
-                                           |      "3": {
-                                           |        "list": [
-                                           |          {
-                                           |            "int": 14
-                                           |          },
-                                           |          {
-                                           |            "int": 42
-                                           |          },
-                                           |          {
-                                           |            "string": "1337"
-                                           |          }
-                                           |        ]
-                                           |      },
-                                           |      "4": {
-                                           |        "map": [
-                                           |          {
-                                           |            "k": {
-                                           |              "string": "key"
-                                           |            },
-                                           |            "v": {
-                                           |              "string": "value"
-                                           |            }
-                                           |          },
-                                           |          {
-                                           |            "k": {
-                                           |              "int": 14
-                                           |            },
-                                           |            "v": {
-                                           |              "int": 42
-                                           |            }
-                                           |          }
-                                           |        ]
-                                           |      }
-                                           |    }
-                                           |""".stripMargin
 
 }
