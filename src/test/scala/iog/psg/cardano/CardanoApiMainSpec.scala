@@ -136,6 +136,16 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
   }
 
+  "The Cmd Line -restoreWallet" should "restore deleted wallet 2" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.restoreWallet,
+      CmdLine.passphrase, testWallet2Passphrase,
+      CmdLine.name, testWallet2Name,
+      CmdLine.mnemonic, testWallet2Mnemonic)
+
+    assert(cmdLineResults.exists(_.contains(s"Wallet($testWallet2Id")))
+  }
+
   "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in {
     val cmdLineResults = runCmdLine(
       CmdLine.listWalletAddresses,
@@ -143,7 +153,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains("Some(unused)")))
-    cmdLineResults.count(_.contains("Some(used)")) shouldBe 0
+    assert(cmdLineResults.exists(!_.contains("Some(used)")))
   }
 
   it should "list used wallet addresses" in {
@@ -192,46 +202,17 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
     val postTxTime = ZonedDateTime.now().plusMinutes(5)
 
-    def listWalletTxs: Seq[String] = runCmdLine(
+    val resultsListWalletTxs = runCmdLine(
       CmdLine.listWalletTransactions,
       CmdLine.start, preTxTime.toString,
       CmdLine.`end`, postTxTime.toString,
       CmdLine.walletId, testWalletId)
 
-    val foundTx = listWalletTxs.exists(_.contains(txId))
+    val foundTx = resultsListWalletTxs.exists(_.contains(txId))
     assert(foundTx, s"Couldn't find txId $txId in transactions ")
   }
 
-  //=-------------->
-
-
-  private def getUnusedAddressWallet2 = getUnusedAddress(testWallet2Id)
-
-  private def getUnusedAddressWallet1 = getUnusedAddress(testWalletId)
-
-  def getUnusedAddress(walletId: String): String = {
-    val results = runCmdLine(
-      CmdLine.listWalletAddresses,
-      CmdLine.state, "unused",
-      CmdLine.walletId, walletId)
-
-
-    val all = results.last.split(",")
-    val cleanedUp = all.map(s => {
-      if (s.indexOf("addr") > 0)
-        Some(s.substring(s.indexOf("addr")))
-      else None
-    }) collect {
-      case Some(goodAddr) => goodAddr
-    }
-    cleanedUp.head
-  }
-
-  def extractTxId(toStringCreateTransactionResult: String): String = {
-    toStringCreateTransactionResult.split(",").head.stripPrefix("CreateTransactionResponse(")
-  }
-
-  "--help" should "show possible commands" in {
+  "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
 
     results.mkString("\n") shouldBe
@@ -362,5 +343,28 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         |""".stripMargin
   }
 
+  private def getUnusedAddressWallet2 = getUnusedAddress(testWallet2Id)
+
+  private def getUnusedAddressWallet1 = getUnusedAddress(testWalletId)
+
+  private def getUnusedAddress(walletId: String): String = {
+    val results = runCmdLine(
+      CmdLine.listWalletAddresses,
+      CmdLine.state, "unused",
+      CmdLine.walletId, walletId)
+
+    val all = results.last.split(",")
+    val cleanedUp = all.map(s => {
+      if (s.indexOf("addr") > 0)
+        Some(s.substring(s.indexOf("addr")))
+      else None
+    }) collect {
+      case Some(goodAddr) => goodAddr
+    }
+    cleanedUp.head
+  }
+
+  private def extractTxId(toStringCreateTransactionResult: String): String =
+    toStringCreateTransactionResult.split(",").head.stripPrefix("CreateTransactionResponse(")
 
 }
