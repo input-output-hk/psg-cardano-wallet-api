@@ -4,8 +4,11 @@ import java.time.ZonedDateTime
 
 import io.circe.Decoder
 import io.circe.parser._
+import io.circe.generic.auto._
+
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.ModelCompare
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

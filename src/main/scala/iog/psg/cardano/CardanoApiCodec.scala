@@ -37,7 +37,6 @@ object CardanoApiCodec {
 
   private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val createListAddrEntityDecoder: Decoder[WalletAddressId] = deriveConfiguredDecoder
 
   private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
     stringToZonedDate(s) match {
@@ -259,7 +258,6 @@ object CardanoApiCodec {
                            amount: QuantityUnit
                          )
 
-  @ConfiguredJsonCodec
   case class FundPaymentsResponse(
                                    inputs: IndexedSeq[InAddress],
                                    outputs: Seq[OutAddress]
