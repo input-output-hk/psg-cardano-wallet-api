@@ -161,7 +161,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare {
         )
       ),
       status = TxState.pending,
-      //TODO fix toMapMetadataStr
       metadata = Some(TxMetadataOut(json = parse("""
                                                    |{
                                                    |      "0": {
