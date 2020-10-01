@@ -13,7 +13,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
-import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
+import io.circe.generic.extras.semiauto.{deriveConfiguredDecoder, deriveConfiguredEncoder}
 import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
@@ -36,6 +36,8 @@ object CardanoApiCodec {
     encoder.mapJson(_.dropNullValues)
 
   private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val createListAddrEntityDecoder: Decoder[WalletAddressId] = deriveConfiguredDecoder
 
   private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
     stringToZonedDate(s) match {
@@ -153,7 +155,7 @@ object CardanoApiCodec {
 
   @ConfiguredJsonCodec case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
-  @ConfiguredJsonCodec case class WalletAddressId(id: String, state: Option[AddressFilter])
+  case class WalletAddressId(id: String, state: Option[AddressFilter])
 
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
