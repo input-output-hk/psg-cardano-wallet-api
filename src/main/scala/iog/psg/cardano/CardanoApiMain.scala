@@ -123,7 +123,7 @@ object CardanoApiMain {
           val newPassphrase = arguments.get(CmdLine.passphrase)
 
           val result: Unit = unwrap(api.updatePassphrase(walletId, oldPassphrase, newPassphrase).executeBlocking)
-          trace("Unit result from delete wallet")
+          trace("Unit result from update passphrase")
 
         } else if (hasArgument(CmdLine.deleteWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
