@@ -1,4 +1,4 @@
-name: Clean, build, test and package
+name: Clean, build, test, coverage
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,14 +34,4 @@ jobs:
         with:
           name: code-coverage-report
           path: target/scala-2.13/scoverage-report
-  package:
-    if: contains(github.ref, 'release')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Package
-        uses: actions/setup-java@v1.4.2
-        with:
-            java-version: '11.0.8'
-      - run: sbt publish
 

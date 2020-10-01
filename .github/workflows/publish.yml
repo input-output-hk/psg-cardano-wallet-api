@@ -1,0 +1,31 @@
+name: Publish to Maven
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SONA_USER: ${{ secrets.SONA_USER }}
+  SONA_PASS: ${{ secrets.SONA_PASS }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  package:
+    if: contains(github.ref, 'master') || contains(github.ref, 'develop')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure GPG Key
+        run: |
+            mkdir -p ~/.gnupg/
+            printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
+            gpg --import --no-tty --batch --yes ~/.gnupg/private.key
+        env:
+            GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      - uses: actions/checkout@v2
+      - name: Package
+        uses: actions/setup-java@v1.4.2
+        with:
+            java-version: '11.0.8'
+      - run: sbt publishSigned sonatypeRelease
+
