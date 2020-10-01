@@ -98,8 +98,6 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     )
 
     compareWallets(wallet, properWallet)
-
-    compareDelegation(delegation, properDelegation)
   }
 
   "Bad wallet creation" should "be prevented" in {

@@ -300,7 +300,7 @@ object CardanoApiCodec {
                                       )
 
   @ConfiguredJsonCodec
-  case class Passphrase(lastUpdatedAt: ZonedDateTime)
+  final case class Passphrase(lastUpdatedAt: ZonedDateTime)
 
   @ConfiguredJsonCodec
   case class Wallet(
