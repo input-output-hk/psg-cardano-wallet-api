@@ -193,10 +193,6 @@ object CardanoApiMain {
             result.foreach(trace.apply)
           }
 
-        } else if (hasArgument(CmdLine.listWallets)) {
-          val result = unwrap(api.listWallets.executeBlocking)
-          result.foreach(trace.apply)
-
         } else if (hasArgument(CmdLine.createWallet) || hasArgument(CmdLine.restoreWallet)) {
           val name = arguments.get(CmdLine.name)
           val passphrase = arguments.get(CmdLine.passphrase)

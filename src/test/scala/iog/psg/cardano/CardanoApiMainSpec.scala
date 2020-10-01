@@ -47,9 +47,59 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     results.reverse
   }
 
-  "The Cmd line Main" should "support retrieving netInfo" in {
-    val results = runCmdLine(CmdLine.netInfo)
-    assert(results.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $results")
+  "The Cmd line -netInfo" should "support retrieving netInfo" in {
+    val cmdLineResults = runCmdLine(CmdLine.netInfo)
+    assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
+  }
+
+  "The Cmd Line -wallets" should "show our test wallet in the list" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.listWallets)
+
+    cmdLineResults.find(w => w.contains(testWalletName) &&
+      w.contains(testWalletId))
+      .getOrElse {
+        val cmdLineResults = runCmdLine(
+          CmdLine.createWallet,
+          CmdLine.passphrase, testWalletPassphrase,
+          CmdLine.name, testWalletName,
+          CmdLine.mnemonic, testWalletMnemonic)
+
+        assert(cmdLineResults.exists(_.contains(testWalletId)), "Test Wallet not created")
+      }
+
+  }
+
+  "The Cmd Line -estimateFee" should "estimate transaction costs" in {
+    val unusedAddr = getUnusedAddressWallet1
+
+    val cmdLineResults = runCmdLine(
+      CmdLine.estimateFee,
+      CmdLine.amount, testAmountToTransfer,
+      CmdLine.address, unusedAddr,
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
+  }
+
+  "The Cmd Line -wallet [walletId]" should "get our wallet" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.getWallet,
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains(testWalletId)), "Test wallet not found.")
+  }
+
+  "The Cmd Line -createWallet" should "create wallet 2" in {
+    val results = runCmdLine(
+      CmdLine.createWallet,
+      CmdLine.passphrase, testWallet2Passphrase,
+      CmdLine.name, testWallet2Name,
+      CmdLine.mnemonic, testWallet2Mnemonic)
+
+    println(results)
+
+    assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
   }
 
   it should "not create a wallet with a bad mnemonic" in {
@@ -62,71 +112,98 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(results.exists(_.contains("Found an unknown word")), "Bad menmonic not stopped")
   }
 
-  it should "find our test wallet" in {
-    val wallets = runCmdLine(
-      CmdLine.listWallets)
-
-    wallets.find(w => w.contains(testWalletName) &&
-      w.contains(testWalletId))
-      .getOrElse {
-        val results = runCmdLine(
-          CmdLine.createWallet,
-          CmdLine.passphrase, testWalletPassphrase,
-          CmdLine.name, testWalletName,
-          CmdLine.mnemonic, testWalletMnemonic)
-
-        assert(results.exists(_.contains(testWalletId)), "Test Wallet not created")
-      }
-
-  }
-
-  it should "get our wallet" in {
-    val results = runCmdLine(
-      CmdLine.getWallet,
-      CmdLine.walletId, testWalletId)
-
-    assert(results.exists(_.contains(testWalletId)), "Test wallet not found.")
-
-  }
-
-  it should "create or find wallet 2" in {
-
-    val wallets = runCmdLine(CmdLine.listWallets)
-
-    wallets.find(w => w.contains(testWallet2Name) &&
-      w.contains(testWallet2Id))
-      .getOrElse {
-        val results = runCmdLine(
-          CmdLine.createWallet,
-          CmdLine.passphrase, testWallet2Passphrase,
-          CmdLine.name, testWallet2Name,
-          CmdLine.mnemonic, testWallet2Mnemonic)
-
-        assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
-      }
-  }
-
-  it should "allow password change in test wallet 2" in {
-    runCmdLine(
+  "The Cmd Line -updatePassphrase" should "allow password change in test wallet 2" in {
+    val cmdLineResults = runCmdLine(
       CmdLine.updatePassphrase,
       CmdLine.oldPassphrase, testWallet2Passphrase,
       CmdLine.passphrase, testWalletPassphrase,
       CmdLine.walletId, testWallet2Id)
 
+    assert(cmdLineResults.exists(_.contains("Unit result from update passphrase")))
   }
 
-  it should "fund payments" in {
+  "The Cmd Line -deleteWallet [walletId]" should "delete test wallet 2" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.deleteWallet,
+      CmdLine.walletId, testWallet2Id)
+
+    assert(cmdLineResults.exists(_.contains("Unit result from delete wallet")))
 
     val results = runCmdLine(
+      CmdLine.getWallet,
+      CmdLine.walletId, testWallet2Id)
+
+    assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
+  }
+
+  "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.listWalletAddresses,
+      CmdLine.state, "unused",
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains("Some(unused)")))
+    cmdLineResults.count(_.contains("Some(used)")) shouldBe 0
+  }
+
+  it should "list used wallet addresses" in {
+    val cmdLineResults = runCmdLine(
+      CmdLine.listWalletAddresses,
+      CmdLine.state, "used",
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains("Some(used)")))
+    cmdLineResults.count(_.contains("Some(unused)")) shouldBe 0
+  }
+
+  "The Cmd Line -fundTx" should "fund payments" in {
+    val cmdLineResults = runCmdLine(
       CmdLine.fundTx,
       CmdLine.amount, testAmountToTransfer,
       CmdLine.address, getUnusedAddressWallet2,
       CmdLine.walletId, testWalletId)
 
-    assert(results.last.contains("FundPaymentsResponse") ||
-      results.mkString("").contains("cannot_cover_fee"), s"$results")
-    //results.foreach(println)
+    assert(cmdLineResults.last.contains("FundPaymentsResponse") ||
+      cmdLineResults.mkString("").contains("cannot_cover_fee"), s"$cmdLineResults")
   }
+
+  "The Cmd Lines -createTx, -getTx, -listTxs" should "transact from A to B with metadata, txId should be visible in get and list" in {
+    val unusedAddr = getUnusedAddressWallet1
+    val preTxTime = ZonedDateTime.now().minusMinutes(1)
+
+    val resultsCreateTx = runCmdLine(
+      CmdLine.createTx,
+      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.amount, testAmountToTransfer,
+      CmdLine.metadata, testMetadata,
+      CmdLine.address, unusedAddr,
+      CmdLine.walletId, testWalletId)
+
+    assert(resultsCreateTx.last.contains("pending"), "Transaction should be pending")
+
+    val txId = extractTxId(resultsCreateTx.last)
+
+    val resultsGetTx = runCmdLine(
+      CmdLine.getTx,
+      CmdLine.txId, txId,
+      CmdLine.walletId, testWalletId)
+
+    assert(resultsGetTx.last.contains(txId), "The getTx result didn't contain the id")
+
+    val postTxTime = ZonedDateTime.now().plusMinutes(5)
+
+    def listWalletTxs: Seq[String] = runCmdLine(
+      CmdLine.listWalletTransactions,
+      CmdLine.start, preTxTime.toString,
+      CmdLine.`end`, postTxTime.toString,
+      CmdLine.walletId, testWalletId)
+
+    val foundTx = listWalletTxs.exists(_.contains(txId))
+    assert(foundTx, s"Couldn't find txId $txId in transactions ")
+  }
+
+  //=-------------->
+
 
   private def getUnusedAddressWallet2 = getUnusedAddress(testWallet2Id)
 
@@ -150,70 +227,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     cleanedUp.head
   }
 
-  it should "transact from a to a with metadata" in {
-
-    val unusedAddr = getUnusedAddressWallet1
-
-    // estimate fee
-    val estimateResults = runCmdLine(
-      CmdLine.estimateFee,
-      CmdLine.amount, testAmountToTransfer,
-      CmdLine.address, unusedAddr,
-      CmdLine.walletId, testWalletId)
-
-    //estimateResults.foreach(println)
-
-    val preTxTime = ZonedDateTime.now().minusMinutes(1)
-
-    val resultsCreateTx = runCmdLine(
-      CmdLine.createTx,
-      CmdLine.passphrase, testWalletPassphrase,
-      CmdLine.amount, testAmountToTransfer,
-      CmdLine.metadata, testMetadata,
-      CmdLine.address, unusedAddr,
-      CmdLine.walletId, testWalletId)
-
-    assert(resultsCreateTx.last.contains("pending"), "Transaction should be pending")
-
-    val txId = extractTxId(resultsCreateTx.last)
-
-    val resultsGetTx = runCmdLine(
-      CmdLine.getTx,
-      CmdLine.txId, txId,
-      CmdLine.walletId, testWalletId)
-
-    assert(resultsGetTx.last.contains(txId), "The getTx result didn't contain the id")
-    //list Txs
-
-    val postTxTime = ZonedDateTime.now().plusMinutes(5)
-
-    def listWalletTxs: Seq[String] = runCmdLine(
-      CmdLine.listWalletTransactions,
-      CmdLine.start, preTxTime.toString,
-      CmdLine.`end`, postTxTime.toString,
-      CmdLine.walletId, testWalletId)
-
-
-    val foundTx = listWalletTxs.exists(_.contains(txId))
-    assert(foundTx, s"Couldn't find txId $txId in transactions ")
-
-  }
-
   def extractTxId(toStringCreateTransactionResult: String): String = {
     toStringCreateTransactionResult.split(",").head.stripPrefix("CreateTransactionResponse(")
-  }
-
-
-  it should "delete test wallet 2" in {
-    runCmdLine(
-      CmdLine.deleteWallet,
-      CmdLine.walletId, testWallet2Id)
-    val results = runCmdLine(
-      CmdLine.getWallet,
-      CmdLine.walletId, testWallet2Id)
-
-    assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
-
   }
 
   "--help" should "show possible commands" in {
