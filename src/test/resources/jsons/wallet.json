@@ -1,0 +1,49 @@
+{
+  "id": "2512a00e9653fe49a44a5886202e24d77eeb998f",
+  "address_pool_gap": 20,
+  "balance": {
+    "available": {
+      "quantity": 42000000,
+      "unit": "lovelace"
+    },
+    "reward": {
+      "quantity": 42000000,
+      "unit": "lovelace"
+    },
+    "total": {
+      "quantity": 42000000,
+      "unit": "lovelace"
+    }
+  },
+  "delegation": {
+    "active": {
+      "status": "delegating",
+      "target": "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
+    },
+    "next": [
+      {
+        "status": "not_delegating",
+        "changes_at": {
+          "epoch_number": 14,
+          "epoch_start_time": "2020-01-22T10:06:39.037Z"
+        }
+      }
+    ]
+  },
+  "name": "Alan's Wallet",
+  "passphrase": {
+    "last_updated_at": "2019-02-27T14:46:45.000Z"
+  },
+  "state": {
+    "status": "ready"
+  },
+  "tip": {
+    "slot_number": 1337,
+    "epoch_number": 14,
+    "height": {
+      "quantity": 1337,
+      "unit": "block"
+    },
+    "absolute_slot_number": 8086
+  }
+}
