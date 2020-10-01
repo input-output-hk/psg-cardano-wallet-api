@@ -102,10 +102,6 @@ public class JpiResponseCheck {
             public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
                 CompletableFuture<T> result = new CompletableFuture<>();
 
-                System.out.println(request.request().uri().path());
-                System.out.println(request.request().uri().fragment());
-                System.out.println(request.request().uri());
-
                 if(request.request().uri().path().endsWith("wallets", true)) {
                     Enumeration.Value lovelace = CardanoApiCodec.Units$.MODULE$.Value(CardanoApiCodec.Units$.MODULE$.lovelace().toString());
                     Enumeration.Value sync = CardanoApiCodec.SyncState$.MODULE$.Value(CardanoApiCodec.SyncState$.MODULE$.ready().toString());

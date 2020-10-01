@@ -6,131 +6,131 @@ import org.scalatest.matchers.should.Matchers
 
 trait ModelCompare extends Matchers {
 
-  final def compareInAddress(decoded: InAddress, proper: InAddress): Assertion = {
-    decoded.address shouldBe proper.address
-    compareQuantityUnitOpts(decoded.amount, proper.amount)
-    decoded.id shouldBe proper.id
-    decoded.index shouldBe proper.index
+  final def compareInAddress(decoded: InAddress, expected: InAddress): Assertion = {
+    decoded.address shouldBe expected.address
+    compareQuantityUnitOpts(decoded.amount, expected.amount)
+    decoded.id shouldBe expected.id
+    decoded.index shouldBe expected.index
   }
 
-  final def compareOutAddress(decoded: OutAddress, proper: OutAddress): Assertion = {
-    decoded.address shouldBe proper.address
-    compareQuantityUnit(decoded.amount, proper.amount)
+  final def compareOutAddress(decoded: OutAddress, expected: OutAddress): Assertion = {
+    decoded.address shouldBe expected.address
+    compareQuantityUnit(decoded.amount, expected.amount)
   }
 
-  final def compareInputs(decoded: Seq[InAddress], proper: Seq[InAddress]): Seq[Assertion] =
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareInAddress(decodedAddress, properAddress)
+  final def compareInputs(decoded: Seq[InAddress], expected: Seq[InAddress]): Seq[Assertion] =
+    decoded.zip(expected).map {
+      case (decodedAddress, expectedAddress) => compareInAddress(decodedAddress, expectedAddress)
     }
 
-  final def compareOutputs(decoded: Seq[OutAddress], proper: Seq[OutAddress]): Seq[Assertion] =
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareOutAddress(decodedAddress, properAddress)
+  final def compareOutputs(decoded: Seq[OutAddress], expected: Seq[OutAddress]): Seq[Assertion] =
+    decoded.zip(expected).map {
+      case (decodedAddress, expectedAddress) => compareOutAddress(decodedAddress, expectedAddress)
     }
 
-  final def compareFundPaymentsResponse(decoded: FundPaymentsResponse, proper: FundPaymentsResponse): Seq[Assertion] = {
-    compareInputs(decoded.inputs, proper.inputs)
-    compareOutputs(decoded.outputs, proper.outputs)
+  final def compareFundPaymentsResponse(decoded: FundPaymentsResponse, expected: FundPaymentsResponse): Seq[Assertion] = {
+    compareInputs(decoded.inputs, expected.inputs)
+    compareOutputs(decoded.outputs, expected.outputs)
   }
 
-  final def compareEstimateFeeResponse(decoded: EstimateFeeResponse, proper: EstimateFeeResponse): Assertion = {
-    compareQuantityUnit(decoded.estimatedMax, proper.estimatedMax)
-    compareQuantityUnit(decoded.estimatedMin, proper.estimatedMin)
+  final def compareEstimateFeeResponse(decoded: EstimateFeeResponse, expected: EstimateFeeResponse): Assertion = {
+    compareQuantityUnit(decoded.estimatedMax, expected.estimatedMax)
+    compareQuantityUnit(decoded.estimatedMin, expected.estimatedMin)
   }
 
-  final def compareStakeAddress(decoded: StakeAddress, proper: StakeAddress): Assertion = {
-    compareQuantityUnit(decoded.amount, proper.amount)
-    decoded.stakeAddress shouldBe proper.stakeAddress
+  final def compareStakeAddress(decoded: StakeAddress, expected: StakeAddress): Assertion = {
+    compareQuantityUnit(decoded.amount, expected.amount)
+    decoded.stakeAddress shouldBe expected.stakeAddress
   }
 
-  final def compareStakeAddresses(decoded: Seq[StakeAddress], proper: Seq[StakeAddress]): Seq[Assertion] = {
-    decoded.zip(proper).map {
-      case (decodedAddress, properAddress) => compareStakeAddress(decodedAddress, properAddress)
+  final def compareStakeAddresses(decoded: Seq[StakeAddress], expected: Seq[StakeAddress]): Seq[Assertion] = {
+    decoded.zip(expected).map {
+      case (decodedAddress, expectedAddress) => compareStakeAddress(decodedAddress, expectedAddress)
     }
   }
 
-  final def compareTransaction(decoded: CreateTransactionResponse, proper: CreateTransactionResponse): Assertion = {
-    decoded.id shouldBe proper.id
-    compareQuantityUnit(decoded.amount, proper.amount)
-    decoded.insertedAt shouldBe proper.insertedAt
-    decoded.pendingSince shouldBe proper.pendingSince
-    decoded.depth shouldBe proper.depth
-    decoded.direction shouldBe proper.direction
-    compareInputs(decoded.inputs, proper.inputs)
-    compareOutputs(decoded.outputs, proper.outputs)
-    compareStakeAddresses(decoded.withdrawals, proper.withdrawals)
-    decoded.status shouldBe proper.status
-    decoded.metadata shouldBe proper.metadata
+  final def compareTransaction(decoded: CreateTransactionResponse, expected: CreateTransactionResponse): Assertion = {
+    decoded.id shouldBe expected.id
+    compareQuantityUnit(decoded.amount, expected.amount)
+    decoded.insertedAt shouldBe expected.insertedAt
+    decoded.pendingSince shouldBe expected.pendingSince
+    decoded.depth shouldBe expected.depth
+    decoded.direction shouldBe expected.direction
+    compareInputs(decoded.inputs, expected.inputs)
+    compareOutputs(decoded.outputs, expected.outputs)
+    compareStakeAddresses(decoded.withdrawals, expected.withdrawals)
+    decoded.status shouldBe expected.status
+    decoded.metadata shouldBe expected.metadata
   }
 
-  final def compareAddress(decoded: WalletAddressId, proper: WalletAddressId): Assertion = {
-    decoded.id shouldBe proper.id
-    decoded.state shouldBe proper.state
+  final def compareAddress(decoded: WalletAddressId, expected: WalletAddressId): Assertion = {
+    decoded.id shouldBe expected.id
+    decoded.state shouldBe expected.state
   }
 
-  final def compareNetworkInformation(decoded: NetworkInfo, proper: NetworkInfo): Assertion = {
-    decoded.nextEpoch shouldBe proper.nextEpoch
-    decoded.nodeTip shouldBe proper.nodeTip
-    decoded.networkTip shouldBe proper.networkTip
-    decoded.syncProgress.status.toString shouldBe proper.syncProgress.status.toString
+  final def compareNetworkInformation(decoded: NetworkInfo, expected: NetworkInfo): Assertion = {
+    decoded.nextEpoch shouldBe expected.nextEpoch
+    decoded.nodeTip shouldBe expected.nodeTip
+    decoded.networkTip shouldBe expected.networkTip
+    decoded.syncProgress.status.toString shouldBe expected.syncProgress.status.toString
 
-    compareQuantityUnitOpts(decoded.syncProgress.progress, proper.syncProgress.progress)
+    compareQuantityUnitOpts(decoded.syncProgress.progress, expected.syncProgress.progress)
   }
 
-  final def compareQuantityUnitOpts(decoded: Option[QuantityUnit], proper: Option[QuantityUnit]): Assertion = {
-    if (decoded.isEmpty && proper.isEmpty) assert(true)
+  final def compareQuantityUnitOpts(decoded: Option[QuantityUnit], expected: Option[QuantityUnit]): Assertion = {
+    if (decoded.isEmpty && expected.isEmpty) assert(true)
     else (for {
       decodedQU <- decoded
-      properQU <- proper
-    } yield compareQuantityUnit(decodedQU, properQU)).getOrElse(assert(false, "one of units is none"))
+      expectedQU <- expected
+    } yield compareQuantityUnit(decodedQU, expectedQU)).getOrElse(assert(false, "one of units is none"))
   }
 
-  final def compareQuantityUnit(decoded: QuantityUnit, proper: QuantityUnit): Assertion = {
-    decoded.unit.toString shouldBe proper.unit.toString
-    decoded.quantity shouldBe proper.quantity
+  final def compareQuantityUnit(decoded: QuantityUnit, expected: QuantityUnit): Assertion = {
+    decoded.unit.toString shouldBe expected.unit.toString
+    decoded.quantity shouldBe expected.quantity
   }
 
-  final def compareBalance(decoded: Balance, proper: Balance): Assertion = {
-    decoded.available.quantity shouldBe proper.available.quantity
-    decoded.available.unit.toString shouldBe proper.available.unit.toString
+  final def compareBalance(decoded: Balance, expected: Balance): Assertion = {
+    decoded.available.quantity shouldBe expected.available.quantity
+    decoded.available.unit.toString shouldBe expected.available.unit.toString
 
-    decoded.reward.quantity shouldBe proper.reward.quantity
-    decoded.reward.unit.toString shouldBe proper.reward.unit.toString
+    decoded.reward.quantity shouldBe expected.reward.quantity
+    decoded.reward.unit.toString shouldBe expected.reward.unit.toString
 
-    decoded.total.quantity shouldBe proper.total.quantity
-    decoded.total.unit.toString shouldBe proper.total.unit.toString
+    decoded.total.quantity shouldBe expected.total.quantity
+    decoded.total.unit.toString shouldBe expected.total.unit.toString
   }
 
-  final def compareState(decoded: SyncStatus, proper: SyncStatus): Assertion = {
-    decoded.status.toString shouldBe proper.status.toString
-    decoded.progress shouldBe proper.progress
+  final def compareState(decoded: SyncStatus, expected: SyncStatus): Assertion = {
+    decoded.status.toString shouldBe expected.status.toString
+    decoded.progress shouldBe expected.progress
   }
 
-  final def compareDelegation(decoded: Delegation, proper: Delegation): Seq[Assertion] = {
-    decoded.active.status.toString shouldBe proper.active.status.toString
-    decoded.active.target shouldBe proper.active.target
+  final def compareDelegation(decoded: Delegation, expected: Delegation): Seq[Assertion] = {
+    decoded.active.status.toString shouldBe expected.active.status.toString
+    decoded.active.target shouldBe expected.active.target
 
-    decoded.next.zip(proper.next).map {
-      case (decodedNext, properNext) =>
-        decodedNext.status.toString shouldBe properNext.status.toString
-        decodedNext.changesAt shouldBe properNext.changesAt
+    decoded.next.zip(expected.next).map {
+      case (decodedNext, expectedNext) =>
+        decodedNext.status.toString shouldBe expectedNext.status.toString
+        decodedNext.changesAt shouldBe expectedNext.changesAt
     }
   }
 
-  final def compareDelegationOpts(decoded: Option[Delegation], proper: Option[Delegation]): Seq[Assertion] = {
-    if (decoded.nonEmpty && proper.nonEmpty) compareDelegation(decoded.get, proper.get)
+  final def compareDelegationOpts(decoded: Option[Delegation], expected: Option[Delegation]): Seq[Assertion] = {
+    if (decoded.nonEmpty && expected.nonEmpty) compareDelegation(decoded.get, expected.get)
     else Seq(assert(false, "one of delegations is none"))
   }
 
-  final def compareWallets(decoded: Wallet, proper: Wallet): Assertion = {
-    decoded.id shouldBe proper.id
-    decoded.addressPoolGap shouldBe proper.addressPoolGap
-    compareBalance(decoded.balance, proper.balance)
-    compareDelegationOpts(decoded.delegation, proper.delegation)
-    decoded.name shouldBe proper.name
-    decoded.passphrase shouldBe proper.passphrase
-    compareState(decoded.state, proper.state)
-    decoded.tip shouldBe proper.tip
+  final def compareWallets(decoded: Wallet, expected: Wallet): Assertion = {
+    decoded.id shouldBe expected.id
+    decoded.addressPoolGap shouldBe expected.addressPoolGap
+    compareBalance(decoded.balance, expected.balance)
+    compareDelegationOpts(decoded.delegation, expected.delegation)
+    decoded.name shouldBe expected.name
+    decoded.passphrase shouldBe expected.passphrase
+    compareState(decoded.state, expected.state)
+    decoded.tip shouldBe expected.tip
   }
   
 }
