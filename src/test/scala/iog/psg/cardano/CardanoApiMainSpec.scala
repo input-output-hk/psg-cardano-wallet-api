@@ -5,13 +5,19 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
-class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures {
-
+  override def afterAll(): Unit = {
+    runCmdLine(
+      CmdLine.deleteWallet,
+      CmdLine.walletId, testWallet2Id)
+    super.afterAll()
+  }
 
   private implicit val system = ActorSystem("SingleRequest")
   private implicit val context = system.dispatcher
@@ -96,8 +102,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.passphrase, testWallet2Passphrase,
       CmdLine.name, testWallet2Name,
       CmdLine.mnemonic, testWallet2Mnemonic)
-
-    println(results)
 
     assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
   }
