@@ -64,7 +64,42 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
 
   final case class TxMetadataOut(json: Json) {
-    def toMapMetadataStr: Decoder.Result[Map[Long, String]] = json.as[Map[Long, String]]
+    def toMapMetadataStr: Decoder.Result[Map[Long, String]] = {
+      println("---------> IN toMapMetadataStr")
+      type KeyVal = Map[Long, String]
+
+      // using the expansion may be necessary for Circe to detect it correctly
+      implicit val decodeMap: Decoder[Map[Long, String]] = new Decoder[Map[Long, String]] {
+        override def apply(c: HCursor): Decoder.Result[KeyVal] = {
+          println("---------> IN decodeMap apply")
+          def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
+            res.right.flatMap((map: KeyVal) => {
+              println("key: "+key)
+              println("map: "+map)
+              println("c.downField(key): "+c.downField(key).as[String])
+              c.downField(key).as[String].fold(
+                { err =>
+                  println("--> err: "+err)
+                  Left(err)
+                },
+                (value: String) => {
+                  println("value: "+value)
+                  Right(map.+(key.toLong -> value))
+                }
+              )
+            })
+          }
+
+          def emptyMapResult: Decoder.Result[KeyVal] = Right(Map[Long, String]().empty)
+
+          def withKeys(keys: Iterable[String]): Decoder.Result[KeyVal] = keys.foldLeft(emptyMapResult)(extractValueForKeyInto)
+
+          c.keys.fold[Decoder.Result[KeyVal]](ifEmpty = emptyMapResult)(withKeys)
+        }
+      }
+
+      json.as[Map[Long, String]](decodeMap)
+    }
   }
 
   private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut)
@@ -90,9 +125,9 @@ object CardanoApiCodec {
 
   final case class MetadataValueArray(ary: Seq[MetadataValue]) extends MetadataValue
 
-  final case class MetadataValueByteArray(ary: ByteString) extends MetadataValue
+  final case class MetadataValueByteString(bs: ByteString) extends MetadataValue
 
-  final case class MetadataValueObject(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
+  final case class MetadataValueMap(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
 
   implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
     case MetadataValueLong(l) => l.toString
@@ -105,17 +140,19 @@ object CardanoApiCodec {
   }
 
   implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
-    case MetadataValueLong(s) => s.asJson
-    case MetadataValueStr(s) => s.asJson
-    case MetadataValueArray(s) => s.asJson
-    case MetadataValueObject(s) => s.asJson
-    case MetadataValueByteArray(ary: ByteString) => toMetadataHex(ary)
+    case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
+    case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
+    case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
+    case MetadataValueArray(s) => Json.obj(("list", s.asJson))
+    case MetadataValueMap(s) =>
+      Json.obj(("map", s.map {
+        case (key, value) => Map("k" -> key, "v" -> value)
+      }.asJson))
   }
 
   implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
     case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
     case TxMetadataMapIn(s) => s.asJson
-
   }
 
 

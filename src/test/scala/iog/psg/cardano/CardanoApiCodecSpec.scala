@@ -2,9 +2,11 @@ package iog.psg.cardano
 
 import java.time.ZonedDateTime
 
+import akka.util.ByteString
 import io.circe.Decoder
 import io.circe.parser._
 import io.circe.generic.auto._
+import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.{DummyModel, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -67,6 +69,84 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
     val decoded = decodeJsonFile[FundPaymentsResponse]("coin_selections_random.json")
 
     compareFundPaymentsResponse(decoded, fundPaymentsResponse)
+  }
+
+  "TxMetadataMapIn encode" should "encode string value to proper json" in  {
+    val map: Map[Long, MetadataValue] = Map(0L -> MetadataValueStr("cardano"))
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+
+    metaInJsonStr shouldBe """{"0":{"string":"cardano"}}"""
+  }
+
+  it should "encode long value to proper json" in {
+    val map: Map[Long, MetadataValue] = Map(1L -> MetadataValueLong(14))
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+
+    metaInJsonStr shouldBe """{"1":{"int":14}}"""
+  }
+
+  it should "encode byte string value to proper json" in {
+    val map: Map[Long, MetadataValue] = Map(2L -> MetadataValueByteString(ByteString("2512a00e9653fe49a44a5886202e24d77eeb998f")))
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+
+    metaInJsonStr shouldBe """{"2":{"bytes":"2512a00e9653fe49a44a5886202e24d77eeb998f"}}"""
+  }
+
+  it should "encode list value to proper json" in {
+    val map: Map[Long, MetadataValue] = Map(3L -> MetadataValueArray(List(
+      MetadataValueLong(14), MetadataValueLong(42), MetadataValueStr("1337")
+    )))
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+
+    metaInJsonStr shouldBe """{"3":{"list":[{"int":14},{"int":42},{"string":"1337"}]}}"""
+  }
+
+  it should "encode map value to proper json" in {
+    val map: Map[Long, MetadataValue] = Map(4L -> MetadataValueMap(Map(
+      MetadataValueStr("key") -> MetadataValueStr("value"),
+      MetadataValueLong(14) -> MetadataValueLong(42)
+    )))
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+    metaInJsonStr shouldBe """{"4":{"map":[{"k":{"string":"key"},"v":{"string":"value"}},{"k":{"int":14},"v":{"int":42}}]}}"""
+  }
+
+  it should "encode properly all types to json" in {
+    val map: Map[Long, MetadataValue] = Map(
+      0L -> MetadataValueStr("cardano"),
+      1L -> MetadataValueLong(14),
+      2L -> MetadataValueByteString(ByteString("2512a00e9653fe49a44a5886202e24d77eeb998f")),
+      3L -> MetadataValueArray(List(
+        MetadataValueLong(14), MetadataValueLong(42), MetadataValueStr("1337")
+      )),
+      4L -> MetadataValueMap(Map(
+        MetadataValueStr("key") -> MetadataValueStr("value"),
+        MetadataValueLong(14) -> MetadataValueLong(42)
+      ))
+    )
+    val metaDataIn: TxMetadataIn = TxMetadataMapIn(map)
+    val metaInJsonStr = metaDataIn.asJson.noSpaces
+
+    metaInJsonStr shouldBe """{"0":{"string":"cardano"},"1":{"int":14},"2":{"bytes":"2512a00e9653fe49a44a5886202e24d77eeb998f"},"3":{"list":[{"int":14},{"int":42},{"string":"1337"}]},"4":{"map":[{"k":{"string":"key"},"v":{"string":"value"}},{"k":{"int":14},"v":{"int":42}}]}}""".stripMargin
+  }
+
+  "txMetadataOut toMapMetadataStr" should "be pared properly" in {
+    val test =
+      TxMetadataOut(parse("""
+        |{
+        |      "0": {
+        |        "string": "cardano"
+        |      }
+        |}
+        |""".stripMargin).getOrElse(fail("x y z")))
+
+    println("test.toMapMetadataStr: "+test.toMapMetadataStr)
+    test.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(0 -> "cardano")
+    //txMetadataOut.toMapMetadataStr
   }
 
   private def getJsonFromFile(file: String): String = {
@@ -140,52 +220,7 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
         )
       ),
       status = TxState.pending,
-      metadata = Some(TxMetadataOut(json = parse("""
-                                                   |{
-                                                   |      "0": {
-                                                   |        "string": "cardano"
-                                                   |      },
-                                                   |      "1": {
-                                                   |        "int": 14
-                                                   |      },
-                                                   |      "2": {
-                                                   |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                                   |      },
-                                                   |      "3": {
-                                                   |        "list": [
-                                                   |          {
-                                                   |            "int": 14
-                                                   |          },
-                                                   |          {
-                                                   |            "int": 42
-                                                   |          },
-                                                   |          {
-                                                   |            "string": "1337"
-                                                   |          }
-                                                   |        ]
-                                                   |      },
-                                                   |      "4": {
-                                                   |        "map": [
-                                                   |          {
-                                                   |            "k": {
-                                                   |              "string": "key"
-                                                   |            },
-                                                   |            "v": {
-                                                   |              "string": "value"
-                                                   |            }
-                                                   |          },
-                                                   |          {
-                                                   |            "k": {
-                                                   |              "int": 14
-                                                   |            },
-                                                   |            "v": {
-                                                   |              "int": 42
-                                                   |            }
-                                                   |          }
-                                                   |        ]
-                                                   |      }
-                                                   |    }
-                                                   |""".stripMargin).getOrElse(fail("Invalid metadata json"))))
+      metadata = Some(txMetadataOut)
     )
   }
 
@@ -210,5 +245,52 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
 
   private final lazy val addressIdStr =
     "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g"
+
+  private final lazy val txMetadataOut = TxMetadataOut(json = parse("""
+                                                               |{
+                                                               |      "0": {
+                                                               |        "string": "cardano"
+                                                               |      },
+                                                               |      "1": {
+                                                               |        "int": 14
+                                                               |      },
+                                                               |      "2": {
+                                                               |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                                               |      },
+                                                               |      "3": {
+                                                               |        "list": [
+                                                               |          {
+                                                               |            "int": 14
+                                                               |          },
+                                                               |          {
+                                                               |            "int": 42
+                                                               |          },
+                                                               |          {
+                                                               |            "string": "1337"
+                                                               |          }
+                                                               |        ]
+                                                               |      },
+                                                               |      "4": {
+                                                               |        "map": [
+                                                               |          {
+                                                               |            "k": {
+                                                               |              "string": "key"
+                                                               |            },
+                                                               |            "v": {
+                                                               |              "string": "value"
+                                                               |            }
+                                                               |          },
+                                                               |          {
+                                                               |            "k": {
+                                                               |              "int": 14
+                                                               |            },
+                                                               |            "v": {
+                                                               |              "int": 42
+                                                               |            }
+                                                               |          }
+                                                               |        ]
+                                                               |      }
+                                                               |    }
+                                                               |""".stripMargin).getOrElse(fail("Invalid metadata json")))
 
 }
