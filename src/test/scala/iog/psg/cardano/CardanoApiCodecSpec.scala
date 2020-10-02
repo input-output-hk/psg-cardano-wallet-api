@@ -161,7 +161,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
                             |  }
                             |}""".stripMargin).getOrElse(fail("Invalid json.")))
 
-    println("test.toMapMetadataStr: "+test.toMapMetadataStr)
     test.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(
       0 -> MetadataValueStr("cardano"),
       1 -> MetadataValueLong(14),

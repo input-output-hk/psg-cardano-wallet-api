@@ -67,13 +67,11 @@ object CardanoApiCodec {
 
   final case class TxMetadataOut(json: Json) {
     def toMapMetadataStr: Decoder.Result[Map[Long, MetadataValue]] = {
-      println("---------> IN toMapMetadataStr")
       type KeyVal = Map[Long, MetadataValue]
 
       // using the expansion may be necessary for Circe to detect it correctly
       implicit val decodeMap: Decoder[Map[Long, MetadataValue]] = new Decoder[Map[Long, MetadataValue]] {
         override def apply(c: HCursor): Decoder.Result[KeyVal] = {
-          println("---------> IN decodeMap apply")
 
           val valueTypeString = "string"
           val valueTypeLong = "int" //named int but will work as long
@@ -83,7 +81,6 @@ object CardanoApiCodec {
 
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
             res.flatMap((map: KeyVal) => {
-              println("----> key: "+key)
 
               val keyDownField = c.downField(key)
               keyDownField.keys.flatMap(_.headOption) match {
@@ -106,31 +103,24 @@ object CardanoApiCodec {
                   )
                 case Some(valueType) if valueType == "list" =>
                   val downFieldList = keyDownField.downField(valueTypeList)
-                  println("downArray.keys' "+downFieldList.downArray.keys)
-                  println("downArray.values' "+downFieldList.downArray.values)
-
                   val keyValuesObjects: List[Json] = downFieldList.values.map(_.toList).getOrElse(Nil)
-                  println("keyValuesObjects: "+keyValuesObjects)
+
                   val listResults: Seq[Either[DecodingFailure, (String, MetadataValue)]] = keyValuesObjects.map { json =>
                     json.hcursor.keys.flatMap(_.headOption) match {
                       case Some(valueType) if valueType == valueTypeString =>
-                        println("1a downFieldList.downArray.downField(valueTypeString): "+downFieldList.downArray.downField(valueTypeString))
-                        println("1b downFieldList.downArray.downField(valueTypeString).as[String]: "+downFieldList.downArray.downField(valueTypeString).as[String])
-                        downFieldList.downArray.downField(valueTypeString).as[String].fold(
+                        json.hcursor.downField(valueTypeString).as[String].fold(
                           err => Left(err),
                           (value: String) => Right(valueTypeString -> MetadataValueStr(value))
                         )
 
                       case Some(valueType) if valueType == valueTypeLong =>
-                        println("2a downFieldList.downField(valueTypeLong): "+downFieldList.downArray.downField(valueTypeLong))
-                        println("2b downFieldList.downArray.downField(valueTypeLong): "+downFieldList.downArray.downField(valueTypeLong).as[Long])
-                        downFieldList.downArray.downField(valueTypeLong).as[Long].fold(
+                        json.hcursor.downField(valueTypeLong).as[Long].fold(
                           err => Left(err),
                           (value: Long) => Right(valueTypeLong -> MetadataValueLong(value))
                         )
 
                       case Some(valueType) if valueType == valueTypeBytes =>
-                        downFieldList.downArray.downField(valueTypeBytes).as[String].fold(
+                        json.hcursor.downField(valueTypeBytes).as[String].fold(
                           err => Left(err),
                           (value: String) => Right(valueTypeBytes -> MetadataValueByteString(ByteString(value)))
                         )
@@ -138,7 +128,6 @@ object CardanoApiCodec {
                   }
 
                   val errors = listResults.filter(_.isLeft)
-                  println("errors: "+errors)
                   if (errors.nonEmpty) Left(errors.head.swap.toOption.get)
                   else {
                     val values = listResults.flatMap(_.toOption).map(_._2)
