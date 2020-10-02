@@ -48,6 +48,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       override def close(): Unit = ()
     }
 
+    implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
+
     CardanoApiMain.run(arguments)
 
     results.reverse

@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
-      - run: sbt coverage test coverageReport
+      - run: sbt coverage test it:test coverageReport
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           CARDANO_API_WALLET_1_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}
