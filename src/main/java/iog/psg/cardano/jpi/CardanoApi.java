@@ -21,6 +21,12 @@ public class CardanoApi {
         api = null;
     }
 
+    /**
+     * CardanoApi constructor
+     *
+     * @param api iog.psg.cardano.CardanoApi instance
+     * @param helpExecute og.psg.cardano.jpi.HelpExecute instance
+     */
     public CardanoApi(iog.psg.cardano.CardanoApi api, HelpExecute helpExecute) {
         this.helpExecute = helpExecute;
         this.api = api;
@@ -28,12 +34,26 @@ public class CardanoApi {
         Objects.requireNonNull(helpExecute, "HelpExecute cannot be null");
     }
 
+    /**
+     * Create and restore a wallet from a mnemonic sentence or account public key.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
+     *
+     * @param name wallet's name
+     * @param passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
+     * @param mnemonicWordList A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39 )
+     * @param mnemonicSecondFactor An optional passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
+     * @param addressPoolGap An optional number of consecutive unused addresses allowed
+
+     * @return Created wallet
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<CardanoApiCodec.Wallet> createRestore(
             String name,
             String passphrase,
             List<String> mnemonicWordList,
             Optional<List<String>> mnemonicSecondFactor,
-            int addressPoolGap) throws CardanoApiException {
+            int addressPoolGap) throws CardanoApiException, NullPointerException {
         CardanoApiCodec.MnemonicSentence mnem = createMnemonic(mnemonicWordList);
 
         Optional<CardanoApiCodec.MnemonicSentence> mnemSecondFactor = mnemonicSecondFactor.map(CardanoApi::createMnemonic);
@@ -43,13 +63,28 @@ public class CardanoApi {
         );
     }
 
+    /**
+     * Create and send transaction from the wallet.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction #postTransaction]]
+     *
+     * @param fromWalletId wallet's id
+     * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
+     * @param payments A list of target outputs ( address, amount )
+     * @param withdrawal Optional, when provided, instruments the server to automatically withdraw rewards from the source
+     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
+     *                   as they cost).
+     * @param metadata   Extra application data attached to the transaction.
+     * @return created transaction
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
             List<CardanoApiCodec.Payment> payments,
             CardanoApiCodec.TxMetadataIn metadata,
             String withdrawal
-            ) throws CardanoApiException {
+            ) throws CardanoApiException, NullPointerException {
 
         return helpExecute.execute(api.createTransaction(fromWalletId, passphrase,
                 new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
@@ -57,6 +92,16 @@ public class CardanoApi {
                 option(withdrawal)));
     }
 
+    /**
+     * Create and send transaction from the wallet.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction #postTransaction]]
+     *
+     * @param fromWalletId wallet's id
+     * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
+     * @param payments A list of target outputs ( address, amount )
+     * @return created transaction
+     * @throws CardanoApiException
+     */
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
@@ -66,13 +111,31 @@ public class CardanoApi {
         return createTransaction(fromWalletId, passphrase, payments, null, "self");
     }
 
+    /**
+     * Get wallet details by id
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet #getWallet]]
+     *
+     * @param fromWalletId wallet's id
+     * @return wallet
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<CardanoApiCodec.Wallet> getWallet(
-            String fromWalletId) throws CardanoApiException {
+            String fromWalletId) throws CardanoApiException, NullPointerException {
 
         return helpExecute.execute(
                 api.getWallet(fromWalletId));
     }
 
+    /**
+     * Delete wallet by id
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet #deleteWallet]]
+     *
+     * @param fromWalletId wallet's id
+     * @return void
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<Void> deleteWallet(
             String fromWalletId) throws CardanoApiException {
 
@@ -80,6 +143,14 @@ public class CardanoApi {
                 api.deleteWallet(fromWalletId)).thenApply(x -> null);
     }
 
+    /**
+     * Get transaction by id.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction #getTransaction]]
+     *
+     * @param walletId wallet's id
+     * @param transactionId transaction's id
+     * @return get transaction request
+     */
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
             String walletId, String transactionId) throws CardanoApiException {
 
@@ -87,42 +158,105 @@ public class CardanoApi {
                 api.getTransaction(walletId, transactionId));
     }
 
+    /**
+     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
+     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
+     * is lower than at least 90% of the fees observed.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee #estimateFee]]
+     *
+     * @param walletId wallet's id
+     * @param payments A list of target outputs ( address, amount )
+     * @return estimatedfee response
+     */
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
         return estimateFee(walletId, payments, "self");
     }
 
+    /**
+     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
+     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
+     * is lower than at least 90% of the fees observed.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee #estimateFee]]
+     *
+     * @param walletId wallet's id
+     * @param payments A list of target outputs ( address, amount )
+     * @param withdrawal Optional, when provided, instruments the server to automatically withdraw rewards from the source
+     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
+     *                   as they cost).
+     * @return estimatedfee response
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
-            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal) throws CardanoApiException {
+            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal) throws CardanoApiException, NullPointerException {
         return helpExecute.execute(
                 api.estimateFee(walletId,
                         new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                        withdrawal));
+                        withdrawal, option(Optional.empty()))); //TODO provide metadata
     }
+    //TODO estimate fee with metadataIn
 
+    /**
+     * Select coins to cover the given set of payments.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Coin-Selections #CoinSelections]]
+     *
+     * @param walletId wallet's id
+     * @param payments A list of target outputs ( address, amount )
+     * @return fund payments
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
-            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
+            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException, NullPointerException {
         return helpExecute.execute(
                 api.fundPayments(walletId,
                         new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq())));
     }
 
+    /**
+     * list of known addresses, ordered from newest to oldest
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
+     *
+     * @param walletId wallet's id
+     * @param addressFilter addresses state: used, unused
+     * @return list of wallet's addresses
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
-            String walletId, AddressFilter addressFilter) throws CardanoApiException {
+            String walletId, AddressFilter addressFilter) throws CardanoApiException, NullPointerException {
         Enumeration.Value v = CardanoApiCodec.AddressFilter$.MODULE$.Value(addressFilter.name().toLowerCase());
         return helpExecute.execute(
                 api.listAddresses(walletId, scala.Option.apply(v))).thenApply(CollectionConverters::asJava);
     }
 
+    /**
+     * list of known addresses, ordered from newest to oldest
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
+     *
+     * @param walletId wallet's id
+     * @return list of wallet's addresses
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
-            String walletId) throws CardanoApiException {
+            String walletId) throws CardanoApiException, NullPointerException {
         return helpExecute.execute(
                 api.listAddresses(walletId, scala.Option.empty())).thenApply(CollectionConverters::asJava);
     }
 
-
+    /**
+     * Lists all incoming and outgoing wallet's transactions.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions #listTransactions]]
+     *
+     * @param builder ListTransactionsParamBuilder
+     * @return list of wallet's transactions
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<List<CardanoApiCodec.CreateTransactionResponse>> listTransactions(
-            ListTransactionsParamBuilder builder) throws CardanoApiException {
+            ListTransactionsParamBuilder builder) throws CardanoApiException, NullPointerException {
         return helpExecute.execute(
                 api.listTransactions(
                         builder.getWalletId(),
@@ -133,25 +267,49 @@ public class CardanoApi {
                 .thenApply(CollectionConverters::asJava);
     }
 
-
-    public CompletionStage<List<CardanoApiCodec.Wallet>> listWallets() throws CardanoApiException {
+    /**
+     * list of known wallets, ordered from oldest to newest.
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets #listWallets]]
+     *
+     * @return wallets's list
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
+    public CompletionStage<List<CardanoApiCodec.Wallet>> listWallets() throws CardanoApiException, NullPointerException {
         return helpExecute.execute(
                 api.listWallets())
                 .thenApply(CollectionConverters::asJava);
     }
 
+    /**
+     * Update Passphrase
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase #putWalletPassphrase]]
+     * @param walletId wallet's id
+     * @param oldPassphrase current passphrase
+     * @param newPassphrase new passphrase
+     * @return void
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
     public CompletionStage<Void> updatePassphrase(
             String walletId,
             String oldPassphrase,
-            String newPassphrase) throws CardanoApiException {
+            String newPassphrase) throws CardanoApiException, NullPointerException {
 
         return helpExecute.execute(api.updatePassphrase(walletId, oldPassphrase, newPassphrase)).thenApply(x -> null);
     }
 
-    public CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException {
+    /**
+     * Gives network information
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation #getNetworkInformation]]
+     *
+     * @return network info
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
+    public CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException, NullPointerException {
         return helpExecute.execute(api.networkInfo());
     }
-
 
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);

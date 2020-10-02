@@ -83,6 +83,12 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
+  /**
+   * list of known wallets, ordered from oldest to newest.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets #listWallets]]
+   *
+   * @return list wallets request
+   */
   def listWallets: CardanoApiRequest[Seq[Wallet]] = CardanoApiRequest(
     HttpRequest(
       uri = wallets,
@@ -91,6 +97,13 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     _.toWallets
   )
 
+  /**
+   * Get wallet details by id
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet #getWallet]]
+   *
+   * @param walletId wallet's id
+   * @return get wallet request
+   */
   def getWallet(walletId: String): CardanoApiRequest[Wallet] = CardanoApiRequest(
     HttpRequest(
       uri = s"${wallets}/$walletId",
@@ -99,6 +112,12 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     _.toWallet
   )
 
+  /**
+   * Gives network information
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation #getNetworkInformation]]
+   *
+   * @return network info request
+   */
   def networkInfo: CardanoApiRequest[NetworkInfo] = CardanoApiRequest(
     HttpRequest(
       uri = s"${network}/information",
@@ -109,13 +128,14 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
   /**
    * Create and restore a wallet from a mnemonic sentence or account public key.
-    Api Url: https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet
-    @name wallet's name
-    @mnemonicSentence A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39 )
-    @mnemonicSecondFactor An optional passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
-    @passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
-    @addressPoolFap An optional number of consecutive unused addresses allowed
-    @return Wallet
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
+   *
+   * @param name wallet's name
+   * @param passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
+   * @param mnemonicSentence A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39 )
+   * @param mnemonicSecondFactor An optional passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
+   * @param addressPoolGap An optional number of consecutive unused addresses allowed
+   * @return create/restore wallet request
    */
   def createRestoreWallet(
                            name: String,
@@ -147,6 +167,14 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
   }
 
+  /**
+   * list of known addresses, ordered from newest to oldest
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
+   *
+   * @param walletId wallet's id
+   * @param state addresses state: used, unused
+   * @return list wallet addresses request
+   */
   def listAddresses(walletId: String,
                     state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]] = {
 
@@ -166,6 +194,22 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
 
   }
 
+  /**
+   * Lists all incoming and outgoing wallet's transactions.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions #listTransactions]]
+   *
+   * @param walletId wallet's id
+   * @param start    An optional start time in ISO 8601 date-and-time format. Basic and extended formats are both accepted. Times can be local (with a timezone offset) or UTC.
+   *                 If both a start time and an end time are specified, then the start time must not be later than the end time.
+   *                 Example: 2008-08-08T08:08:08Z
+   * @param end      An optional end time in ISO 8601 date-and-time format. Basic and extended formats are both accepted. Times can be local (with a timezone offset) or UTC.
+   *                 If both a start time and an end time are specified, then the start time must not be later than the end time.
+   *                 Example: 2008-08-08T08:08:08Z
+   * @param order    Default: "descending" ( "ascending", "descending" )
+   * @param minWithdrawal Returns only transactions that have at least one withdrawal above the given amount.
+   *                      This is particularly useful when set to 1 in order to list the withdrawal history of a wallet.
+   * @return list wallet's transactions request
+   */
   def listTransactions(walletId: String,
                        start: Option[ZonedDateTime] = None,
                        end: Option[ZonedDateTime] = None,
@@ -193,7 +237,19 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     )
   }
 
-
+  /**
+   * Create and send transaction from the wallet.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction #postTransaction]]
+   *
+   * @param fromWalletId wallet's id
+   * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
+   * @param payments A list of target outputs ( address, amount )
+   * @param withdrawal Optional, when provided, instruments the server to automatically withdraw rewards from the source
+   *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
+   *                   as they cost).
+   * @param metadata   Extra application data attached to the transaction.
+   * @return create transaction request
+   */
   def createTransaction(fromWalletId: String,
                         passphrase: String,
                         payments: Payments,
@@ -216,9 +272,24 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     }
   }
 
+  /**
+   * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
+   * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
+   * is lower than at least 90% of the fees observed.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee #estimateFee]]
+   *
+   * @param fromWalletId wallet's id
+   * @param payments A list of target outputs ( address, amount )
+   * @param withdrawal Optional, when provided, instruments the server to automatically withdraw rewards from the source
+   *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
+   *                   as they cost).
+   * @param metadataIn Extra application data attached to the transaction.
+   * @return estimate fee request
+   */
   def estimateFee(fromWalletId: String,
                   payments: Payments,
-                  withdrawal: String = "self"
+                  withdrawal: String = "self",
+                  metadataIn: Option[TxMetadataIn] = None
                  ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 
     val estimateFees = EstimateFee(payments.payments, withdrawal)
@@ -235,6 +306,14 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     }
   }
 
+  /**
+   * Select coins to cover the given set of payments.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Coin-Selections #CoinSelections]]
+   *
+   * @param walletId wallet's id
+   * @param payments A list of target outputs ( address, amount )
+   * @return fund payments request
+   */
   def fundPayments(walletId: String,
                    payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]] = {
     Marshal(payments).to[RequestEntity] map { marshalled =>
@@ -249,6 +328,14 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     }
   }
 
+  /**
+   * Get transaction by id.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction #getTransaction]]
+   *
+   * @param walletId wallet's id
+   * @param transactionId transaction's id
+   * @return get transaction request
+   */
   def getTransaction[T <: TxMetadataIn](
                                          walletId: String,
                                          transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
@@ -264,6 +351,14 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     )
   }
 
+  /**
+   * Update Passphrase
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase #putWalletPassphrase]]
+   * @param walletId wallet's id
+   * @param oldPassphrase current passphrase
+   * @param newPassphrase new passphrase
+   * @return update passphrase request
+   */
   def updatePassphrase(
                         walletId: String,
                         oldPassphrase: String,
@@ -285,6 +380,12 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     }
   }
 
+  /**
+   * Delete wallet by id
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet #deleteWallet]]
+   * @param walletId wallet's id
+   * @return delete wallet request
+   */
   def deleteWallet(
                     walletId: String
                   ): CardanoApiRequest[Unit] = {
