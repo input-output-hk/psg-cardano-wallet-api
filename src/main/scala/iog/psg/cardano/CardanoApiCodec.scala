@@ -10,6 +10,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.CursorOp.DownField
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
@@ -64,33 +65,69 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
 
   final case class TxMetadataOut(json: Json) {
-    def toMapMetadataStr: Decoder.Result[Map[Long, String]] = {
+    def toMapMetadataStr: Decoder.Result[Map[Long, MetadataValue]] = {
       println("---------> IN toMapMetadataStr")
-      type KeyVal = Map[Long, String]
+      type KeyVal = Map[Long, MetadataValue]
 
       // using the expansion may be necessary for Circe to detect it correctly
-      implicit val decodeMap: Decoder[Map[Long, String]] = new Decoder[Map[Long, String]] {
+      implicit val decodeMap: Decoder[Map[Long, MetadataValue]] = new Decoder[Map[Long, MetadataValue]] {
         override def apply(c: HCursor): Decoder.Result[KeyVal] = {
           println("---------> IN decodeMap apply")
+
+          val valueTypeString = "string"
+          val valueTypeLong = "int" //named int but will work as long
+          val valueTypeBytes = "bytes"
+          val valueTypeList = "list"
+
+
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
-            res.right.flatMap((map: KeyVal) => {
+            res.flatMap((map: KeyVal) => {
               println("key: "+key)
               println("map: "+map)
-              println("c.downField(key): "+c.downField(key).as[String])
-              c.downField(key).as[String].fold(
+              println("c.downField(key): "+c.downField(key).downField("string").as[String])
+              println("c.downField(key).keys: "+c.downField(key).keys.flatMap(_.headOption))
+
+              val keyDownField = c.downField(key)
+              keyDownField.keys.flatMap(_.headOption) match {
+                case Some(valueType) if valueType == valueTypeString =>
+                  keyDownField.downField(valueTypeString).as[String].fold(
+                    err => Left(err),
+                    (value: String) => Right(map.+(key.toLong -> MetadataValueStr(value)))
+                  )
+
+                case Some(valueType) if valueType == valueTypeLong =>
+                  keyDownField.downField(valueTypeLong).as[Long].fold(
+                    err => Left(err),
+                    (value: Long) => Right(map.+(key.toLong -> MetadataValueLong(value)))
+                  )
+
+                case Some(valueType) if valueType == valueTypeBytes =>
+                  keyDownField.downField(valueTypeBytes).as[String].fold(
+                    err => Left(err),
+                    (value: String) => Right(map.+(key.toLong -> MetadataValueByteString(ByteString(value))))
+                  )
+                case Some(valueType) if valueType == "list" =>
+                  val keyValuesObjects: List[Json] = keyDownField.downField(valueTypeList).values.map(_.toList).getOrElse(Nil)
+
+                  ???
+                case Some(valueType) if valueType == "map" => ???
+                case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
+              }
+
+              /*c.downField(key).as[Long].fold(
                 { err =>
                   println("--> err: "+err)
                   Left(err)
                 },
-                (value: String) => {
+                (value: Long) => {
                   println("value: "+value)
-                  Right(map.+(key.toLong -> value))
+                  Right(map.+(key.toLong -> MetadataValueStr(value.toString)))
                 }
-              )
+              )*/
             })
           }
 
-          def emptyMapResult: Decoder.Result[KeyVal] = Right(Map[Long, String]().empty)
+          def emptyMapResult: Decoder.Result[KeyVal] = Right(Map[Long, MetadataValue]().empty)
 
           def withKeys(keys: Iterable[String]): Decoder.Result[KeyVal] = keys.foldLeft(emptyMapResult)(extractValueForKeyInto)
 
@@ -98,7 +135,7 @@ object CardanoApiCodec {
         }
       }
 
-      json.as[Map[Long, String]](decodeMap)
+      json.as[Map[Long, MetadataValue]](decodeMap)
     }
   }
 
