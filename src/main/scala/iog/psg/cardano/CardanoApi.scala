@@ -111,17 +111,18 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
    * Create and restore a wallet from a mnemonic sentence or account public key.
     Api Url: https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet
     @name wallet's name
-    @mnemonicSentence A list of mnemonic words ( can be generated using https://iancoleman.io/bip39 )
+    @mnemonicSentence A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39 )
+    @mnemonicSecondFactor An optional passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
     @passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
-    @addressPoolFap Number of consecutive unused addresses allowed ( optional )
+    @addressPoolFap An optional number of consecutive unused addresses allowed
     @return Wallet
    */
   def createRestoreWallet(
                            name: String,
                            passphrase: String,
                            mnemonicSentence: MnemonicSentence,
+                           mnemonicSecondFactor: Option[MnemonicSentence] = None, //TODO write tests scala+java
                            addressPoolGap: Option[Int] = None
-
                          ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =
@@ -129,6 +130,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
         name,
         passphrase,
         mnemonicSentence.mnemonicSentence,
+        mnemonicSecondFactor.map(_.mnemonicSentence),
         addressPoolGap
       )
 

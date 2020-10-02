@@ -5,7 +5,6 @@ import scala.Enumeration;
 import scala.Option;
 import scala.jdk.CollectionConverters;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -35,7 +34,7 @@ public class JpiResponseCheck {
 
     public void createBadWallet() throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
         List<String> mnem = Arrays.asList("", "sdfa", "dfd");
-        jpi.createRestore("some name", "password99", mnem, 4).toCompletableFuture().get(timeout, timeoutUnit);
+        jpi.createRestore("some name", "password99", mnem, Optional.empty(), 4).toCompletableFuture().get(timeout, timeoutUnit);
     }
 
     public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
@@ -45,7 +44,7 @@ public class JpiResponseCheck {
                 return true;
             }
         }
-        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList,addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList, Optional.empty(), addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
         return created.id().contentEquals(ourWalletId);
     }
 

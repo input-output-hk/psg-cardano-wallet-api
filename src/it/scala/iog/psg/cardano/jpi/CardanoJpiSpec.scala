@@ -9,6 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
+import scala.jdk.OptionConverters.RichOption
 
 
 class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare {
@@ -41,6 +42,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
         testWalletName,
         testWalletPassphrase,
         mnem.mnemonicSentence.asJava,
+        None.toJava,
         10
       ).toCompletableFuture.get()
 

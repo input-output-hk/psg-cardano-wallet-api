@@ -202,6 +202,7 @@ object CardanoApiCodec {
                             name: String,
                             passphrase: String,
                             mnemonicSentence: IndexedSeq[String],
+                            mnemonicSecondFactor: Option[IndexedSeq[String]] = None,
                             addressPoolGap: Option[Int] = None
                           ) {
     require(

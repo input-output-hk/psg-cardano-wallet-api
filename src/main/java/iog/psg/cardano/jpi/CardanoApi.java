@@ -32,10 +32,14 @@ public class CardanoApi {
             String name,
             String passphrase,
             List<String> mnemonicWordList,
+            Optional<List<String>> mnemonicSecondFactor,
             int addressPoolGap) throws CardanoApiException {
         CardanoApiCodec.MnemonicSentence mnem = createMnemonic(mnemonicWordList);
+
+        Optional<CardanoApiCodec.MnemonicSentence> mnemSecondFactor = mnemonicSecondFactor.map(CardanoApi::createMnemonic);
+
         return helpExecute.execute(
-                api.createRestoreWallet(name, passphrase, mnem, option(addressPoolGap))
+                api.createRestoreWallet(name, passphrase, mnem, option(mnemSecondFactor), option(addressPoolGap))
         );
     }
 

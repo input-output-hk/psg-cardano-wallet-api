@@ -5,10 +5,7 @@ import iog.psg.cardano.jpi.CardanoApi;
 import iog.psg.cardano.jpi.*;
 import scala.Enumeration;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +34,7 @@ public class TestMain {
                 wallet =
                         api.getWallet(walletId).toCompletableFuture().get();
             } catch(Exception e) {
-                wallet = api.createRestore("cardanoapimainspec", passphrase, menmLst, 10).toCompletableFuture().get();
+                wallet = api.createRestore("cardanoapimainspec", passphrase, menmLst, Optional.empty(),10).toCompletableFuture().get();
             }
 
             CardanoApiCodec.WalletAddressId unusedAddr = api.listAddresses(wallet.id(), AddressFilter.UNUSED).toCompletableFuture().get().get(0);
