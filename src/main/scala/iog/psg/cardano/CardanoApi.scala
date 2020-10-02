@@ -107,6 +107,15 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     _.toNetworkInfoResponse
   )
 
+  /**
+   * Create and restore a wallet from a mnemonic sentence or account public key.
+    Api Url: https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet
+    @name wallet's name
+    @mnemonicSentence A list of mnemonic words ( can be generated using https://iancoleman.io/bip39 )
+    @passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
+    @addressPoolFap Number of consecutive unused addresses allowed ( optional )
+    @return Wallet
+   */
   def createRestoreWallet(
                            name: String,
                            passphrase: String,
