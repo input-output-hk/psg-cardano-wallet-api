@@ -19,6 +19,7 @@ import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
 import iog.psg.cardano.CardanoApiCodec.DelegationStatus.DelegationStatus
+import iog.psg.cardano.CardanoApiCodec.{MetadataValueByteString, MetadataValueLong, MetadataValueStr}
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
@@ -82,10 +83,7 @@ object CardanoApiCodec {
 
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
             res.flatMap((map: KeyVal) => {
-              println("key: "+key)
-              println("map: "+map)
-              println("c.downField(key): "+c.downField(key).downField("string").as[String])
-              println("c.downField(key).keys: "+c.downField(key).keys.flatMap(_.headOption))
+              println("----> key: "+key)
 
               val keyDownField = c.downField(key)
               keyDownField.keys.flatMap(_.headOption) match {
@@ -107,23 +105,49 @@ object CardanoApiCodec {
                     (value: String) => Right(map.+(key.toLong -> MetadataValueByteString(ByteString(value))))
                   )
                 case Some(valueType) if valueType == "list" =>
-                  val keyValuesObjects: List[Json] = keyDownField.downField(valueTypeList).values.map(_.toList).getOrElse(Nil)
+                  val downFieldList = keyDownField.downField(valueTypeList)
+                  println("downArray.keys' "+downFieldList.downArray.keys)
+                  println("downArray.values' "+downFieldList.downArray.values)
 
-                  ???
+                  val keyValuesObjects: List[Json] = downFieldList.values.map(_.toList).getOrElse(Nil)
+                  println("keyValuesObjects: "+keyValuesObjects)
+                  val listResults: Seq[Either[DecodingFailure, (String, MetadataValue)]] = keyValuesObjects.map { json =>
+                    json.hcursor.keys.flatMap(_.headOption) match {
+                      case Some(valueType) if valueType == valueTypeString =>
+                        println("1a downFieldList.downArray.downField(valueTypeString): "+downFieldList.downArray.downField(valueTypeString))
+                        println("1b downFieldList.downArray.downField(valueTypeString).as[String]: "+downFieldList.downArray.downField(valueTypeString).as[String])
+                        downFieldList.downArray.downField(valueTypeString).as[String].fold(
+                          err => Left(err),
+                          (value: String) => Right(valueTypeString -> MetadataValueStr(value))
+                        )
+
+                      case Some(valueType) if valueType == valueTypeLong =>
+                        println("2a downFieldList.downField(valueTypeLong): "+downFieldList.downArray.downField(valueTypeLong))
+                        println("2b downFieldList.downArray.downField(valueTypeLong): "+downFieldList.downArray.downField(valueTypeLong).as[Long])
+                        downFieldList.downArray.downField(valueTypeLong).as[Long].fold(
+                          err => Left(err),
+                          (value: Long) => Right(valueTypeLong -> MetadataValueLong(value))
+                        )
+
+                      case Some(valueType) if valueType == valueTypeBytes =>
+                        downFieldList.downArray.downField(valueTypeBytes).as[String].fold(
+                          err => Left(err),
+                          (value: String) => Right(valueTypeBytes -> MetadataValueByteString(ByteString(value)))
+                        )
+                    }
+                  }
+
+                  val errors = listResults.filter(_.isLeft)
+                  println("errors: "+errors)
+                  if (errors.nonEmpty) Left(errors.head.swap.toOption.get)
+                  else {
+                    val values = listResults.flatMap(_.toOption).map(_._2)
+                    Right(map.+(key.toLong -> MetadataValueArray(values)))
+                  }
+
                 case Some(valueType) if valueType == "map" => ???
                 case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
               }
-
-              /*c.downField(key).as[Long].fold(
-                { err =>
-                  println("--> err: "+err)
-                  Left(err)
-                },
-                (value: Long) => {
-                  println("value: "+value)
-                  Right(map.+(key.toLong -> MetadataValueStr(value.toString)))
-                }
-              )*/
             })
           }
 
