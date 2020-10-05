@@ -19,7 +19,6 @@ import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
 import iog.psg.cardano.CardanoApiCodec.DelegationStatus.DelegationStatus
-import iog.psg.cardano.CardanoApiCodec.{MetadataValueByteString, MetadataValueLong, MetadataValueStr}
 import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
 import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
 import iog.psg.cardano.CardanoApiCodec.TxState.TxState
@@ -79,56 +78,51 @@ object CardanoApiCodec {
           val valueTypeList = "list"
           val valueTypeMap = "map"
 
-          def extractStringField(json: Json): Either[DecodingFailure, MetadataValueStr] =
-            json.hcursor.downField(valueTypeString).as[String].fold(
+          def extractStringField(cursor: ACursor): Either[DecodingFailure, MetadataValueStr] =
+            cursor.downField(valueTypeString).as[String].fold(
               err => Left(err),
               (value: String) => Right(MetadataValueStr(value))
             )
 
-          def extractLongField(json: Json): Either[DecodingFailure, MetadataValueLong] =
-            json.hcursor.downField(valueTypeLong).as[Long].fold(
+          def extractLongField(cursor: ACursor): Either[DecodingFailure, MetadataValueLong] =
+            cursor.downField(valueTypeLong).as[Long].fold(
               err => Left(err),
               (value: Long) => Right(MetadataValueLong(value))
             )
 
-          def extractBytesField(json: Json): Either[DecodingFailure, MetadataValueByteString] =
-            json.hcursor.downField(valueTypeBytes).as[String].fold(
+          def extractBytesField(cursor: ACursor): Either[DecodingFailure, MetadataValueByteString] =
+            cursor.downField(valueTypeBytes).as[String].fold(
               err => Left(err),
               (value: String) => Right(MetadataValueByteString(ByteString(value)))
             )
 
-          def extractTypedFieldValue(json: Json): Either[DecodingFailure, MetadataValue] = json.hcursor.keys.flatMap(_.headOption) match {
-            case Some(valueType) if valueType == valueTypeString =>
-              extractStringField(json)
+          def extractTypedFieldValue(json: Json): Either[DecodingFailure, MetadataValue] = {
+            val cursor = json.hcursor
+            cursor.keys.flatMap(_.headOption) match {
+              case Some(valueType) if valueType == valueTypeString =>
+                extractStringField(cursor)
 
-            case Some(valueType) if valueType == valueTypeLong =>
-              extractLongField(json)
+              case Some(valueType) if valueType == valueTypeLong =>
+                extractLongField(cursor)
 
-            case Some(valueType) if valueType == valueTypeBytes =>
-              extractBytesField(json)
+              case Some(valueType) if valueType == valueTypeBytes =>
+                extractBytesField(cursor)
+            }
           }
 
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
             res.flatMap((map: KeyVal) => {
-              val keyDownField = c.downField(key)
+              val keyDownField: ACursor = c.downField(key)
               keyDownField.keys.flatMap(_.headOption) match {
                 case Some(valueType) if valueType == valueTypeString =>
-                  keyDownField.downField(valueTypeString).as[String].fold(
-                    err => Left(err),
-                    (value: String) => Right(map.+(key.toLong -> MetadataValueStr(value)))
-                  )
+                  extractStringField(keyDownField).map(extractedValue => map.+(key.toLong -> extractedValue))
 
                 case Some(valueType) if valueType == valueTypeLong =>
-                  keyDownField.downField(valueTypeLong).as[Long].fold(
-                    err => Left(err),
-                    (value: Long) => Right(map.+(key.toLong -> MetadataValueLong(value)))
-                  )
+                  extractLongField(keyDownField).map(extractedValue => map.+(key.toLong -> extractedValue))
 
                 case Some(valueType) if valueType == valueTypeBytes =>
-                  keyDownField.downField(valueTypeBytes).as[String].fold(
-                    err => Left(err),
-                    (value: String) => Right(map.+(key.toLong -> MetadataValueByteString(ByteString(value))))
-                  )
+                  extractBytesField(keyDownField).map(extractedValue => map.+(key.toLong -> extractedValue))
+
                 case Some(valueType) if valueType == valueTypeList =>
                   val downFieldList = keyDownField.downField(valueTypeList)
                   val keyValuesObjects: List[Json] = downFieldList.values.map(_.toList).getOrElse(Nil)
