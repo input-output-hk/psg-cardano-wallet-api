@@ -4,6 +4,8 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.TestWalletsConfig
+import iog.psg.cardano.common.TestWalletFixture
 import iog.psg.cardano.util.{Configure, ModelCompare}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
@@ -16,26 +18,11 @@ import scala.jdk.OptionConverters.RichOption
 class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
-    sut.deleteWallet(testWallet3Id)
+    sut.deleteWallet(TestWalletsConfig.walletsMap(3).id)
     super.afterAll()
   }
 
-  private val baseUrl = config.getString("cardano.wallet.baseUrl")
-  private val testWalletName = config.getString("cardano.wallet.name")
-  private val testWallet2Name = config.getString("cardano.wallet2.name")
-  private val testWalletMnemonic = config.getString("cardano.wallet.mnemonic")
-  private val testWallet2Mnemonic = config.getString("cardano.wallet2.mnemonic")
-  private val testWalletId = config.getString("cardano.wallet.id")
-  private val testWallet2Id = config.getString("cardano.wallet2.id")
-  private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
-  private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
-  private val testWallet3Name = config.getString("cardano.wallet3.name")
-  private val testWallet3Mnemonic = config.getString("cardano.wallet3.mnemonic")
-  private val testWallet3MnemonicSecondary = config.getString("cardano.wallet3.mnemonicsecondary")
-  private val testWallet3Id = config.getString("cardano.wallet3.id")
-  private val testWallet3Passphrase = config.getString("cardano.wallet3.passphrase")
-
-  private val testAmountToTransfer = config.getString("cardano.wallet.amount")
+  private val baseUrl = TestWalletsConfig.baseUrl
   private val timeoutValue: Long = 10
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
@@ -46,10 +33,10 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     networkState shouldBe "ready"
   }
 
-  "Jpi CardanoAPI" should "allow override of execute" in {
+  "Jpi CardanoAPI" should "allow override of execute" in new TestWalletFixture(1) {
     val api = JpiResponseCheck.buildWithDummyApiExecutor()
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
-    val wallet = api
+    val createdWallet = api
       .createRestore(
         testWalletName,
         testWalletPassphrase,
@@ -94,17 +81,17 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
       tip = networkTip
     )
 
-    compareWallets(wallet, properWallet)
+    compareWallets(createdWallet, properWallet)
   }
 
   "Bad wallet creation" should "be prevented" in {
     an[IllegalArgumentException] shouldBe thrownBy(sut.createBadWallet())
   }
 
-  "Test wallet" should "exist or be created" in {
+  "Test wallet" should "exist or be created" in new TestWalletFixture(1) {
 
     val aryLen = testWalletMnemonic.split(" ").length
-    val aryLen2 = testWallet2Mnemonic.split(" ").length
+    val aryLen2 = TestWalletsConfig.walletsMap(2).mnemonic.split(" ").length
 
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut
@@ -115,48 +102,48 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
         mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
-  it should "get our wallet" in {
+  it should "get our wallet" in new TestWalletFixture(1){
     sut.getWallet(testWalletId) shouldBe true
   }
 
-  it should "create r find wallet 2" in {
-    val mnem = GenericMnemonicSentence(testWallet2Mnemonic)
+  it should "create r find wallet 2" in new TestWalletFixture(2){
+    val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut
       .findOrCreateTestWallet(
-        testWallet2Id,
-        testWallet2Name,
-        testWallet2Passphrase,
+        testWalletId,
+        testWalletName,
+        testWalletPassphrase,
         mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
-  it should "allow password change in wallet 2" in {
-    sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase)
+  it should "allow password change in wallet 2" in new TestWalletFixture(2) {
+    sut.passwordChange(testWalletId, testWalletPassphrase, testWalletPassphrase)
     //now this is the wrong password
-    an[Exception] shouldBe thrownBy(sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
+    an[Exception] shouldBe thrownBy(sut.passwordChange(testWalletId, testWalletPassphrase.toUpperCase(), testWalletPassphrase))
 
-    sut.passwordChange(testWallet2Id, testWalletPassphrase, testWallet2Passphrase)
+    sut.passwordChange(testWalletId, testWalletPassphrase, testWalletPassphrase.toUpperCase())
   }
 
-  it should "create wallet with secondary factor" in {
-    val mnem = GenericMnemonicSentence(testWallet3Mnemonic)
-    val mnemSecondary = GenericMnemonicSecondaryFactor(testWallet3MnemonicSecondary)
+  it should "create wallet with secondary factor" in new TestWalletFixture(3) {
+    val mnem = GenericMnemonicSentence(testWalletMnemonic)
+    val mnemSecondary = GenericMnemonicSecondaryFactor(testWalletMnemonicSecondary.get)
 
-    val wallet = sut.createTestWallet(
-      testWallet3Name,
-      testWallet3Passphrase,
+    val createdWallet = sut.createTestWallet(
+      testWalletName,
+      testWalletPassphrase,
       mnem.mnemonicSentence.asJava,
       Some(mnemSecondary.mnemonicSentence.asJava).toJava,
       10)
 
-    wallet.id shouldBe testWallet3Id
+    createdWallet.id shouldBe testWalletId
   }
 
-  it should "fund payments" in {
-    val response = sut.fundPayments(testWalletId, testAmountToTransfer.toInt)
+  it should "fund payments" in new TestWalletFixture(1) {
+    val response = sut.fundPayments(testWalletId, testAmountToTransfer.get.toInt)
 
   }
 
-  it should "transact from a to a with metadata" in {
+  it should "transact from a to a with metadata" in new TestWalletFixture(1) {
 
     val metadata: Map[String, String] = Map(
       Long.box(Long.MaxValue).toString -> "0" * 64,
@@ -164,7 +151,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     )
 
     val createTxResponse =
-      sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.toInt, metadata.asJava)
+      sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.get.toInt, metadata.asJava)
     val id = createTxResponse.id
     val getTxResponse = sut.getTx(testWalletId, createTxResponse.id)
 
@@ -176,11 +163,10 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
   }
 
 
-  it should "delete wallet 2" in {
-    sut.deleteWallet(testWallet2Id)
-    an[Exception] shouldBe thrownBy(sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
+  it should "delete wallet 2" in new TestWalletFixture(2){
+    sut.deleteWallet(testWalletId)
+    an[Exception] shouldBe thrownBy(sut.getWallet(testWalletId), "Wallet should not be retrieved")
   }
 
-  //TODO estimate fee
 }
 
