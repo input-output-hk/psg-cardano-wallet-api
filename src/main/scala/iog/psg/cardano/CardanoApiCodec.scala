@@ -79,25 +79,33 @@ object CardanoApiCodec {
           val valueTypeList = "list"
           val valueTypeMap = "map"
 
+          def extractStringField(json: Json): Either[DecodingFailure, MetadataValueStr] =
+            json.hcursor.downField(valueTypeString).as[String].fold(
+              err => Left(err),
+              (value: String) => Right(MetadataValueStr(value))
+            )
 
-          def extractTypedFieldValue(json: Json): Either[DecodingFailure, (String, MetadataValue)] = json.hcursor.keys.flatMap(_.headOption) match {
+          def extractLongField(json: Json): Either[DecodingFailure, MetadataValueLong] =
+            json.hcursor.downField(valueTypeLong).as[Long].fold(
+              err => Left(err),
+              (value: Long) => Right(MetadataValueLong(value))
+            )
+
+          def extractBytesField(json: Json): Either[DecodingFailure, MetadataValueByteString] =
+            json.hcursor.downField(valueTypeBytes).as[String].fold(
+              err => Left(err),
+              (value: String) => Right(MetadataValueByteString(ByteString(value)))
+            )
+
+          def extractTypedFieldValue(json: Json): Either[DecodingFailure, MetadataValue] = json.hcursor.keys.flatMap(_.headOption) match {
             case Some(valueType) if valueType == valueTypeString =>
-              json.hcursor.downField(valueTypeString).as[String].fold(
-                err => Left(err),
-                (value: String) => Right(valueTypeString -> MetadataValueStr(value))
-              )
+              extractStringField(json)
 
             case Some(valueType) if valueType == valueTypeLong =>
-              json.hcursor.downField(valueTypeLong).as[Long].fold(
-                err => Left(err),
-                (value: Long) => Right(valueTypeLong -> MetadataValueLong(value))
-              )
+              extractLongField(json)
 
             case Some(valueType) if valueType == valueTypeBytes =>
-              json.hcursor.downField(valueTypeBytes).as[String].fold(
-                err => Left(err),
-                (value: String) => Right(valueTypeBytes -> MetadataValueByteString(ByteString(value)))
-              )
+              extractBytesField(json)
           }
 
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
@@ -125,12 +133,12 @@ object CardanoApiCodec {
                   val downFieldList = keyDownField.downField(valueTypeList)
                   val keyValuesObjects: List[Json] = downFieldList.values.map(_.toList).getOrElse(Nil)
 
-                  val listResults: Seq[Either[DecodingFailure, (String, MetadataValue)]] = keyValuesObjects.map(extractTypedFieldValue)
+                  val listResults: Seq[Either[DecodingFailure, MetadataValue]] = keyValuesObjects.map(extractTypedFieldValue)
 
                   val errors = listResults.filter(_.isLeft)
                   if (errors.nonEmpty) Left(errors.head.swap.toOption.get)
                   else {
-                    val values = listResults.flatMap(_.toOption).map(_._2)
+                    val values = listResults.flatMap(_.toOption)
                     Right(map.+(key.toLong -> MetadataValueArray(values)))
                   }
 
@@ -145,7 +153,7 @@ object CardanoApiCodec {
 
                   val results: Seq[Either[DecodingFailure, (MetadataKey, MetadataValue)]] = keyValuesObjects.map { json =>
                     (getMapField[MetadataKey]("k", json), getMapField[MetadataValue]("v", json)) match {
-                      case (Right(keyField), Right(valueField)) => Right(keyField._2.asInstanceOf[MetadataKey] -> valueField._2)
+                      case (Right(keyField), Right(valueField)) => Right(keyField.asInstanceOf[MetadataKey] -> valueField)
                       case (Left(error), _) => Left(error)
                       case (_ , Left(error)) => Left(error)
                     }
