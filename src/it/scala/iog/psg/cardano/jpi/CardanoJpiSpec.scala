@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.{Configure, ModelCompare}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -12,7 +13,12 @@ import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 import scala.jdk.OptionConverters.RichOption
 
 
-class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare {
+class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
+
+  override def afterAll(): Unit = {
+    sut.deleteWallet(testWallet3Id)
+    super.afterAll()
+  }
 
   private val baseUrl = config.getString("cardano.wallet.baseUrl")
   private val testWalletName = config.getString("cardano.wallet.name")
@@ -23,6 +29,12 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
   private val testWallet2Id = config.getString("cardano.wallet2.id")
   private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
   private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
+  private val testWallet3Name = config.getString("cardano.wallet3.name")
+  private val testWallet3Mnemonic = config.getString("cardano.wallet3.mnemonic")
+  private val testWallet3MnemonicSecondary = config.getString("cardano.wallet3.mnemonicsecondary")
+  private val testWallet3Id = config.getString("cardano.wallet3.id")
+  private val testWallet3Passphrase = config.getString("cardano.wallet3.passphrase")
+
   private val testAmountToTransfer = config.getString("cardano.wallet.amount")
   private val timeoutValue: Long = 10
   private val timeoutUnits = TimeUnit.SECONDS
@@ -123,6 +135,17 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     an[Exception] shouldBe thrownBy(sut.passwordChange(testWallet2Id, testWallet2Passphrase, testWalletPassphrase))
 
     sut.passwordChange(testWallet2Id, testWalletPassphrase, testWallet2Passphrase)
+  }
+
+  it should "create wallet with secondary factor" in {
+    val mnem = GenericMnemonicSentence(testWallet3Mnemonic)
+    val mnemSecondary = GenericMnemonicSecondaryFactor(testWallet3MnemonicSecondary)
+
+    assert(sut.findOrCreateTestWallet(
+      testWallet3Id,
+      testWallet3Name,
+      testWallet3Passphrase,
+      mnem.mnemonicSentence.asJava, 10, mnemSecondary.mnemonicSentence.asJava))
   }
 
   it should "fund payments" in {

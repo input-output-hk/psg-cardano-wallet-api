@@ -56,7 +56,7 @@ public class CardanoApi {
             int addressPoolGap) throws CardanoApiException, NullPointerException {
         CardanoApiCodec.MnemonicSentence mnem = createMnemonic(mnemonicWordList);
 
-        Optional<CardanoApiCodec.MnemonicSentence> mnemSecondFactor = mnemonicSecondFactor.map(CardanoApi::createMnemonic);
+        Optional<CardanoApiCodec.MnemonicSentence> mnemSecondFactor = mnemonicSecondFactor.map(CardanoApi::createMnemonicSecondary);
 
         return helpExecute.execute(
                 api.createRestoreWallet(name, passphrase, mnem, option(mnemSecondFactor), option(addressPoolGap))
@@ -321,6 +321,12 @@ public class CardanoApi {
 
     private static CardanoApiCodec.GenericMnemonicSentence createMnemonic(List<String> wordList) {
         return new CardanoApiCodec.GenericMnemonicSentence(
+                CollectionConverters.asScala(wordList).toIndexedSeq()
+        );
+    }
+
+    private static CardanoApiCodec.GenericMnemonicSecondaryFactor createMnemonicSecondary(List<String> wordList) {
+        return new CardanoApiCodec.GenericMnemonicSecondaryFactor(
                 CollectionConverters.asScala(wordList).toIndexedSeq()
         );
     }

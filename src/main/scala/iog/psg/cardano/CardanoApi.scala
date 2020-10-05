@@ -143,7 +143,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                            name: String,
                            passphrase: String,
                            mnemonicSentence: MnemonicSentence,
-                           mnemonicSecondFactor: Option[MnemonicSentence] = None, //TODO write tests java
+                           mnemonicSecondFactor: Option[MnemonicSentence] = None,
                            addressPoolGap: Option[Int] = None
                          ): Future[CardanoApiRequest[Wallet]] = {
 

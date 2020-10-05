@@ -1,5 +1,6 @@
 package iog.psg.cardano.jpi;
 
+import com.sun.istack.internal.Nullable;
 import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Option;
@@ -38,13 +39,18 @@ public class JpiResponseCheck {
     }
 
     public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
+        return findOrCreateTestWallet(ourWalletId, ourWalletName, walletPassphrase, wordList, addressPoolGap, null);
+    }
+
+    public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap, @Nullable List<String> mnemSecondaryWordList) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
         List<CardanoApiCodec.Wallet> wallets = jpi.listWallets().toCompletableFuture().get(timeout, timeoutUnit);
         for(CardanoApiCodec.Wallet w: wallets) {
             if(w.id().contentEquals(ourWalletId)) {
                 return true;
             }
         }
-        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList, Optional.empty(), addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+
+        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList, Optional.ofNullable(mnemSecondaryWordList), addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
         return created.id().contentEquals(ourWalletId);
     }
 

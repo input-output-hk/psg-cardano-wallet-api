@@ -38,7 +38,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
   private val testWallet3Name = config.getString("cardano.wallet3.name")
   private val testWallet3Mnemonic = config.getString("cardano.wallet3.mnemonic")
-  private val testWallet3MnemonicSecondary = if (config.hasPath("cardano.wallet3.mnemonicsecondary")) Some(config.getString("cardano.wallet3.mnemonicsecondary")) else None
+  private val testWallet3MnemonicSecondary = config.getString("cardano.wallet3.mnemonicsecondary")
   private val testWallet3Id = config.getString("cardano.wallet3.id")
   private val testWallet3Passphrase = config.getString("cardano.wallet3.passphrase")
 
@@ -126,7 +126,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.passphrase, testWallet3Passphrase,
       CmdLine.name, testWallet3Name,
       CmdLine.mnemonic, testWallet3Mnemonic,
-      CmdLine.mnemonicSecondary, testWallet3MnemonicSecondary.getOrElse(fail("Wallet 3 is missing secondary mnemonic"))
+      CmdLine.mnemonicSecondary, testWallet3MnemonicSecondary
     )
     assert(results.last.contains(testWallet3Id), "Test wallet 3 not found.")
   }
