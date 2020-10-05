@@ -128,7 +128,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.mnemonic, testWallet3Mnemonic,
       CmdLine.mnemonicSecondary, testWallet3MnemonicSecondary.getOrElse(fail("Wallet 3 is missing secondary mnemonic"))
     )
-    println("results: "+results)
     assert(results.last.contains(testWallet3Id), "Test wallet 3 not found.")
   }
 

@@ -143,7 +143,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                            name: String,
                            passphrase: String,
                            mnemonicSentence: MnemonicSentence,
-                           mnemonicSecondFactor: Option[MnemonicSentence] = None, //TODO write tests scala+java
+                           mnemonicSecondFactor: Option[MnemonicSentence] = None, //TODO write tests java
                            addressPoolGap: Option[Int] = None
                          ): Future[CardanoApiRequest[Wallet]] = {
 
@@ -156,12 +156,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
         addressPoolGap
       )
 
-    Marshal(createRestore).to[RequestEntity].map { marshalled: MessageEntity =>
-      Unmarshal(marshalled).to[String].foreach { str =>
-        println("!!!!!!!!!!!!!!!!!")
-        println(str)
-        println("!!!!!!!!!!!!!!!!!")
-      }
+    Marshal(createRestore).to[RequestEntity].map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
           uri = s"$wallets",
