@@ -141,11 +141,14 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     val mnem = GenericMnemonicSentence(testWallet3Mnemonic)
     val mnemSecondary = GenericMnemonicSecondaryFactor(testWallet3MnemonicSecondary)
 
-    assert(sut.findOrCreateTestWallet(
-      testWallet3Id,
+    val wallet = sut.createTestWallet(
       testWallet3Name,
       testWallet3Passphrase,
-      mnem.mnemonicSentence.asJava, 10, mnemSecondary.mnemonicSentence.asJava))
+      mnem.mnemonicSentence.asJava,
+      Some(mnemSecondary.mnemonicSentence.asJava).toJava,
+      10)
+
+    wallet.id shouldBe testWallet3Id
   }
 
   it should "fund payments" in {

@@ -38,10 +38,6 @@ public class JpiResponseCheck {
     }
 
     public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
-        return findOrCreateTestWallet(ourWalletId, ourWalletName, walletPassphrase, wordList, addressPoolGap, Optional.empty());
-    }
-
-    public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap, Optional<List<String>> mnemSecondaryWordList) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
         List<CardanoApiCodec.Wallet> wallets = jpi.listWallets().toCompletableFuture().get(timeout, timeoutUnit);
         for(CardanoApiCodec.Wallet w: wallets) {
             if(w.id().contentEquals(ourWalletId)) {
@@ -49,8 +45,13 @@ public class JpiResponseCheck {
             }
         }
 
-        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList, mnemSecondaryWordList, addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+        CardanoApiCodec.Wallet created = createTestWallet(ourWalletName, walletPassphrase, wordList, Optional.empty(), addressPoolGap);
         return created.id().contentEquals(ourWalletId);
+    }
+
+    public CardanoApiCodec.Wallet createTestWallet(String ourWalletName, String walletPassphrase, List<String> wordList, Optional<List<String>> mnemSecondaryWordList, int addressPoolGap) throws CardanoApiException, InterruptedException, ExecutionException, TimeoutException {
+        CardanoApiCodec.Wallet wallet = jpi.createRestore(ourWalletName, walletPassphrase, wordList, mnemSecondaryWordList, addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+        return wallet;
     }
 
     public boolean getWallet(String walletId) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
