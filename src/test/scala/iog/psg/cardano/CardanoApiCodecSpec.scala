@@ -137,27 +137,59 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
   "txMetadataOut toMapMetadataStr" should "be pared properly" in {
     val test =
       TxMetadataOut(parse("""{
-                            |  "0": {
-                            |    "string": "cardano"
-                            |  },
-                            |  "1": {
-                            |    "int": 14
-                            |  },
-                            |  "2": {
-                            |    "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                            |  },
-                            |  "3": {
-                            |    "list": [
-                            |      {
-                            |        "int": 14
-                            |      },
-                            |      {
-                            |        "int": 42
-                            |      },
-                            |      {
-                            |        "string": "1337"
+                            |  "payments": [
+                            |    {
+                            |      "address": "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+                            |      "amount": {
+                            |        "quantity": 42000000,
+                            |        "unit": "lovelace"
                             |      }
-                            |    ]
+                            |    }
+                            |  ],
+                            |  "withdrawal": "self",
+                            |  "metadata": {
+                            |    "0": {
+                            |      "string": "cardano"
+                            |    },
+                            |    "1": {
+                            |      "int": 14
+                            |    },
+                            |    "2": {
+                            |      "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                            |    },
+                            |    "3": {
+                            |      "list": [
+                            |        {
+                            |          "int": 14
+                            |        },
+                            |        {
+                            |          "int": 42
+                            |        },
+                            |        {
+                            |          "string": "1337"
+                            |        }
+                            |      ]
+                            |    },
+                            |    "4": {
+                            |      "map": [
+                            |        {
+                            |          "k": {
+                            |            "string": "key"
+                            |          },
+                            |          "v": {
+                            |            "string": "value"
+                            |          }
+                            |        },
+                            |        {
+                            |          "k": {
+                            |            "int": 14
+                            |          },
+                            |          "v": {
+                            |            "int": 42
+                            |          }
+                            |        }
+                            |      ]
+                            |    }
                             |  }
                             |}""".stripMargin).getOrElse(fail("Invalid json.")))
 
