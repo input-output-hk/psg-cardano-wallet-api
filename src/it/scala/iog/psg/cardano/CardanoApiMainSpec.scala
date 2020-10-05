@@ -102,6 +102,19 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
   }
 
+  it should "estimate transaction costs with metadata" in {
+    val unusedAddr = getUnusedAddressWallet1
+
+    val cmdLineResults = runCmdLine(
+      CmdLine.estimateFee,
+      CmdLine.amount, testAmountToTransfer,
+      CmdLine.address, unusedAddr,
+      CmdLine.metadata, testMetadata,
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
+  }
+
   "The Cmd Line -wallet [walletId]" should "get our wallet" in {
     val cmdLineResults = runCmdLine(
       CmdLine.getWallet,

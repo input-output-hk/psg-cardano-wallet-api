@@ -108,7 +108,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
    */
   def getWallet(walletId: String): CardanoApiRequest[Wallet] = CardanoApiRequest(
     HttpRequest(
-      uri = s"${wallets}/$walletId",
+      uri = s"$wallets/$walletId",
       method = GET
     ),
     _.toWallet
@@ -180,7 +180,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   def listAddresses(walletId: String,
                     state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]] = {
 
-    val baseUri = Uri(s"${wallets}/${walletId}/addresses")
+    val baseUri = Uri(s"$wallets/${walletId}/addresses")
 
     val url = state.map { s =>
       baseUri.withQuery(Query("state" -> s.toString))
@@ -217,7 +217,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                        end: Option[ZonedDateTime] = None,
                        order: Order = Order.descendingOrder,
                        minWithdrawal: Option[Int] = None): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
-    val baseUri = Uri(s"${wallets}/${walletId}/transactions")
+    val baseUri = Uri(s"$wallets/${walletId}/transactions")
 
     val queries =
       Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
@@ -265,7 +265,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     Marshal(createTx).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
-          uri = s"${wallets}/${fromWalletId}/transactions",
+          uri = s"$wallets/$fromWalletId/transactions",
           method = POST,
           entity = marshalled
         ),
@@ -291,15 +291,15 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   def estimateFee(fromWalletId: String,
                   payments: Payments,
                   withdrawal: String = "self",
-                  metadataIn: Option[TxMetadataIn] = None //TODO add to request
+                  metadataIn: Option[TxMetadataIn] = None
                  ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 
-    val estimateFees = EstimateFee(payments.payments, withdrawal)
+    val estimateFees = EstimateFee(payments.payments, withdrawal, metadataIn)
 
     Marshal(estimateFees).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
-          uri = s"${wallets}/${fromWalletId}/payment-fees",
+          uri = s"$wallets/$fromWalletId/payment-fees",
           method = POST,
           entity = marshalled
         ),
@@ -321,7 +321,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     Marshal(payments).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
-          uri = s"${wallets}/${walletId}/coin-selections/random",
+          uri = s"$wallets/${walletId}/coin-selections/random",
           method = POST,
           entity = marshalled
         ),
@@ -342,7 +342,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                                          walletId: String,
                                          transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
 
-    val uri = Uri(s"${wallets}/${walletId}/transactions/${transactionId}")
+    val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
 
     CardanoApiRequest(
       HttpRequest(
@@ -366,7 +366,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                         oldPassphrase: String,
                         newPassphrase: String): Future[CardanoApiRequest[Unit]] = {
 
-    val uri = Uri(s"${wallets}/${walletId}/passphrase")
+    val uri = Uri(s"$wallets/${walletId}/passphrase")
     val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
 
     Marshal(updater).to[RequestEntity] map { marshalled => {
@@ -392,7 +392,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                     walletId: String
                   ): CardanoApiRequest[Unit] = {
 
-    val uri = Uri(s"${wallets}/${walletId}")
+    val uri = Uri(s"$wallets/${walletId}")
 
     CardanoApiRequest(
       HttpRequest(

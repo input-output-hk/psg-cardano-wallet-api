@@ -180,5 +180,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     sut.deleteWallet(testWallet2Id)
     an[Exception] shouldBe thrownBy(sut.getWallet(testWallet2Id), "Wallet should not be retrieved")
   }
+
+  //TODO estimate fee
 }
 

@@ -193,9 +193,32 @@ public class CardanoApi {
         return helpExecute.execute(
                 api.estimateFee(walletId,
                         new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                        withdrawal, option(Optional.empty()))); //TODO provide metadata
+                        withdrawal, option(Optional.empty())));
     }
-    //TODO estimate fee with metadataIn
+
+    /**
+     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
+     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
+     * is lower than at least 90% of the fees observed.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
+     *
+     * @param walletId wallet's id
+     * @param payments A list of target outputs ( address, amount )
+     * @param withdrawal Optional, when provided, instruments the server to automatically withdraw rewards from the source
+     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
+     *                   as they cost).
+     * @param metadata  Extra application data attached to the transaction.
+     * @return estimated fee response
+     * @throws CardanoApiException
+     * @throws NullPointerException
+     */
+    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
+            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal, CardanoApiCodec.TxMetadataIn metadata) throws CardanoApiException, NullPointerException {
+        return helpExecute.execute(
+                api.estimateFee(walletId,
+                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
+                        withdrawal, option(Optional.of(metadata))));
+    }
 
     /**
      * Select coins to cover the given set of payments.
