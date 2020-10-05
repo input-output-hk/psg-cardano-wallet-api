@@ -77,11 +77,31 @@ object CardanoApiCodec {
           val valueTypeLong = "int" //named int but will work as long
           val valueTypeBytes = "bytes"
           val valueTypeList = "list"
+          val valueTypeMap = "map"
 
+
+          def extractTypedFieldValue(json: Json): Either[DecodingFailure, (String, MetadataValue)] = json.hcursor.keys.flatMap(_.headOption) match {
+            case Some(valueType) if valueType == valueTypeString =>
+              json.hcursor.downField(valueTypeString).as[String].fold(
+                err => Left(err),
+                (value: String) => Right(valueTypeString -> MetadataValueStr(value))
+              )
+
+            case Some(valueType) if valueType == valueTypeLong =>
+              json.hcursor.downField(valueTypeLong).as[Long].fold(
+                err => Left(err),
+                (value: Long) => Right(valueTypeLong -> MetadataValueLong(value))
+              )
+
+            case Some(valueType) if valueType == valueTypeBytes =>
+              json.hcursor.downField(valueTypeBytes).as[String].fold(
+                err => Left(err),
+                (value: String) => Right(valueTypeBytes -> MetadataValueByteString(ByteString(value)))
+              )
+          }
 
           def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
             res.flatMap((map: KeyVal) => {
-
               val keyDownField = c.downField(key)
               keyDownField.keys.flatMap(_.headOption) match {
                 case Some(valueType) if valueType == valueTypeString =>
@@ -101,31 +121,11 @@ object CardanoApiCodec {
                     err => Left(err),
                     (value: String) => Right(map.+(key.toLong -> MetadataValueByteString(ByteString(value))))
                   )
-                case Some(valueType) if valueType == "list" =>
+                case Some(valueType) if valueType == valueTypeList =>
                   val downFieldList = keyDownField.downField(valueTypeList)
                   val keyValuesObjects: List[Json] = downFieldList.values.map(_.toList).getOrElse(Nil)
 
-                  val listResults: Seq[Either[DecodingFailure, (String, MetadataValue)]] = keyValuesObjects.map { json =>
-                    json.hcursor.keys.flatMap(_.headOption) match {
-                      case Some(valueType) if valueType == valueTypeString =>
-                        json.hcursor.downField(valueTypeString).as[String].fold(
-                          err => Left(err),
-                          (value: String) => Right(valueTypeString -> MetadataValueStr(value))
-                        )
-
-                      case Some(valueType) if valueType == valueTypeLong =>
-                        json.hcursor.downField(valueTypeLong).as[Long].fold(
-                          err => Left(err),
-                          (value: Long) => Right(valueTypeLong -> MetadataValueLong(value))
-                        )
-
-                      case Some(valueType) if valueType == valueTypeBytes =>
-                        json.hcursor.downField(valueTypeBytes).as[String].fold(
-                          err => Left(err),
-                          (value: String) => Right(valueTypeBytes -> MetadataValueByteString(ByteString(value)))
-                        )
-                    }
-                  }
+                  val listResults: Seq[Either[DecodingFailure, (String, MetadataValue)]] = keyValuesObjects.map(extractTypedFieldValue)
 
                   val errors = listResults.filter(_.isLeft)
                   if (errors.nonEmpty) Left(errors.head.swap.toOption.get)
@@ -134,7 +134,29 @@ object CardanoApiCodec {
                     Right(map.+(key.toLong -> MetadataValueArray(values)))
                   }
 
-                case Some(valueType) if valueType == "map" => ???
+                case Some(valueType) if valueType == valueTypeMap =>
+                  val downFieldMap = keyDownField.downField(valueTypeMap)
+                  val keyValuesObjects: List[Json] = downFieldMap.values.map(_.toList).getOrElse(Nil)
+
+                  def getMapField[T <: MetadataValue](keyName: String, json: Json) = for {
+                    keyJson <- json.\\(keyName).headOption.toRight(DecodingFailure(s"Missing '$keyName' value", List(DownField(key))))
+                    value <- extractTypedFieldValue(keyJson)
+                  } yield value
+
+                  val results: Seq[Either[DecodingFailure, (MetadataKey, MetadataValue)]] = keyValuesObjects.map { json =>
+                    (getMapField[MetadataKey]("k", json), getMapField[MetadataValue]("v", json)) match {
+                      case (Right(keyField), Right(valueField)) => Right(keyField._2.asInstanceOf[MetadataKey] -> valueField._2)
+                      case (Left(error), _) => Left(error)
+                      case (_ , Left(error)) => Left(error)
+                    }
+                  }
+                  val errors = results.filter(_.isLeft)
+                  if (errors.nonEmpty) Left(errors.head.swap.toOption.get)
+                  else {
+                    val values: Map[MetadataKey, MetadataValue] = results.flatMap(_.toOption).toMap
+                    Right(map.+(key.toLong -> MetadataValueMap(values)))
+                  }
+
                 case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
               }
             })
