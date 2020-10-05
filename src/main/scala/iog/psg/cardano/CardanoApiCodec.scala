@@ -207,8 +207,13 @@ object CardanoApiCodec {
                           ) {
     require(
       mnemonicSentence.length == 15 ||
-        mnemonicSentence.length == 21 ||
+        mnemonicSentence.length == 21 ||  //TODO WHY 21 ?
         mnemonicSentence.length == 24, s"Mnemonic word list must be 15, 21, or 24 long (not ${mnemonicSentence.length})")
+
+    private lazy val mnemonicSecondFactorLength = mnemonicSecondFactor.map(_.length).getOrElse(0)
+    require(
+      mnemonicSecondFactor.isEmpty || (mnemonicSecondFactorLength == 9 || mnemonicSecondFactorLength == 12)
+    )
   }
 
   object Units extends Enumeration {

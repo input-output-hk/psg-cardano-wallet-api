@@ -202,7 +202,7 @@ object CardanoApiMain {
             name,
             passphrase,
             GenericMnemonicSentence(mnemonic),
-            None,
+            None, //TODO add mnemonic secondary
             addressPoolGap
           ).executeBlocking)
 
