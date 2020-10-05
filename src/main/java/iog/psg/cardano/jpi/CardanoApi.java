@@ -36,11 +36,11 @@ public class CardanoApi {
 
     /**
      * Create and restore a wallet from a mnemonic sentence or account public key.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet">#postWallet</a>
      *
      * @param name wallet's name
      * @param passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
-     * @param mnemonicWordList A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39 )
+     * @param mnemonicWordList A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39> )
      * @param mnemonicSecondFactor An optional passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
      * @param addressPoolGap An optional number of consecutive unused addresses allowed
 
@@ -65,7 +65,7 @@ public class CardanoApi {
 
     /**
      * Create and send transaction from the wallet.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction #postTransaction]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction">#postTransaction</a>
      *
      * @param fromWalletId wallet's id
      * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
@@ -94,7 +94,7 @@ public class CardanoApi {
 
     /**
      * Create and send transaction from the wallet.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction #postTransaction]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction">#postTransaction</a>
      *
      * @param fromWalletId wallet's id
      * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
@@ -113,7 +113,7 @@ public class CardanoApi {
 
     /**
      * Get wallet details by id
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet #getWallet]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet">#getWallet</a>
      *
      * @param fromWalletId wallet's id
      * @return wallet
@@ -129,7 +129,7 @@ public class CardanoApi {
 
     /**
      * Delete wallet by id
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet #deleteWallet]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet">#deleteWallet</a>
      *
      * @param fromWalletId wallet's id
      * @return void
@@ -145,7 +145,7 @@ public class CardanoApi {
 
     /**
      * Get transaction by id.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction #getTransaction]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction">#getTransaction</a>
      *
      * @param walletId wallet's id
      * @param transactionId transaction's id
@@ -162,7 +162,7 @@ public class CardanoApi {
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
      * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
      * is lower than at least 90% of the fees observed.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee #estimateFee]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
      *
      * @param walletId wallet's id
      * @param payments A list of target outputs ( address, amount )
@@ -177,7 +177,7 @@ public class CardanoApi {
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
      * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
      * is lower than at least 90% of the fees observed.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee #estimateFee]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
      *
      * @param walletId wallet's id
      * @param payments A list of target outputs ( address, amount )
@@ -199,7 +199,7 @@ public class CardanoApi {
 
     /**
      * Select coins to cover the given set of payments.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Coin-Selections #CoinSelections]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Coin-Selections">#CoinSelections</a>
      *
      * @param walletId wallet's id
      * @param payments A list of target outputs ( address, amount )
@@ -216,7 +216,7 @@ public class CardanoApi {
 
     /**
      * list of known addresses, ordered from newest to oldest
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>
      *
      * @param walletId wallet's id
      * @param addressFilter addresses state: used, unused
@@ -233,7 +233,7 @@ public class CardanoApi {
 
     /**
      * list of known addresses, ordered from newest to oldest
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>
      *
      * @param walletId wallet's id
      * @return list of wallet's addresses
@@ -248,7 +248,7 @@ public class CardanoApi {
 
     /**
      * Lists all incoming and outgoing wallet's transactions.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions #listTransactions]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions">#listTransactions</a>
      *
      * @param builder ListTransactionsParamBuilder
      * @return list of wallet's transactions
@@ -269,7 +269,7 @@ public class CardanoApi {
 
     /**
      * list of known wallets, ordered from oldest to newest.
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets #listWallets]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets">#listWallets</a>
      *
      * @return wallets's list
      * @throws CardanoApiException
@@ -283,7 +283,7 @@ public class CardanoApi {
 
     /**
      * Update Passphrase
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase #putWalletPassphrase]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase">#putWalletPassphrase</a>
      * @param walletId wallet's id
      * @param oldPassphrase current passphrase
      * @param newPassphrase new passphrase
@@ -301,7 +301,7 @@ public class CardanoApi {
 
     /**
      * Gives network information
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation #getNetworkInformation]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation">#getNetworkInformation</a>
      *
      * @return network info
      * @throws CardanoApiException

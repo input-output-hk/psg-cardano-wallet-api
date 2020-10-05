@@ -84,7 +84,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
   /**
-   * list of known wallets, ordered from oldest to newest.
+   * List of known wallets, ordered from oldest to newest.
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets #listWallets]]
    *
    * @return list wallets request
@@ -168,7 +168,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   }
 
   /**
-   * list of known addresses, ordered from newest to oldest
+   * List of known addresses, ordered from newest to oldest
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
    *
    * @param walletId wallet's id
