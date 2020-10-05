@@ -13,23 +13,35 @@ import org.scalatest.matchers.should.Matchers
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
-    runCmdLine(
-      CmdLine.deleteWallet,
-      CmdLine.walletId, testWallet2Id)
+    Seq(testWallet2Id, testWallet3Id).map { walletId =>
+      runCmdLine(
+        CmdLine.deleteWallet,
+        CmdLine.walletId, walletId)
+    }
     super.afterAll()
   }
 
   private implicit val system = ActorSystem("SingleRequest")
   private implicit val context = system.dispatcher
+
+  //TODO common code DRY
   private val baseUrl = config.getString("cardano.wallet.baseUrl")
   private val testWalletName = config.getString("cardano.wallet.name")
-  private val testWallet2Name = config.getString("cardano.wallet2.name")
   private val testWalletMnemonic = config.getString("cardano.wallet.mnemonic")
-  private val testWallet2Mnemonic = config.getString("cardano.wallet2.mnemonic")
   private val testWalletId = config.getString("cardano.wallet.id")
-  private val testWallet2Id = config.getString("cardano.wallet2.id")
   private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
+
+  private val testWallet2Name = config.getString("cardano.wallet2.name")
+  private val testWallet2Mnemonic = config.getString("cardano.wallet2.mnemonic")
+  private val testWallet2Id = config.getString("cardano.wallet2.id")
   private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
+
+  private val testWallet3Name = config.getString("cardano.wallet3.name")
+  private val testWallet3Mnemonic = config.getString("cardano.wallet3.mnemonic")
+  private val testWallet3MnemonicSecondary = if (config.hasPath("cardano.wallet3.mnemonicsecondary")) Some(config.getString("cardano.wallet3.mnemonicsecondary")) else None
+  private val testWallet3Id = config.getString("cardano.wallet3.id")
+  private val testWallet3Passphrase = config.getString("cardano.wallet3.passphrase")
+
   private val testAmountToTransfer = config.getString("cardano.wallet.amount")
   private val testMetadata = config.getString("cardano.wallet.metadata")
 
@@ -106,6 +118,18 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       CmdLine.mnemonic, testWallet2Mnemonic)
 
     assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
+  }
+
+  it should "create wallet with secondary factor" in {
+    val results = runCmdLine(
+      CmdLine.createWallet,
+      CmdLine.passphrase, testWallet3Passphrase,
+      CmdLine.name, testWallet3Name,
+      CmdLine.mnemonic, testWallet3Mnemonic,
+      CmdLine.mnemonicSecondary, testWallet3MnemonicSecondary.getOrElse(fail("Wallet 3 is missing secondary mnemonic"))
+    )
+    println("results: "+results)
+    assert(results.last.contains(testWallet3Id), "Test wallet 3 not found.")
   }
 
   it should "not create a wallet with a bad mnemonic" in {

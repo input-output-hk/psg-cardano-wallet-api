@@ -8,10 +8,12 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
 import iog.psg.cardano.CardanoApi.Order.Order
+
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -154,7 +156,12 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
         addressPoolGap
       )
 
-    Marshal(createRestore).to[RequestEntity].map { marshalled =>
+    Marshal(createRestore).to[RequestEntity].map { marshalled: MessageEntity =>
+      Unmarshal(marshalled).to[String].foreach { str =>
+        println("!!!!!!!!!!!!!!!!!")
+        println(str)
+        println("!!!!!!!!!!!!!!!!!")
+      }
       CardanoApiRequest(
         HttpRequest(
           uri = s"$wallets",

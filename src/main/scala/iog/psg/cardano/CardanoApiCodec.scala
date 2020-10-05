@@ -186,6 +186,17 @@ object CardanoApiCodec {
       GenericMnemonicSentence(mnemonicString.split(" ").toIndexedSeq)
   }
 
+  final case class GenericMnemonicSecondaryFactor(mnemonicSentence: IndexedSeq[String]) extends MnemonicSentence {
+    require(
+      mnemonicSentence.length == 9 ||
+        mnemonicSentence.length == 12, s"Mnemonic word list must be 9, 12 long (not ${mnemonicSentence.length})")
+  }
+
+  object GenericMnemonicSecondaryFactor {
+    def apply(mnemonicSentence: String): GenericMnemonicSecondaryFactor =
+      GenericMnemonicSecondaryFactor(mnemonicSentence.split(" ").toIndexedSeq)
+  }
+
   @ConfiguredJsonCodec
   case class NextEpoch(epochStartTime: ZonedDateTime, epochNumber: Long)
 
