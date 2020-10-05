@@ -89,11 +89,8 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
 
   "Test wallet" should "exist or be created" in {
 
-    println(s"WALLET $baseUrl")
     val aryLen = testWalletMnemonic.split(" ").length
     val aryLen2 = testWallet2Mnemonic.split(" ").length
-    println(s"WALLET 1 words $aryLen <-")
-    println(s"WALLET 2 words $aryLen2 <-")
 
     val mnem = GenericMnemonicSentence(testWalletMnemonic)
     sut

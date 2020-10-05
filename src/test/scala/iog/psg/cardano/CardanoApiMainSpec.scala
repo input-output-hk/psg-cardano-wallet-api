@@ -11,6 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
+
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with ModelCompare with DummyModel {
 
   "The Cmd Line -netInfo" should "show current network information" in new ApiRequestExecutorFixture[NetworkInfo]{

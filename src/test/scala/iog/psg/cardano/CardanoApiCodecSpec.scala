@@ -135,53 +135,7 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
   }
 
   "txMetadataOut toMapMetadataStr" should "be pared properly" in {
-    val test =
-      TxMetadataOut(parse("""{
-                            |  "0": {
-                            |    "string": "cardano"
-                            |  },
-                            |  "1": {
-                            |    "int": 14
-                            |  },
-                            |  "2": {
-                            |    "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                            |  },
-                            |  "3": {
-                            |    "list": [
-                            |      {
-                            |        "int": 14
-                            |      },
-                            |      {
-                            |        "int": 42
-                            |      },
-                            |      {
-                            |        "string": "1337"
-                            |      }
-                            |    ]
-                            |  },
-                            |  "4": {
-                            |    "map": [
-                            |      {
-                            |        "k": {
-                            |          "string": "key"
-                            |        },
-                            |        "v": {
-                            |          "string": "value"
-                            |        }
-                            |      },
-                            |      {
-                            |        "k": {
-                            |          "int": 14
-                            |        },
-                            |        "v": {
-                            |          "int": 42
-                            |        }
-                            |      }
-                            |    ]
-                            |  }
-                            |}""".stripMargin).getOrElse(fail("Invalid json.")))
-
-    test.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(
+    txMetadataOut.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(
       0 -> MetadataValueStr("cardano"),
       1 -> MetadataValueLong(14),
       2 -> MetadataValueByteString(ByteString("2512a00e9653fe49a44a5886202e24d77eeb998f")),
@@ -340,5 +294,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
                                                                |      }
                                                                |    }
                                                                |""".stripMargin).getOrElse(fail("Invalid metadata json")))
+
 
 }

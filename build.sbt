@@ -38,7 +38,7 @@ lazy val rootProject = (project in file("."))
     dynverSonatypeSnapshots in ThisBuild := true,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations"),
-    parallelExecution in Test := false,
+    parallelExecution in Test := true,
     parallelExecution in IntegrationTest := false,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
