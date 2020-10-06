@@ -5,7 +5,6 @@ import scala.Enumeration;
 import scala.Option;
 import scala.jdk.CollectionConverters;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -20,7 +19,6 @@ public class JpiResponseCheck {
         jpi = null;
         timeout = 0;
         timeoutUnit = null;
-
     }
 
     public JpiResponseCheck(CardanoApi jpi, long timeout, TimeUnit timeoutUnit) {
@@ -35,7 +33,7 @@ public class JpiResponseCheck {
 
     public void createBadWallet() throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
         List<String> mnem = Arrays.asList("", "sdfa", "dfd");
-        jpi.createRestore("some name", "password99", mnem, 4).toCompletableFuture().get(timeout, timeoutUnit);
+        jpi.createRestore("some name", "password99", mnem,4).toCompletableFuture().get(timeout, timeoutUnit);
     }
 
     public boolean findOrCreateTestWallet(String ourWalletId, String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {
@@ -45,8 +43,19 @@ public class JpiResponseCheck {
                 return true;
             }
         }
-        CardanoApiCodec.Wallet created =  jpi.createRestore(ourWalletName, walletPassphrase, wordList,addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+
+        CardanoApiCodec.Wallet created = createTestWallet(ourWalletName, walletPassphrase, wordList, addressPoolGap);
         return created.id().contentEquals(ourWalletId);
+    }
+
+    public CardanoApiCodec.Wallet createTestWallet(String ourWalletName, String walletPassphrase, List<String> wordList, int addressPoolGap) throws CardanoApiException, InterruptedException, ExecutionException, TimeoutException {
+        CardanoApiCodec.Wallet wallet = jpi.createRestore(ourWalletName, walletPassphrase, wordList, addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+        return wallet;
+    }
+
+    public CardanoApiCodec.Wallet createTestWallet(String ourWalletName, String walletPassphrase, List<String> wordList, List<String> mnemSecondaryWordList, int addressPoolGap) throws CardanoApiException, InterruptedException, ExecutionException, TimeoutException {
+        CardanoApiCodec.Wallet wallet = jpi.createRestore(ourWalletName, walletPassphrase, wordList, mnemSecondaryWordList, addressPoolGap).toCompletableFuture().get(timeout, timeoutUnit);
+        return wallet;
     }
 
     public boolean getWallet(String walletId) throws CardanoApiException, InterruptedException, TimeoutException, ExecutionException {

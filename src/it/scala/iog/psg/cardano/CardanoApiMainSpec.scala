@@ -4,6 +4,8 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApiMain.CmdLine
+import iog.psg.cardano.TestWalletsConfig.baseUrl
+import iog.psg.cardano.common.TestWalletFixture
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -13,25 +15,17 @@ import org.scalatest.matchers.should.Matchers
 class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
-    runCmdLine(
-      CmdLine.deleteWallet,
-      CmdLine.walletId, testWallet2Id)
+    Seq(2, 3).map { num =>
+    val walletId = TestWalletsConfig.walletsMap(num).id
+      runCmdLine(
+        CmdLine.deleteWallet,
+        CmdLine.walletId, walletId)
+    }
     super.afterAll()
   }
 
   private implicit val system = ActorSystem("SingleRequest")
   private implicit val context = system.dispatcher
-  private val baseUrl = config.getString("cardano.wallet.baseUrl")
-  private val testWalletName = config.getString("cardano.wallet.name")
-  private val testWallet2Name = config.getString("cardano.wallet2.name")
-  private val testWalletMnemonic = config.getString("cardano.wallet.mnemonic")
-  private val testWallet2Mnemonic = config.getString("cardano.wallet2.mnemonic")
-  private val testWalletId = config.getString("cardano.wallet.id")
-  private val testWallet2Id = config.getString("cardano.wallet2.id")
-  private val testWalletPassphrase = config.getString("cardano.wallet.passphrase")
-  private val testWallet2Passphrase = config.getString("cardano.wallet2.passphrase")
-  private val testAmountToTransfer = config.getString("cardano.wallet.amount")
-  private val testMetadata = config.getString("cardano.wallet.metadata")
 
   private val defaultArgs = Array(CmdLine.baseUrl, baseUrl)
 
@@ -60,7 +54,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
   }
 
-  "The Cmd Line -wallets" should "show our test wallet in the list" in {
+  "The Cmd Line -wallets" should "show our test wallet in the list" in new TestWalletFixture(walletNum = 1) {
+
     val cmdLineResults = runCmdLine(
       CmdLine.listWallets)
 
@@ -78,19 +73,32 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
 
   }
 
-  "The Cmd Line -estimateFee" should "estimate transaction costs" in {
+  "The Cmd Line -estimateFee" should "estimate transaction costs" in new TestWalletFixture(walletNum = 1){
     val unusedAddr = getUnusedAddressWallet1
 
     val cmdLineResults = runCmdLine(
       CmdLine.estimateFee,
-      CmdLine.amount, testAmountToTransfer,
+      CmdLine.amount, testAmountToTransfer.get,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
   }
 
-  "The Cmd Line -wallet [walletId]" should "get our wallet" in {
+  it should "estimate transaction costs with metadata" in new TestWalletFixture(walletNum = 1){
+    val unusedAddr = getUnusedAddressWallet1
+
+    val cmdLineResults = runCmdLine(
+      CmdLine.estimateFee,
+      CmdLine.amount, testAmountToTransfer.get,
+      CmdLine.address, unusedAddr,
+      CmdLine.metadata, testMetadata.get,
+      CmdLine.walletId, testWalletId)
+
+    assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
+  }
+
+  "The Cmd Line -wallet [walletId]" should "get our wallet" in new TestWalletFixture(walletNum = 1){
     val cmdLineResults = runCmdLine(
       CmdLine.getWallet,
       CmdLine.walletId, testWalletId)
@@ -98,14 +106,25 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(cmdLineResults.exists(_.contains(testWalletId)), "Test wallet not found.")
   }
 
-  "The Cmd Line -createWallet" should "create wallet 2" in {
+  "The Cmd Line -createWallet" should "create wallet 2" in new TestWalletFixture(walletNum = 2){
     val results = runCmdLine(
       CmdLine.createWallet,
-      CmdLine.passphrase, testWallet2Passphrase,
-      CmdLine.name, testWallet2Name,
-      CmdLine.mnemonic, testWallet2Mnemonic)
+      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.name, testWalletName,
+      CmdLine.mnemonic, testWalletMnemonic)
 
-    assert(results.last.contains(testWallet2Id), "Test wallet 2 not found.")
+    assert(results.last.contains(testWalletId), "Test wallet 2 not found.")
+  }
+
+  it should "create wallet with secondary factor" in new TestWalletFixture(walletNum = 3){
+    val results = runCmdLine(
+      CmdLine.createWallet,
+      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.name, testWalletName,
+      CmdLine.mnemonic, testWalletMnemonic,
+      CmdLine.mnemonicSecondary, testWalletMnemonicSecondary.get
+    )
+    assert(results.last.contains(testWalletId), "Test wallet 3 not found.")
   }
 
   it should "not create a wallet with a bad mnemonic" in {
@@ -118,41 +137,41 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(results.exists(_.contains("Found an unknown word")), "Bad menmonic not stopped")
   }
 
-  "The Cmd Line -updatePassphrase" should "allow password change in test wallet 2" in {
+  "The Cmd Line -updatePassphrase" should "allow password change in test wallet 2" in new TestWalletFixture(walletNum = 2){
     val cmdLineResults = runCmdLine(
       CmdLine.updatePassphrase,
-      CmdLine.oldPassphrase, testWallet2Passphrase,
-      CmdLine.passphrase, testWalletPassphrase,
-      CmdLine.walletId, testWallet2Id)
+      CmdLine.oldPassphrase, testWalletPassphrase,
+      CmdLine.passphrase, testWalletPassphrase.toUpperCase,
+      CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains("Unit result from update passphrase")))
   }
 
-  "The Cmd Line -deleteWallet [walletId]" should "delete test wallet 2" in {
+  "The Cmd Line -deleteWallet [walletId]" should "delete test wallet 2" in new TestWalletFixture(walletNum = 2){
     val cmdLineResults = runCmdLine(
       CmdLine.deleteWallet,
-      CmdLine.walletId, testWallet2Id)
+      CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains("Unit result from delete wallet")))
 
     val results = runCmdLine(
       CmdLine.getWallet,
-      CmdLine.walletId, testWallet2Id)
+      CmdLine.walletId, testWalletId)
 
     assert(results.exists(!_.contains(testWalletId)), "Test wallet found after deletion?")
   }
 
-  "The Cmd Line -restoreWallet" should "restore deleted wallet 2" in {
+  "The Cmd Line -restoreWallet" should "restore deleted wallet 2" in new TestWalletFixture(walletNum = 2){
     val cmdLineResults = runCmdLine(
       CmdLine.restoreWallet,
-      CmdLine.passphrase, testWallet2Passphrase,
-      CmdLine.name, testWallet2Name,
-      CmdLine.mnemonic, testWallet2Mnemonic)
+      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.name, testWalletName,
+      CmdLine.mnemonic, testWalletMnemonic)
 
-    assert(cmdLineResults.exists(_.contains(s"Wallet($testWallet2Id")))
+    assert(cmdLineResults.exists(_.contains(s"Wallet($testWalletId")))
   }
 
-  "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in {
+  "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in new TestWalletFixture(walletNum = 1){
     val cmdLineResults = runCmdLine(
       CmdLine.listWalletAddresses,
       CmdLine.state, "unused",
@@ -162,7 +181,7 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     assert(cmdLineResults.exists(!_.contains("Some(used)")))
   }
 
-  it should "list used wallet addresses" in {
+  it should "list used wallet addresses" in new TestWalletFixture(walletNum = 1){
     val cmdLineResults = runCmdLine(
       CmdLine.listWalletAddresses,
       CmdLine.state, "used",
@@ -172,10 +191,10 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     cmdLineResults.count(_.contains("Some(unused)")) shouldBe 0
   }
 
-  "The Cmd Line -fundTx" should "fund payments" in {
+  "The Cmd Line -fundTx" should "fund payments" in new TestWalletFixture(walletNum = 1){
     val cmdLineResults = runCmdLine(
       CmdLine.fundTx,
-      CmdLine.amount, testAmountToTransfer,
+      CmdLine.amount, testAmountToTransfer.get,
       CmdLine.address, getUnusedAddressWallet2,
       CmdLine.walletId, testWalletId)
 
@@ -183,15 +202,15 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
       cmdLineResults.mkString("").contains("cannot_cover_fee"), s"$cmdLineResults")
   }
 
-  "The Cmd Lines -createTx, -getTx, -listTxs" should "transact from A to B with metadata, txId should be visible in get and list" in {
+  "The Cmd Lines -createTx, -getTx, -listTxs" should "transact from A to B with metadata, txId should be visible in get and list" in new TestWalletFixture(walletNum = 1){
     val unusedAddr = getUnusedAddressWallet1
     val preTxTime = ZonedDateTime.now().minusMinutes(1)
 
     val resultsCreateTx = runCmdLine(
       CmdLine.createTx,
       CmdLine.passphrase, testWalletPassphrase,
-      CmdLine.amount, testAmountToTransfer,
-      CmdLine.metadata, testMetadata,
+      CmdLine.amount, testAmountToTransfer.get,
+      CmdLine.metadata, testMetadata.get,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
 
@@ -349,9 +368,9 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
         |""".stripMargin
   }
 
-  private def getUnusedAddressWallet2 = getUnusedAddress(testWallet2Id)
+  private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)
 
-  private def getUnusedAddressWallet1 = getUnusedAddress(testWalletId)
+  private def getUnusedAddressWallet1 = getUnusedAddress(TestWalletsConfig.walletsMap(1).id)
 
   private def getUnusedAddress(walletId: String): String = {
     val results = runCmdLine(
