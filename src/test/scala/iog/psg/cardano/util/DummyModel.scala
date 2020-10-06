@@ -41,4 +41,18 @@ trait DummyModel {
     height = Some(QuantityUnit(1337, Units.block)),
     absoluteSlotNumber = Some(8086)
   )
+
+  final lazy val nodeTip = NodeTip(
+    epochNumber = 14,
+    slotNumber = 1337,
+    height = QuantityUnit(1337, Units.block),
+    absoluteSlotNumber = Some(8086)
+  )
+
+  final val networkInfo =  NetworkInfo(
+    syncProgress = SyncStatus(SyncState.ready, None),
+    networkTip = networkTip.copy(height = None),
+    nodeTip = nodeTip,
+    nextEpoch = NextEpoch(ZonedDateTime.parse("2019-02-27T14:46:45.000Z"), 14)
+  )
 }

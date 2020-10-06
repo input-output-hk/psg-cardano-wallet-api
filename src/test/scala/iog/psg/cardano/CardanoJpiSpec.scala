@@ -3,12 +3,13 @@ package iog.psg.cardano
 import akka.actor.ActorSystem
 import iog.psg.cardano.jpi.JpiResponseCheck
 import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, ModelCompare}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 
-class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with InMemoryCardanoApi with DummyModel {
+class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with ScalaFutures with InMemoryCardanoApi with DummyModel {
 
   lazy val api = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
 
@@ -26,6 +27,10 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
   it should "return 404 if wallet does not exists" in {
     val response = Try(api.getWallet("invalid_wallet_id").toCompletableFuture.get()).toEither
     response.swap.getOrElse(fail("Should fail")).getMessage shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Wallet not found, Code: 404"
+  }
+
+  "GET /network/information" should "return network information" in {
+    api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
