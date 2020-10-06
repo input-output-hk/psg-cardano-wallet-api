@@ -189,29 +189,7 @@ public class CardanoApi {
      */
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
-        return estimateFee(walletId, payments, "self");
-    }
-
-    /**
-     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
-     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
-     * is lower than at least 90% of the fees observed.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
-     *
-     * @param walletId wallet's id
-     * @param payments A list of target outputs ( address, amount )
-     * @param withdrawal nullable, when provided, instruments the server to automatically withdraw rewards from the source
-     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
-     *                   as they cost).
-     * @return estimatedfee response
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
-     */
-    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
-            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal) throws CardanoApiException {
-        return helpExecute.execute(
-                api.estimateFee(walletId,
-                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                        withdrawal, option(Optional.empty())));
+        return estimateFee(walletId, payments, "self", null);
     }
 
     /**
@@ -230,11 +208,15 @@ public class CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
-            String walletId, List<CardanoApiCodec.Payment> payments, String withdrawal, CardanoApiCodec.TxMetadataIn metadata) throws CardanoApiException {
+            String walletId,
+            List<CardanoApiCodec.Payment> payments,
+            String withdrawal,
+            CardanoApiCodec.TxMetadataIn metadata) throws CardanoApiException {
+
         return helpExecute.execute(
                 api.estimateFee(walletId,
                         new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                        withdrawal, option(Optional.of(metadata))));
+                        option(withdrawal), option(metadata)));
     }
 
     /**
@@ -256,6 +238,7 @@ public class CardanoApi {
     /**
      * list of known addresses, ordered from newest to oldest
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>
+     *
      *
      * @param walletId wallet's id
      * @param addressFilter addresses state: used, unused
@@ -279,8 +262,7 @@ public class CardanoApi {
      */
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
             String walletId) throws CardanoApiException {
-        return helpExecute.execute(
-                api.listAddresses(walletId, scala.Option.empty())).thenApply(CollectionConverters::asJava);
+        return listAddresses(walletId, null);
     }
 
     /**

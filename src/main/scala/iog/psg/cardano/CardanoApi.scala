@@ -290,7 +290,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
    */
   def estimateFee(fromWalletId: String,
                   payments: Payments,
-                  withdrawal: String = "self",
+                  withdrawal: Option[String],
                   metadataIn: Option[TxMetadataIn] = None
                  ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 

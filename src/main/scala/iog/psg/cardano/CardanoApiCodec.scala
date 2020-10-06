@@ -162,7 +162,7 @@ object CardanoApiCodec {
                                                  metadata: Option[TxMetadataIn],
                                                  withdrawal: Option[String])
 
-  private[cardano] case class EstimateFee(payments: Seq[Payment], withdrawal: String, metadata: Option[TxMetadataIn])
+  private[cardano] case class EstimateFee(payments: Seq[Payment], withdrawal: Option[String], metadata: Option[TxMetadataIn])
 
   case class Payments(payments: Seq[Payment])
 
