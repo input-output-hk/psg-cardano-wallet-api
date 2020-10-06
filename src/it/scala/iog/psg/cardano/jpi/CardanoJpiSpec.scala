@@ -52,7 +52,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
       absoluteSlotNumber = Some(10)
     )
 
-    val properWallet = Wallet(
+    val expectedWallet = Wallet(
       id = "id",
       addressPoolGap = 10,
       balance = Balance(
@@ -81,7 +81,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
       tip = networkTip
     )
 
-    compareWallets(createdWallet, properWallet)
+    compareWallets(createdWallet, expectedWallet)
   }
 
   "Bad wallet creation" should "be prevented" in {
