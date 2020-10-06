@@ -1,7 +1,8 @@
 package iog.psg.cardano
 
+import java.util.concurrent.CompletionStage
+
 import akka.actor.ActorSystem
-import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
@@ -22,6 +23,11 @@ class CardanoJpiSpec
 
   lazy val api = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
 
+  private def tryGetErrorMessage[T](completionStage: CompletionStage[T]) =
+    Try(completionStage.toCompletableFuture.get()).toEither.swap.getOrElse(fail("should fail")).getMessage
+
+  private val walletNotFoundError = "iog.psg.cardano.jpi.CardanoApiException: Message: Wallet not found, Code: 404"
+
   "GET /wallets" should "return wallets list" in {
     val response = api.listWallets().toCompletableFuture.get()
     response.size() shouldBe 1
@@ -34,10 +40,9 @@ class CardanoJpiSpec
   }
 
   it should "return 404 if wallet does not exists" in {
-    val response = Try(api.getWallet("invalid_wallet_id").toCompletableFuture.get()).toEither
-    response.swap
-      .getOrElse(fail("Should fail"))
-      .getMessage shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Wallet not found, Code: 404"
+    tryGetErrorMessage(
+      api.getWallet("invalid_wallet_id")
+    ) shouldBe walletNotFoundError
   }
 
   "GET /network/information" should "return network information" in {
@@ -61,6 +66,12 @@ class CardanoJpiSpec
     ids shouldBe usedAddresses.map(_.id)
   }
 
+  it should "return wallet not found error" in {
+    tryGetErrorMessage(
+      api.listAddresses("invalid_wallet_id", AddressFilter.USED)
+    ) shouldBe walletNotFoundError
+  }
+
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val builder = ListTransactionsParamBuilder.create(wallet.id)
     api.listTransactions(builder).toCompletableFuture.get().asScala.map(_.id) shouldBe Seq(
@@ -68,12 +79,25 @@ class CardanoJpiSpec
     )
   }
 
+  it should "return not found error" in {
+    val builder = ListTransactionsParamBuilder.create("invalid_wallet_id")
+    tryGetErrorMessage(
+      api.listTransactions(builder)
+    ) shouldBe walletNotFoundError
+  }
+
   "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
-    api.getTransaction(wallet.id, createdTransactionResponse.id).toCompletableFuture.get().id shouldBe createdTransactionResponse.id
+    api
+      .getTransaction(wallet.id, createdTransactionResponse.id)
+      .toCompletableFuture
+      .get()
+      .id shouldBe createdTransactionResponse.id
   }
 
   it should "return not found error" in {
-    Try(api.getTransaction(wallet.id, "not_existing_id").toCompletableFuture.get()).toEither.swap.getOrElse(fail("Should fail")).getMessage shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Transaction not found, Code: 404"
+    tryGetErrorMessage(
+      api.getTransaction(wallet.id, "not_existing_id")
+    ) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Transaction not found, Code: 404"
   }
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
@@ -84,21 +108,52 @@ class CardanoJpiSpec
       .id shouldBe createdTransactionResponse.id
   }
 
+  it should "return not found" in {
+    tryGetErrorMessage(
+      api.createTransaction("invalid_wallet_id", "MySecret", payments.payments.asJava)
+    ) shouldBe walletNotFoundError
+  }
+
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(
+      api.estimateFee("invalid_wallet_id", payments.payments.asJava)
+    ) shouldBe walletNotFoundError
   }
 
   "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
     api.fundPayments(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe fundPaymentsResponse
   }
 
+  it should "return not found" in {
+    tryGetErrorMessage(
+      api.fundPayments("invalid_wallet_id", payments.payments.asJava)
+    ) shouldBe walletNotFoundError
+  }
+
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
-    ???
+    api.updatePassphrase(wallet.id, "old_password", "new_password").toCompletableFuture.get() shouldBe null
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(
+      api.updatePassphrase("invalid_wallet_id", "old_password", "new_password")
+    ) shouldBe walletNotFoundError
   }
 
   "DELETE /wallets/{walletId" should "delete wallet" in {
-    ???
+    api.deleteWallet(wallet.id).toCompletableFuture.get() shouldBe null
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(
+      api.deleteWallet("invalid_wallet_id")
+    ) shouldBe walletNotFoundError
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
+
 }

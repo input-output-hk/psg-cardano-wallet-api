@@ -31,7 +31,6 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-
   final val createdTransactionResponse = {
     val commonAmount = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
 
