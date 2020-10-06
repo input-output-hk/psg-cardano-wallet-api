@@ -105,11 +105,11 @@ class CardanoApiSpec
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments).executeOrFail() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments, None).executeOrFail() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {
-    api.estimateFee("invalid_wallet_id", payments).executeExpectingErrorOrFail() shouldBe walletNotFoundError
+    api.estimateFee("invalid_wallet_id", payments, None).executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
   "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
