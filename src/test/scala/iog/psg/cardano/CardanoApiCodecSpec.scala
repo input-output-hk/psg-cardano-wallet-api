@@ -2,17 +2,13 @@ package iog.psg.cardano
 
 import java.time.ZonedDateTime
 
-import io.circe.Decoder
-import io.circe.parser._
 import io.circe.generic.auto._
 import iog.psg.cardano.CardanoApiCodec._
-import iog.psg.cardano.util.{DummyModel, ModelCompare}
+import iog.psg.cardano.util.{DummyModel, JsonFiles, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.io.Source
-
-class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare with DummyModel {
+class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare with DummyModel with JsonFiles {
 
   "Wallet" should "be decoded properly" in {
     val decoded = decodeJsonFile[Wallet]("wallet.json")
@@ -44,9 +40,9 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
 
   "list addresses" should "be decoded properly" in {
     val decoded = decodeJsonFile[Seq[WalletAddressId]]("addresses.json")
-    decoded.size shouldBe 1
+    decoded.size shouldBe 3
 
-    compareAddress(decoded.head, WalletAddressId(id = addressIdStr, Some(AddressFilter.used)))
+    compareAddress(decoded.head, WalletAddressId(id = addressIdStr, Some(AddressFilter.unUsed)))
   }
 
   "list transactions" should "be decoded properly" in {
@@ -72,19 +68,6 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare wi
     val decoded = decodeJsonFile[FundPaymentsResponse]("coin_selections_random.json")
 
     compareFundPaymentsResponse(decoded, fundPaymentsResponse)
-  }
-
-  private def getJsonFromFile(file: String): String = {
-    val source = Source.fromURL(getClass.getResource(s"/jsons/$file"))
-    val jsonStr = source.mkString
-    source.close()
-    jsonStr
-  }
-
-
-  private def decodeJsonFile[T](file: String)(implicit dec: Decoder[T]) = {
-    val jsonStr = getJsonFromFile(file)
-    decode[T](jsonStr).getOrElse(fail("Could not decode wallet"))
   }
 
 }

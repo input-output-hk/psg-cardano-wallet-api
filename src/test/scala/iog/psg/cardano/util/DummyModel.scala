@@ -101,15 +101,15 @@ trait DummyModel { self: Assertions =>
 
   final val addresses = Seq(
     WalletAddressId(
-      id = "wallet_1_unused",
+      id = "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     ),
     WalletAddressId(
-      id = "wallet_2_used",
+      id = "addr2sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.used)
     ),
     WalletAddressId(
-      id = "wallet_3_unused",
+      id = "addr3sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     )
   )

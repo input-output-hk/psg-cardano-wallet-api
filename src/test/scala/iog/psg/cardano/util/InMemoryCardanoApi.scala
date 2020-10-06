@@ -2,15 +2,16 @@ package iog.psg.cardano.util
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpMethods
+import io.circe.generic.auto.exportDecoder
 import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage}
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse, EstimateFeeResponse, FundPaymentsResponse, NetworkInfo, Wallet, WalletAddressId}
 import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait InMemoryCardanoApi { this: DummyModel with ScalaFutures with Assertions =>
+trait InMemoryCardanoApi { this: ScalaFutures with Assertions with JsonFiles =>
 
   implicit val as: ActorSystem
   implicit lazy val ec = as.dispatcher
@@ -33,6 +34,13 @@ trait InMemoryCardanoApi { this: DummyModel with ScalaFutures with Assertions =>
       inMemoryExecutor.execute(req.futureValue).futureValue.swap.getOrElse(fail("Request should failed."))
   }
 
+  private val jsonFileWallet = decodeJsonFile[Wallet]("wallet.json")
+  private val jsonFileNetInfo = decodeJsonFile[NetworkInfo]("netinfo.json")
+  private val jsonFileAddresses = decodeJsonFile[Seq[WalletAddressId]]("addresses.json")
+  private val jsonFileCreatedTransactionResponse = decodeJsonFile[CreateTransactionResponse]("transaction.json")
+  private val jsonFileCoinSelectionRandom = decodeJsonFile[FundPaymentsResponse]("coin_selections_random.json")
+  private val jsonFileEstimateFees = decodeJsonFile[EstimateFeeResponse]("estimate_fees.json")
+
   val inMemoryExecutor = new ApiRequestExecutor {
     override def execute[T](
       request: CardanoApi.CardanoApiRequest[T]
@@ -42,22 +50,22 @@ trait InMemoryCardanoApi { this: DummyModel with ScalaFutures with Assertions =>
 
       Future.successful {
         ((apiAddress, method) match {
-          case ("network/information", HttpMethods.GET) => Right(networkInfo)
-          case ("wallets", HttpMethods.GET)                          => Right(List(wallet))
-          case ("wallets", HttpMethods.POST)                         => Right(wallet)
-          case (s"wallets/${wallet.id}", HttpMethods.GET)            => Right(wallet)
-          case (s"wallets/${wallet.id}", HttpMethods.DELETE)         => Right(())
-          case (s"wallets/${wallet.id}/passphrase", HttpMethods.PUT) => Right(())
-          case (s"wallets/${wallet.id}/addresses?state=unused", HttpMethods.GET) =>
-            Right(addresses.filter(_.state.contains(AddressFilter.unUsed)))
-          case (s"wallets/${wallet.id}/addresses?state=used", HttpMethods.GET) =>
-            Right(addresses.filter(_.state.contains(AddressFilter.used)))
-          case (s"wallets/${wallet.id}/transactions", HttpMethods.GET) => Right(Seq(createdTransactionResponse))
-          case (s"wallets/${wallet.id}/transactions/${createdTransactionResponse.id}", HttpMethods.GET) =>
-            Right(createdTransactionResponse)
-          case (s"wallets/${wallet.id}/transactions", HttpMethods.POST)           => Right(createdTransactionResponse)
-          case (s"wallets/${wallet.id}/payment-fees", HttpMethods.POST)           => Right(estimateFeeResponse)
-          case (s"wallets/${wallet.id}/coin-selections/random", HttpMethods.POST) => Right(fundPaymentsResponse)
+          case ("network/information", HttpMethods.GET) => Right(jsonFileNetInfo)
+          case ("wallets", HttpMethods.GET)                          => Right(List(jsonFileWallet))
+          case ("wallets", HttpMethods.POST)                         => Right(jsonFileWallet)
+          case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET)            => Right(jsonFileWallet)
+          case (s"wallets/${jsonFileWallet.id}", HttpMethods.DELETE)         => Right(())
+          case (s"wallets/${jsonFileWallet.id}/passphrase", HttpMethods.PUT) => Right(())
+          case (s"wallets/${jsonFileWallet.id}/addresses?state=unused", HttpMethods.GET) =>
+            Right(jsonFileAddresses.filter(_.state.contains(AddressFilter.unUsed)))
+          case (s"wallets/${jsonFileWallet.id}/addresses?state=used", HttpMethods.GET) =>
+            Right(jsonFileAddresses.filter(_.state.contains(AddressFilter.used)))
+          case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.GET) => Right(Seq(jsonFileCreatedTransactionResponse))
+          case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
+            Right(jsonFileCreatedTransactionResponse)
+          case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST)           => Right(jsonFileCreatedTransactionResponse)
+          case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST)           => Right(jsonFileEstimateFees)
+          case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) => Right(jsonFileCoinSelectionRandom)
           case (r"wallets/.+/transactions/.+", HttpMethods.GET) => Left(ErrorMessage(s"Transaction not found", "404"))
           case (r"wallets/.+", _) => Left(ErrorMessage(s"Wallet not found", "404"))
           case unknown            => Left(ErrorMessage(s"Not implemented for: $unknown", "400"))
