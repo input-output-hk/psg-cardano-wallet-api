@@ -52,6 +52,7 @@ trait InMemoryCardanoApi { this: DummyModel with ScalaFutures with Assertions =>
           case (s"wallets/${wallet.id}/transactions/${createdTransactionResponse.id}", HttpMethods.GET) => Right(createdTransactionResponse)
           case (s"wallets/${wallet.id}/transactions", HttpMethods.POST) => Right(createdTransactionResponse)
           case (s"wallets/${wallet.id}/payment-fees", HttpMethods.POST) => Right(estimateFeeResponse)
+          case (s"wallets/${wallet.id}/coin-selections/random", HttpMethods.POST) => Right(fundPaymentsResponse)
 
           case (r"wallets/.+/transactions/.+", HttpMethods.GET) => Left(ErrorMessage(s"Transaction not found", "404"))
 

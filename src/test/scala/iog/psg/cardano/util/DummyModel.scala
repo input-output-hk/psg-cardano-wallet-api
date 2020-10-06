@@ -183,4 +183,6 @@ trait DummyModel { self: Assertions =>
     EstimateFeeResponse(estimatedMin = estimatedMin, estimatedMax = estimatedMin.copy(quantity = estimatedMin.quantity * 3))
   }
 
+  final val fundPaymentsResponse =
+    FundPaymentsResponse(inputs = IndexedSeq(inAddress), outputs = Seq(outAddress))
 }

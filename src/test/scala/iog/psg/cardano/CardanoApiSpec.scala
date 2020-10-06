@@ -42,7 +42,7 @@ class CardanoApiSpec
     api.listAddresses(wallet.id, Some(AddressFilter.unUsed)).executeOrFail().map(_.id) shouldBe unUsedAddresses.map(_.id)
   }
 
-  it should "return wallet'snused addresses" in {
+  it should "return wallet's used addresses" in {
     api.listAddresses(wallet.id, Some(AddressFilter.used)).executeOrFail().map(_.id) shouldBe usedAddresses.map(_.id)
   }
 
@@ -69,7 +69,7 @@ class CardanoApiSpec
   }
 
   "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
-    ???
+    api.fundPayments(wallet.id, payments).executeOrFail() shouldBe fundPaymentsResponse
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {

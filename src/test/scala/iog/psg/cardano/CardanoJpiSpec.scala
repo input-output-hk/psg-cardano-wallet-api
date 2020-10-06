@@ -56,7 +56,7 @@ class CardanoJpiSpec
     ids shouldBe unUsedAddresses.map(_.id)
   }
 
-  it should "return wallet'snused addresses" in {
+  it should "return wallet's used addresses" in {
     val ids = api.listAddresses(wallet.id, AddressFilter.USED).toCompletableFuture.get().asScala.toList.map(_.id)
     ids shouldBe usedAddresses.map(_.id)
   }
@@ -89,7 +89,7 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
-    ???
+    api.fundPayments(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe fundPaymentsResponse
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
