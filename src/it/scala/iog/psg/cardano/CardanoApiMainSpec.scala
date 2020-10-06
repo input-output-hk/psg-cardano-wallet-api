@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApiMain.CmdLine
+import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
 import org.scalatest.BeforeAndAfterAll
@@ -26,7 +27,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
   private implicit val system = ActorSystem("SingleRequest")
   private implicit val context = system.dispatcher
 
-  private val baseUrl = TestWalletsConfig.baseUrl
   private val defaultArgs = Array(CmdLine.baseUrl, baseUrl)
 
   private def makeArgs(args: String*): Array[String] =

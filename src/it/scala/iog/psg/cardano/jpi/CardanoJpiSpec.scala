@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
+import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
 import iog.psg.cardano.util.{Configure, ModelCompare}
 import org.scalatest.BeforeAndAfterAll
@@ -22,7 +23,6 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
     super.afterAll()
   }
 
-  private val baseUrl = TestWalletsConfig.baseUrl
   private val timeoutValue: Long = 10
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
