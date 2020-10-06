@@ -109,7 +109,7 @@ object CardanoApiMain {
           val addr = arguments.get(CmdLine.address)
           val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
           val payments = Payments(Seq(singlePayment))
-          val result = unwrap(api.estimateFee(walletId, payments).executeBlocking)
+          val result = unwrap(api.estimateFee(walletId, payments, None).executeBlocking)
           trace(result)
 
         } else if (hasArgument(CmdLine.getWallet)) {
