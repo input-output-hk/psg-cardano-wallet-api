@@ -1,8 +1,9 @@
 package iog.psg.cardano
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{ AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder }
-import iog.psg.cardano.util.{ Configure, DummyModel, InMemoryCardanoApi, ModelCompare }
+import iog.psg.cardano.CardanoApi.ErrorMessage
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -67,6 +68,14 @@ class CardanoJpiSpec
     )
   }
 
+  "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
+    api.getTransaction(wallet.id, createdTransactionResponse.id).toCompletableFuture.get().id shouldBe createdTransactionResponse.id
+  }
+
+  it should "return not found error" in {
+    Try(api.getTransaction(wallet.id, "not_existing_id").toCompletableFuture.get()).toEither.swap.getOrElse(fail("Should fail")).getMessage shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Transaction not found, Code: 404"
+  }
+
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
     api
       .createTransaction(wallet.id, "MySecret", payments.payments.asJava)
@@ -77,6 +86,18 @@ class CardanoJpiSpec
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
+    ???
+  }
+
+  "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
+    ???
+  }
+
+  "DELETE /wallets/{walletId" should "delete wallet" in {
+    ???
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")

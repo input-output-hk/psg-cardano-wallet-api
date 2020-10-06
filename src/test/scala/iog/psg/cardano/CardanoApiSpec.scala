@@ -50,6 +50,14 @@ class CardanoApiSpec
     api.listTransactions(wallet.id).executeOrFail().map(_.id) shouldBe Seq(createdTransactionResponse.id)
   }
 
+  "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
+    api.getTransaction(wallet.id, createdTransactionResponse.id).executeOrFail().id shouldBe createdTransactionResponse.id
+  }
+
+  it should "return not found error" in {
+    api.getTransaction(wallet.id, "not_existing_id").executeExpectingErrorOrFail() shouldBe ErrorMessage("Transaction not found", "404")
+  }
+
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
     api.createTransaction(
       fromWalletId = wallet.id, passphrase = "MySecret", payments = payments, metadata = None, withdrawal = None
@@ -58,6 +66,18 @@ class CardanoApiSpec
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments).executeOrFail() shouldBe estimateFeeResponse
+  }
+
+  "POST /wallets/{walletId}/coin-selections/random" should "fund payments" in {
+    ???
+  }
+
+  "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
+    ???
+  }
+
+  "DELETE /wallets/{walletId" should "delete wallet" in {
+    ???
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
