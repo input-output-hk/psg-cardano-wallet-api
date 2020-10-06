@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
 
-class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare {
+class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare {
 
   private val baseUrl = config.getString("cardano.wallet.baseUrl")
   private val testWalletName = config.getString("cardano.wallet.name")
