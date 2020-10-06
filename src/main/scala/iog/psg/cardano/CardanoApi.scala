@@ -112,7 +112,6 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
                            passphrase: String,
                            mnemonicSentence: MnemonicSentence,
                            addressPoolGap: Option[Int] = None
-
                          ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =

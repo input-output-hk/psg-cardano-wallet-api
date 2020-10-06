@@ -2,9 +2,128 @@ package iog.psg.cardano.util
 
 import java.time.ZonedDateTime
 
+import io.circe.parser.parse
 import iog.psg.cardano.CardanoApiCodec._
+import org.scalatest.Assertions
 
-trait DummyModel {
+trait DummyModel { self: Assertions =>
+
+  final val addressIdStr =
+    "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g"
+
+  final val inAddress = InAddress(
+    address = Some(addressIdStr),
+    amount = Some(QuantityUnit(quantity = 42000000, unit = Units.lovelace)),
+    id = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
+    index = 0
+  )
+
+  final val outAddress =
+    OutAddress(address = addressIdStr, amount = QuantityUnit(quantity = 42000000, unit = Units.lovelace))
+
+  final val timedBlock = TimedBlock(
+    time = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
+    block = Block(
+      slotNumber = 1337,
+      epochNumber = 14,
+      height = QuantityUnit(1337, Units.block),
+      absoluteSlotNumber = Some(8086)
+    )
+  )
+
+
+  final val createdTransactionResponse = {
+    val commonAmount = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
+
+    CreateTransactionResponse(
+      id = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
+      amount = commonAmount,
+      insertedAt = Some(timedBlock),
+      pendingSince = Some(timedBlock),
+      depth = Some(QuantityUnit(quantity = 1337, unit = Units.block)),
+      direction = TxDirection.outgoing,
+      inputs = Seq(inAddress),
+      outputs = Seq(outAddress),
+      withdrawals = Seq(
+        StakeAddress(
+          stakeAddress = "stake1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2x",
+          amount = commonAmount
+        )
+      ),
+      status = TxState.pending,
+      metadata = Some(TxMetadataOut(json = parse("""
+                                                   |{
+                                                   |      "0": {
+                                                   |        "string": "cardano"
+                                                   |      },
+                                                   |      "1": {
+                                                   |        "int": 14
+                                                   |      },
+                                                   |      "2": {
+                                                   |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                                   |      },
+                                                   |      "3": {
+                                                   |        "list": [
+                                                   |          {
+                                                   |            "int": 14
+                                                   |          },
+                                                   |          {
+                                                   |            "int": 42
+                                                   |          },
+                                                   |          {
+                                                   |            "string": "1337"
+                                                   |          }
+                                                   |        ]
+                                                   |      },
+                                                   |      "4": {
+                                                   |        "map": [
+                                                   |          {
+                                                   |            "k": {
+                                                   |              "string": "key"
+                                                   |            },
+                                                   |            "v": {
+                                                   |              "string": "value"
+                                                   |            }
+                                                   |          },
+                                                   |          {
+                                                   |            "k": {
+                                                   |              "int": 14
+                                                   |            },
+                                                   |            "v": {
+                                                   |              "int": 42
+                                                   |            }
+                                                   |          }
+                                                   |        ]
+                                                   |      }
+                                                   |    }
+                                                   |""".stripMargin).getOrElse(fail("Invalid metadata json"))))
+    )
+  }
+
+  final val addresses = Seq(
+    WalletAddressId(
+      id = "wallet_1_unused",
+      state = Some(AddressFilter.unUsed)
+    ),
+    WalletAddressId(
+      id = "wallet_2_used",
+      state = Some(AddressFilter.used)
+    ),
+    WalletAddressId(
+      id = "wallet_3_unused",
+      state = Some(AddressFilter.unUsed)
+    )
+  )
+
+  final val unUsedAddresses = addresses.filter(_.state.contains(AddressFilter.unUsed))
+  final val usedAddresses = addresses.filter(_.state.contains(AddressFilter.used))
+
+  final val networkTip = NetworkTip(
+    epochNumber = 14,
+    slotNumber = 1337,
+    height = Some(QuantityUnit(1337, Units.block)),
+    absoluteSlotNumber = Some(8086)
+  )
 
   final val wallet = Wallet(
     id = "2512a00e9653fe49a44a5886202e24d77eeb998f",
@@ -35,13 +154,6 @@ trait DummyModel {
     tip = networkTip
   )
 
-  final val networkTip = NetworkTip(
-    epochNumber = 14,
-    slotNumber = 1337,
-    height = Some(QuantityUnit(1337, Units.block)),
-    absoluteSlotNumber = Some(8086)
-  )
-
   final lazy val nodeTip = NodeTip(
     epochNumber = 14,
     slotNumber = 1337,
@@ -49,10 +161,26 @@ trait DummyModel {
     absoluteSlotNumber = Some(8086)
   )
 
-  final val networkInfo =  NetworkInfo(
+  final val networkInfo = NetworkInfo(
     syncProgress = SyncStatus(SyncState.ready, None),
     networkTip = networkTip.copy(height = None),
     nodeTip = nodeTip,
     nextEpoch = NextEpoch(ZonedDateTime.parse("2019-02-27T14:46:45.000Z"), 14)
   )
+
+  final val mnemonicSentence = GenericMnemonicSentence(
+    "a b c d e a b c d e a b c d e"
+  )
+
+  final val payments = Payments(
+    Seq(
+      Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))
+    )
+  )
+
+  final val estimateFeeResponse = {
+    val estimatedMin = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
+    EstimateFeeResponse(estimatedMin = estimatedMin, estimatedMax = estimatedMin.copy(quantity = estimatedMin.quantity * 3))
+  }
+
 }
