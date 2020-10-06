@@ -34,7 +34,7 @@ public class TestMain {
                 wallet =
                         api.getWallet(walletId).toCompletableFuture().get();
             } catch(Exception e) {
-                wallet = api.createRestore("cardanoapimainspec", passphrase, menmLst, Optional.empty(),10).toCompletableFuture().get();
+                wallet = api.createRestore("cardanoapimainspec", passphrase, menmLst, 10).toCompletableFuture().get();
             }
 
             CardanoApiCodec.WalletAddressId unusedAddr = api.listAddresses(wallet.id(), AddressFilter.UNUSED).toCompletableFuture().get().get(0);

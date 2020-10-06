@@ -41,7 +41,6 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
         testWalletName,
         testWalletPassphrase,
         mnem.mnemonicSentence.asJava,
-        None.toJava,
         10
       ).toCompletableFuture.get()
 
@@ -132,7 +131,7 @@ class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with Model
       testWalletName,
       testWalletPassphrase,
       mnem.mnemonicSentence.asJava,
-      Some(mnemSecondary.mnemonicSentence.asJava).toJava,
+      mnemSecondary.mnemonicSentence.asJava,
       10)
 
     createdWallet.id shouldBe testWalletId
