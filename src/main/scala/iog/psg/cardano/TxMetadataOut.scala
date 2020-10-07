@@ -39,9 +39,9 @@ final case class TxMetadataOut(json: Json) {
           (value: String) => Right(MetadataValueByteString(ByteString(value)))
         )
 
-      def extractListField(cursor: ACursor): DecodingEither[MetadataValueArray] = {
+      def extractListField(cursor: ACursor, key: String): DecodingEither[MetadataValueArray] = {
         val keyValuesObjects: List[Json] = cursor.downField(ValueTypeList).values.map(_.toList).getOrElse(Nil)
-        val listResults: Seq[DecodingEither[MetadataValue]] = keyValuesObjects.map(extractTypedFieldValue)
+        val listResults: Seq[DecodingEither[MetadataValue]] = keyValuesObjects.map(objJson => extractTypedFieldValue(objJson, key))
 
         listMapErrorOrResult(listResults, () => {
           val values = listResults.flatMap(_.toOption)
@@ -55,7 +55,7 @@ final case class TxMetadataOut(json: Json) {
 
         def getMapField[T <: MetadataValue](keyName: String, json: Json): DecodingEither[MetadataValue] = for {
           keyJson <- json.\\(keyName).headOption.toRight(DecodingFailure(s"Missing '$keyName' value", List(DownField(key))))
-          value <- extractTypedFieldValue(keyJson)
+          value <- extractTypedFieldValue(keyJson, key)
         } yield value
 
         val listResults: Seq[DecodingEither[(MetadataKey, MetadataValue)]] = keyValuesObjects.map { json =>
@@ -72,7 +72,7 @@ final case class TxMetadataOut(json: Json) {
         })
       }
 
-      def extractTypedFieldValue(json: Json): DecodingEither[MetadataValue] = {
+      def extractTypedFieldValue(json: Json, key: String): DecodingEither[MetadataValue] = {
         val cursor = json.hcursor
         cursor.keys.flatMap(_.headOption) match {
           case Some(ValueTypeString) =>
@@ -83,6 +83,8 @@ final case class TxMetadataOut(json: Json) {
 
           case Some(ValueTypeBytes)  =>
             extractBytesField(cursor)
+
+          case _ => Left(DecodingFailure("Invalid type value", List(DownField(key))))
         }
       }
 
@@ -92,7 +94,7 @@ final case class TxMetadataOut(json: Json) {
       def listMapErrorOrResult[A, B](results: Seq[DecodingEither[A]], onRight: () => B): DecodingEither[B] =
         results.find(_.isLeft) match {
           case Some(Left(error)) => Left(error)
-          case None => Right(onRight())
+          case _ => Right(onRight())
         }
 
       def extractValueForKeyInto(res: Decoder.Result[KeyVal], key: String): Decoder.Result[KeyVal] = {
@@ -109,7 +111,7 @@ final case class TxMetadataOut(json: Json) {
               extractBytesField(keyDownField).map(extractedValue => map.+(key.toLong -> extractedValue))
 
             case Some(valueType) if valueType == ValueTypeList =>
-              extractListField(keyDownField).map(valueArray => map.+(key.toLong -> valueArray))
+              extractListField(keyDownField, key).map(valueArray => map.+(key.toLong -> valueArray))
 
             case Some(valueType) if valueType == ValueTypeMap =>
               extractMapField(keyDownField, key).map(valueMap => map.+(key.toLong -> valueMap))
