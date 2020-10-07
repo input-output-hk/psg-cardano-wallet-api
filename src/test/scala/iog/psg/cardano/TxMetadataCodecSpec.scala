@@ -1,6 +1,7 @@
 package iog.psg.cardano
 
 import akka.util.ByteString
+import io.circe.ParsingFailure
 import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.DummyModel
@@ -72,7 +73,7 @@ class TxMetadataCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
     metaInJsonStr shouldBe """{"0":{"string":"cardano"},"1":{"int":14},"2":{"bytes":"2512a00e9653fe49a44a5886202e24d77eeb998f"},"3":{"list":[{"int":14},{"int":42},{"string":"1337"}]},"4":{"map":[{"k":{"string":"key"},"v":{"string":"value"}},{"k":{"int":14},"v":{"int":42}}]}}""".stripMargin
   }
 
-  "txMetadataOut toMapMetadataStr" should "be pared properly" in {
+  "txMetadataOut toMapMetadataStr" should "be parsed properly" in {
     txMetadataOut.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(
       0 -> MetadataValueStr("cardano"),
       1 -> MetadataValueLong(14),
@@ -89,4 +90,18 @@ class TxMetadataCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
       )))
   }
 
+  "Raw Good TxMetadata" should "be parsed properly" in {
+    val asString = txMetadataOut.json.noSpaces
+    val Right(rawTxMetaJsonIn) = JsonMetadata.parse(asString)
+    val rawTxMetaJsonIn2 = JsonMetadata(asString)
+    rawTxMetaJsonIn.metadataCompliantJson shouldBe txMetadataOut.json
+    rawTxMetaJsonIn2.metadataCompliantJson shouldBe txMetadataOut.json
+  }
+
+  "Raw Bad TxMetadata" should "be rejected" in {
+    val asString = txMetadataOut.json.noSpaces
+    val badJson = asString.substring(0, asString.length - 1)
+    val Left(ParsingFailure(_, _)) = JsonMetadata.parse(badJson)
+    intercept[Exception](JsonMetadata(badJson))
+  }
 }

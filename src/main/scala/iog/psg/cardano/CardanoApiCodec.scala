@@ -75,7 +75,12 @@ object CardanoApiCodec {
   final case class TxMetadataMapIn[K <: Long](m: Map[K, MetadataValue]) extends TxMetadataIn
 
   object JsonMetadata {
-    def apply(str: String): JsonMetadata = JsonMetadata(str.asJson)
+    def apply(rawJson: String): JsonMetadata = parse(rawJson) match {
+      case Left(p: ParsingFailure) => throw p
+      case Right(jsonMeta) => jsonMeta
+    }
+
+    def parse(rawJson: String): Either[ParsingFailure, JsonMetadata] = parser.parse(rawJson).map(JsonMetadata(_))
   }
 
   final case class JsonMetadata(metadataCompliantJson: Json) extends TxMetadataIn
