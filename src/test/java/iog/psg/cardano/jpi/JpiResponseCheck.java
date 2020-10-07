@@ -114,7 +114,7 @@ public class JpiResponseCheck {
             @Override
             public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
                 Future<Either<iog.psg.cardano.CardanoApi.ErrorMessage, T>> sResponse = executor.execute(request, as.dispatcher(), as);
-                CompletionStage<T> jResponse = toJava(HelpExecute.failOnLeft(sResponse, as.dispatcher()));
+                CompletionStage<T> jResponse = toJava(HelpExecute.unwrap(sResponse, as.dispatcher()));
                 return jResponse;
             }
         });
