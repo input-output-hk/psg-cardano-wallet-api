@@ -6,7 +6,7 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
 
@@ -33,6 +33,7 @@ object CardanoApiMain {
     val passphrase = "-passphrase"
     val metadata = "-metadata"
     val mnemonic = "-mnemonic"
+    val mnemonicSecondary = "-mnemonicSecondary"
     val addressPoolGap = "-addressPoolGap"
     val listWalletAddresses = "-listAddresses"
     val listWalletTransactions = "-listTxs"
@@ -105,7 +106,7 @@ object CardanoApiMain {
           val addr = arguments.get(CmdLine.address)
           val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
           val payments = Payments(Seq(singlePayment))
-          unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFee(walletId, payments).executeBlocking, r => trace(r))
+          unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFee(walletId, payments, None).executeBlocking, r => trace(r))
         } else if (hasArgument(CmdLine.getWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[CardanoApiCodec.Wallet](api.getWallet(walletId).executeBlocking, r => trace(r))
@@ -175,12 +176,14 @@ object CardanoApiMain {
           val name = arguments.get(CmdLine.name)
           val passphrase = arguments.get(CmdLine.passphrase)
           val mnemonic = arguments.get(CmdLine.mnemonic)
+          val mnemonicSecondaryOpt = arguments(CmdLine.mnemonicSecondary)
           val addressPoolGap = arguments(CmdLine.addressPoolGap).map(_.toInt)
 
           unwrap[CardanoApiCodec.Wallet](api.createRestoreWallet(
             name,
             passphrase,
             GenericMnemonicSentence(mnemonic),
+            mnemonicSecondaryOpt.map(m => GenericMnemonicSecondaryFactor(m)),
             addressPoolGap
           ).executeBlocking, r => trace(r))
 

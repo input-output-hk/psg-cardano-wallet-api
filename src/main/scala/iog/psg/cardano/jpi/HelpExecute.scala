@@ -25,6 +25,14 @@ object HelpExecute {
       case (k, v) => k.toLong -> MetadataValueStr (v)
     }
   }.toMap
+
+  def failOnLeft[T](future: Future[CardanoApiResponse[T]])(implicit ec: ExecutionContext): Future[T] = for {
+    either <- future
+    response <- either match {
+      case Left(error) => Future.failed(new CardanoApiException(error.message, error.code))
+      case Right(value) => Future.successful(value)
+    }
+  } yield response
 }
 
 class HelpExecute(implicit ec: ExecutionContext, as: ActorSystem) extends JApiRequestExecutor {
