@@ -5,6 +5,8 @@ import java.time.ZonedDateTime
 import akka.util.ByteString
 import io.circe.syntax.EncoderOps
 import CardanoApiCodec._
+
+import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.{DummyModel, JsonFiles, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

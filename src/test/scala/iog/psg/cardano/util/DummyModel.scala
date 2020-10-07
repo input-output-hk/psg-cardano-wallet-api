@@ -11,10 +11,10 @@ trait DummyModel { self: Assertions =>
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
-  final lazy val addressIdStr =
+  final val addressIdStr =
     "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g"
 
-  final lazy val inAddress = InAddress(
+  final val inAddress = InAddress(
     address = Some(addressIdStr),
     amount = Some(QuantityUnit(quantity = 42000000, unit = Units.lovelace)),
     id = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
@@ -25,7 +25,7 @@ trait DummyModel { self: Assertions =>
     OutAddress(address = addressIdStr, amount = QuantityUnit(quantity = 42000000, unit = Units.lovelace))
 
   final lazy val timedBlock = TimedBlock(
-    time = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
+    time = dummyDateTime,
     block = Block(
       slotNumber = 1337,
       epochNumber = 14,
@@ -104,20 +104,18 @@ trait DummyModel { self: Assertions =>
     )
   }
 
-  final lazy val addresses = Seq(
+
+  final val addresses = Seq(
     WalletAddressId(
-      id =
-        "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id = "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     ),
     WalletAddressId(
-      id =
-        "addr2sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id = "addr2sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.used)
     ),
     WalletAddressId(
-      id =
-        "addr3sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id = "addr3sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     )
   )

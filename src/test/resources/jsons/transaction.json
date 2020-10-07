@@ -5,7 +5,7 @@
     "unit": "lovelace"
   },
   "inserted_at": {
-    "time": "2019-02-27T14:46:45.000Z",
+    "time": "2000-01-02T03:04:05.000Z",
     "block": {
       "slot_number": 1337,
       "epoch_number": 14,
@@ -17,7 +17,7 @@
     }
   },
   "pending_since": {
-    "time": "2019-02-27T14:46:45.000Z",
+    "time": "2000-01-02T03:04:05.000Z",
     "block": {
       "slot_number": 1337,
       "epoch_number": 14,
