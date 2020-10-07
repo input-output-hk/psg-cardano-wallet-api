@@ -13,10 +13,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
-import scala.jdk.OptionConverters.RichOption
 
-
-class CardanoJpiSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
+class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     sut.deleteWallet(TestWalletsConfig.walletsMap(3).id)

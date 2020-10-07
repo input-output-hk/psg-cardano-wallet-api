@@ -49,10 +49,9 @@ public class ListTransactionsParamBuilder {
         Objects.requireNonNull(walletId, "WalletId cannot be null");
     }
 
-    static ListTransactionsParamBuilder create(String walletId) {
+    public static ListTransactionsParamBuilder create(String walletId) {
         return new ListTransactionsParamBuilder(walletId);
     }
-
 
     public ListTransactionsParamBuilder withEndTime(ZonedDateTime endTime) {
         this.endTime = endTime;

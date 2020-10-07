@@ -65,7 +65,7 @@ trait ModelCompare extends Matchers {
 
   final def compareAddress(decoded: WalletAddressId, expected: WalletAddressId): Assertion = {
     decoded.id shouldBe expected.id
-    decoded.state shouldBe expected.state
+    decoded.state.map(_.toString) shouldBe expected.state.map(_.toString)
   }
 
   final def compareNetworkInformation(decoded: NetworkInfo, expected: NetworkInfo): Assertion = {
