@@ -77,7 +77,7 @@ object CardanoApi {
 class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) {
 
   import iog.psg.cardano.CardanoApi._
-  import iog.psg.cardano.CardanoApiCodec._
+  import iog.psg.cardano.codecs.CardanoApiCodec._
   import AddressFilter.AddressFilter
 
   private val wallets = s"${baseUriWithPort}wallets"

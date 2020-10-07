@@ -1,6 +1,6 @@
 package iog.psg.cardano.util
 
-import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.codecs.CardanoApiCodec._
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 

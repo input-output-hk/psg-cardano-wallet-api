@@ -2,7 +2,7 @@ package iog.psg.cardano
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
-import iog.psg.cardano.CardanoApiCodec.NetworkInfo
+import iog.psg.cardano.codecs.CardanoApiCodec.NetworkInfo
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, DummyModel, ModelCompare, Trace}
 import org.scalatest.flatspec.AnyFlatSpec

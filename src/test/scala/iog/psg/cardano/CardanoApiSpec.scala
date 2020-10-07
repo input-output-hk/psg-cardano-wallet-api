@@ -2,7 +2,7 @@ package iog.psg.cardano
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.ErrorMessage
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.codecs.CardanoApiCodec.AddressFilter
 import iog.psg.cardano.util.{CustomPatienceConfiguration, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec

@@ -6,7 +6,8 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.codecs.CardanoApiCodec
+import iog.psg.cardano.codecs.CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
 

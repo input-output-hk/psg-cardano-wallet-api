@@ -1,6 +1,6 @@
 package iog.psg.cardano.util
 
-import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
+import iog.psg.cardano.codecs.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

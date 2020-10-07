@@ -3,15 +3,11 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.util.ByteString
-import io.circe.Decoder
-import io.circe.parser._
 import io.circe.syntax.EncoderOps
-import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.codecs.CardanoApiCodec._
 import iog.psg.cardano.util.{DummyModel, JsonFiles, ModelCompare}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.io.Source
 
 class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with ModelCompare with DummyModel with JsonFiles {
 

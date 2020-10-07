@@ -7,7 +7,7 @@ import akka.http.scaladsl.model._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage }
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.codecs.CardanoApiCodec.AddressFilter
 import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures

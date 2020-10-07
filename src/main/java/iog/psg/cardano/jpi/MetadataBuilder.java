@@ -1,7 +1,7 @@
 package iog.psg.cardano.jpi;
 
 import io.circe.Json;
-import iog.psg.cardano.CardanoApiCodec;
+import iog.psg.cardano.codecs.CardanoApiCodec;
 
 import java.util.Map;
 

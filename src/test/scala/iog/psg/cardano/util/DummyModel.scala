@@ -3,7 +3,8 @@ package iog.psg.cardano.util
 import java.time.ZonedDateTime
 
 import io.circe.parser.parse
-import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.codecs.CardanoApiCodec._
+import iog.psg.cardano.model.TxMetadataOut
 import org.scalatest.Assertions
 
 trait DummyModel { self: Assertions =>
