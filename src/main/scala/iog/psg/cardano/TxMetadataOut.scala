@@ -38,6 +38,22 @@ final case class TxMetadataOut(json: Json) {
           (value: String) => Right(MetadataValueByteString(ByteString(value)))
         )
 
+      def extractTypedFieldValue(json: Json, key: String): DecodingEither[MetadataValue] = {
+        val cursor = json.hcursor
+        cursor.keys.flatMap(_.headOption) match {
+          case Some(ValueTypeString) =>
+            extractStringField(cursor)
+
+          case Some(ValueTypeLong) =>
+            extractLongField(cursor)
+
+          case Some(ValueTypeBytes)  =>
+            extractBytesField(cursor)
+
+          case _ => Left(DecodingFailure("Invalid type value", List(DownField(key))))
+        }
+      }
+
       def extractListField(cursor: ACursor, key: String): DecodingEither[MetadataValueArray] = {
         val keyValuesObjects: List[Json] = cursor.downField(ValueTypeList).values.map(_.toList).getOrElse(Nil)
         val listResults: Seq[DecodingEither[MetadataValue]] = keyValuesObjects.map(objJson => extractTypedFieldValue(objJson, key))
@@ -69,22 +85,6 @@ final case class TxMetadataOut(json: Json) {
           val values: Map[MetadataKey, MetadataValue] = listResults.flatMap(_.toOption).toMap
           MetadataValueMap(values)
         })
-      }
-
-      def extractTypedFieldValue(json: Json, key: String): DecodingEither[MetadataValue] = {
-        val cursor = json.hcursor
-        cursor.keys.flatMap(_.headOption) match {
-          case Some(ValueTypeString) =>
-            extractStringField(cursor)
-
-          case Some(ValueTypeLong) =>
-            extractLongField(cursor)
-
-          case Some(ValueTypeBytes)  =>
-            extractBytesField(cursor)
-
-          case _ => Left(DecodingFailure("Invalid type value", List(DownField(key))))
-        }
       }
 
       /**

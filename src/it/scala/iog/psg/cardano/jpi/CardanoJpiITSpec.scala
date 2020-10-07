@@ -7,14 +7,14 @@ import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
 import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
-import iog.psg.cardano.util.{Configure, ModelCompare}
+import iog.psg.cardano.util.{Configure, CustomPatienceConfiguration, ModelCompare}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
-class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
+class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll with CustomPatienceConfiguration {
 
   override def afterAll(): Unit = {
     sut.deleteWallet(TestWalletsConfig.walletsMap(3).id)
