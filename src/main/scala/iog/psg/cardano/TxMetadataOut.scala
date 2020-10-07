@@ -1,9 +1,9 @@
-package iog.psg.cardano.model
+package iog.psg.cardano
 
 import akka.util.ByteString
 import io.circe.CursorOp.DownField
 import io.circe._
-import iog.psg.cardano.codecs.CardanoApiCodec.{MetadataKey, MetadataValue, MetadataValueArray, MetadataValueByteString, MetadataValueLong, MetadataValueMap, MetadataValueStr}
+import iog.psg.cardano.CardanoApiCodec._
 
 final case class TxMetadataOut(json: Json) {
   def toMapMetadataStr: Decoder.Result[Map[Long, MetadataValue]] = {
@@ -17,6 +17,11 @@ final case class TxMetadataOut(json: Json) {
       val valueTypeBytes = "bytes"
       val valueTypeList = "list"
       val valueTypeMap = "map"
+
+      def extractTypedField(cursor: ACursor): Either[DecodingFailure, MetadataValue] = {
+        //cursor.
+        ???
+      }
 
       def extractStringField(cursor: ACursor): Either[DecodingFailure, MetadataValueStr] =
         cursor.downField(valueTypeString).as[String].fold(
@@ -39,13 +44,13 @@ final case class TxMetadataOut(json: Json) {
       def extractTypedFieldValue(json: Json): Either[DecodingFailure, MetadataValue] = {
         val cursor = json.hcursor
         cursor.keys.flatMap(_.headOption) match {
-          case Some(valueType) if valueType == valueTypeString =>
+          case Some(`valueTypeString`) =>
             extractStringField(cursor)
 
-          case Some(valueType) if valueType == valueTypeLong =>
+          case Some(`valueTypeLong`) =>
             extractLongField(cursor)
 
-          case Some(valueType) if valueType == valueTypeBytes =>
+          case Some(`valueTypeBytes`)  =>
             extractBytesField(cursor)
         }
       }

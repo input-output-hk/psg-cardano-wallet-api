@@ -1,7 +1,7 @@
 package iog.psg.cardano.jpi;
 
 import akka.actor.ActorSystem;
-import iog.psg.cardano.codecs.CardanoApiCodec;
+import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Option;
 import scala.concurrent.Future;

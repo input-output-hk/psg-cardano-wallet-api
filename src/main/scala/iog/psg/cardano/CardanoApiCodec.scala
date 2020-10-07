@@ -1,4 +1,4 @@
-package iog.psg.cardano.codecs
+package iog.psg.cardano
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -16,13 +16,12 @@ import io.circe.generic.extras._
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
 import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
-import iog.psg.cardano.codecs.CardanoApiCodec.AddressFilter.AddressFilter
-import iog.psg.cardano.codecs.CardanoApiCodec.DelegationStatus.DelegationStatus
-import iog.psg.cardano.codecs.CardanoApiCodec.SyncState.SyncState
-import iog.psg.cardano.codecs.CardanoApiCodec.TxDirection.TxDirection
-import iog.psg.cardano.codecs.CardanoApiCodec.TxState.TxState
-import iog.psg.cardano.codecs.CardanoApiCodec.Units.Units
-import iog.psg.cardano.model.TxMetadataOut
+import iog.psg.cardano.CardanoApiCodec.AddressFilter.AddressFilter
+import iog.psg.cardano.CardanoApiCodec.DelegationStatus.DelegationStatus
+import iog.psg.cardano.CardanoApiCodec.SyncState.SyncState
+import iog.psg.cardano.CardanoApiCodec.TxDirection.TxDirection
+import iog.psg.cardano.CardanoApiCodec.TxState.TxState
+import iog.psg.cardano.CardanoApiCodec.Units.Units
 import org.apache.commons.codec.binary.Hex
 
 import scala.concurrent.duration.FiniteDuration

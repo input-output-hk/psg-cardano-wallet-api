@@ -1,6 +1,6 @@
 package iog.psg.cardano.jpi;
 
-import iog.psg.cardano.codecs.CardanoApiCodec;
+import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Some;
 import scala.jdk.javaapi.CollectionConverters;

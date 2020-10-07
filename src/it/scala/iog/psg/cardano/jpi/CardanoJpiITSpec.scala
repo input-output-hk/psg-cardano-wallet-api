@@ -3,7 +3,7 @@ package iog.psg.cardano.jpi
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
-import iog.psg.cardano.codecs.CardanoApiCodec._
+import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
 import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture

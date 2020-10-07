@@ -3,7 +3,7 @@ package iog.psg.cardano.util
 import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.parser.decode
-import iog.psg.cardano.codecs.CardanoApiCodec._
+import iog.psg.cardano.CardanoApiCodec._
 import org.scalatest.Assertions
 
 import scala.io.Source
