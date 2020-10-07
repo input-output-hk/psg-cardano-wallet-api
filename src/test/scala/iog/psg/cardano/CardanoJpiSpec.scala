@@ -57,7 +57,6 @@ class CardanoJpiSpec
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {
     val ids = api.listAddresses(wallet.id, AddressFilter.UNUSED).toCompletableFuture.get().asScala.toList.map(_.id)
-    println("ids: "+ api.listAddresses(wallet.id, AddressFilter.UNUSED).toCompletableFuture.get().asScala.toList)
     ids shouldBe unUsedAddresses.map(_.id)
   }
 
