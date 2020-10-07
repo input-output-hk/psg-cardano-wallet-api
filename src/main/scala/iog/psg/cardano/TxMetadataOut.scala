@@ -12,7 +12,6 @@ final case class TxMetadataOut(json: Json) {
   def toMapMetadataStr: Decoder.Result[Map[Long, MetadataValue]] = {
     type KeyVal = Map[Long, MetadataValue]
 
-    // using the expansion may be necessary for Circe to detect it correctly
     implicit val decodeMap: Decoder[Map[Long, MetadataValue]] = (c: HCursor) => {
 
       val ValueTypeString = "string"
