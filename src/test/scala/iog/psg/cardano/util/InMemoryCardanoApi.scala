@@ -71,7 +71,7 @@ trait InMemoryCardanoApi {
       }
 
       matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
-    }
+    }.sortWith((ta, tb) => if (order == Order.descendingOrder) ta.id > tb.id else ta.id < tb.id)
   }
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
@@ -99,8 +99,6 @@ trait InMemoryCardanoApi {
           Future.successful(())
         else
           Future.failed(new CardanoApiException("Invalid json body", "400"))
-
-      println(s"apiAddress: $apiAddress method: $method jsonFileWallet.id: ${jsonFileWallet.id}")
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET)           =>

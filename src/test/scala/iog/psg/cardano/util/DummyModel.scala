@@ -81,29 +81,18 @@ trait DummyModel { self: Assertions =>
                                                          |    }
                                                          |""".stripMargin).getOrElse(fail("Invalid metadata json")))
 
-  final lazy val createdTransactionResponse = {
-    val commonAmount = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
+  final lazy val firstTransactionId = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
 
-    CreateTransactionResponse(
-      id = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
-      amount = commonAmount,
-      insertedAt = Some(timedBlock),
-      pendingSince = Some(timedBlock),
-      depth = Some(QuantityUnit(quantity = 1337, unit = Units.block)),
-      direction = TxDirection.outgoing,
-      inputs = Seq(inAddress),
-      outputs = Seq(outAddress),
-      withdrawals = Seq(
-        StakeAddress(
-          stakeAddress = "stake1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2x",
-          amount = commonAmount
-        )
-      ),
-      status = TxState.pending,
-      metadata = Some(txMetadataOut)
-    )
-  }
+  final lazy val oldTransactionsIds = Seq(
+    firstTransactionId,
+    "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
+  )
 
+  final lazy val newTransactionsIds = Seq(
+    "2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
+  )
+
+  final lazy val transactionsIds = (oldTransactionsIds ++ newTransactionsIds).sorted
 
   final val addresses = Seq(
     WalletAddressId(

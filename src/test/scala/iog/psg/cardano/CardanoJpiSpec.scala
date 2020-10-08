@@ -81,8 +81,8 @@ class CardanoJpiSpec
     val builder = ListTransactionsParamBuilder.create(wallet.id)
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
 
-    transactions.size shouldBe 2
-    transactions.map(_.id) should contain oneElementOf Seq(createdTransactionResponse.id)
+    transactions.size shouldBe 3
+    transactions.map(_.id) shouldBe transactionsIds
   }
 
   it should "return not found error" in {
@@ -99,16 +99,16 @@ class CardanoJpiSpec
       .withMinwithdrawal(100)
 
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
-    transactions.size shouldBe 1
-    transactions.head.id shouldBe createdTransactionResponse.id
+    transactions.size shouldBe 2
+    transactions.map(_.id) shouldBe oldTransactionsIds.sorted
   }
 
   "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
     api
-      .getTransaction(wallet.id, createdTransactionResponse.id)
+      .getTransaction(wallet.id, firstTransactionId)
       .toCompletableFuture
       .get()
-      .id shouldBe createdTransactionResponse.id
+      .id shouldBe firstTransactionId
   }
 
   it should "return not found error" in {
@@ -127,7 +127,7 @@ class CardanoJpiSpec
       .createTransaction(wallet.id, "MySecret", payments.payments.asJava, metadata, "50")
       .toCompletableFuture
       .get()
-      .id shouldBe createdTransactionResponse.id
+      .id shouldBe firstTransactionId
   }
 
   it should "return not found" in {
