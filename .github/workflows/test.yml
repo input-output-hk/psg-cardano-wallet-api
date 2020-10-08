@@ -1,0 +1,40 @@
+name: Clean, build, test, coverage
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        uses: actions/setup-java@v1.4.2
+        with:
+          java-version: '11.0.8'
+      - run: sbt coverage test it:test coverageReport
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CARDANO_API_WALLET_1_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}
+          CARDANO_API_WALLET_1_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}
+          CARDANO_API_WALLET_2_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_2_MNEMONIC }}
+          CARDANO_API_WALLET_3_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_3_MNEMONIC }}
+          CARDANO_API_WALLET_3_MNEMONIC_SECONDARY: ${{ secrets.CARDANO_API_WALLET_3_MNEMONIC_SECONDARY }}
+          CARDANO_API_WALLET_3_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_3_PASSPHRASE }}
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: target/scala-2.13/scoverage-report
+
