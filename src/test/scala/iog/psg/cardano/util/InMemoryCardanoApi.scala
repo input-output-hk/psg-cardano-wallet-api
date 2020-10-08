@@ -1,18 +1,20 @@
 package iog.psg.cardano.util
 
 import java.io.File
+import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage }
+import iog.psg.cardano.CardanoApi.Order.Order
+import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter
-import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
+import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with JsonFiles =>
@@ -27,7 +29,10 @@ trait InMemoryCardanoApi {
   }
 
   implicit final class InMemoryExecutor[T](req: CardanoApiRequest[T]) {
-    def executeOrFail(): T = inMemoryExecutor.execute(req).futureValue.getOrElse(fail("Request failed."))
+    def executeOrFail(): T = inMemoryExecutor.execute(req).futureValue match {
+      case Left(value) => fail("Request failed: "+value.message)
+      case Right(value) => value
+    }
 
     def executeExpectingErrorOrFail(): ErrorMessage =
       inMemoryExecutor.execute(req).futureValue.swap.getOrElse(fail("Request should failed."))
@@ -49,6 +54,23 @@ trait InMemoryCardanoApi {
     HttpEntity.fromFile(contentType, file)
   }
 
+  private def getTransactions(walletId: String,
+                              start: ZonedDateTime,
+                              `end`: ZonedDateTime,
+                              order: Order,
+                              minWithdrawal: Int) = {
+    jsonFileCreatedTransactionsResponse.filter { transaction =>
+      val matchesDates = transaction.insertedAt.isEmpty || transaction.insertedAt.exists { tb =>
+        val afterStart = start.isBefore(tb.time)
+        val beforeEnd = `end`.isAfter(tb.time)
+
+        afterStart && beforeEnd
+      }
+
+      matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
+    }
+  }
+
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
       request: CardanoApi.CardanoApiRequest[T]
@@ -65,6 +87,8 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
+      println(s"apiAddress: $apiAddress method: $method jsonFileWallet.id: ${jsonFileWallet.id}")
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET)           => request.mapper(httpEntityFromJson("netinfo.json"))
         case ("wallets", HttpMethods.GET)                       => request.mapper(httpEntityFromJson("wallets.json"))
@@ -78,12 +102,27 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("unused_addresses.json"))
         case (s"wallets/${jsonFileWallet.id}/addresses?state=used", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("used_addresses.json"))
-        case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.GET) =>
+
+        case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("transactions.json"))
+
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("transaction.json"))
+
+        case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
+          val query = request.request.uri.query().toMap
+          val transactions = getTransactions(
+            walletId = jsonFileWallet.id,
+            start = ZonedDateTime.parse(query("start")),
+            end = ZonedDateTime.parse(query("end")),
+            order = Order.withName(query("order")),
+            minWithdrawal = query("minWithdrawal").toInt
+          )
+          request.mapper(HttpEntity(transactions.asJson.noSpaces).withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`)))
+
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("transaction.json"))
+
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("estimate_fees.json"))
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>

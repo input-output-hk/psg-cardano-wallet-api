@@ -11,6 +11,7 @@ trait JsonFiles { self: Assertions =>
 
   final lazy val jsonFileWallet = decodeJsonFile[Wallet]("wallet.json")
   final lazy val jsonFileCreatedTransactionResponse = decodeJsonFile[CreateTransactionResponse]("transaction.json")
+  final lazy val jsonFileCreatedTransactionsResponse = decodeJsonFile[Seq[CreateTransactionResponse]]("transactions.json")
 
   final def getJsonFromFile(file: String): String = {
     val source = Source.fromURL(getClass.getResource(s"/jsons/$file"))
