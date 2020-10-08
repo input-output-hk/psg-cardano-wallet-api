@@ -83,11 +83,13 @@ trait DummyModel { self: Assertions =>
 
   final lazy val firstTransactionId = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
 
+  //Year: 2000
   final lazy val oldTransactionsIds = Seq(
     firstTransactionId,
     "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
   )
 
+  //Year: 2020
   final lazy val newTransactionsIds = Seq(
     "2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
   )
