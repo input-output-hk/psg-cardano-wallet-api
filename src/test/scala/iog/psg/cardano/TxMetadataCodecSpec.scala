@@ -74,7 +74,7 @@ class TxMetadataCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
   }
 
   "txMetadataOut toMapMetadataStr" should "be parsed properly" in {
-    txMetadataOut.toMapMetadataStr.getOrElse(fail("could not parse map")) shouldBe Map(
+    txMetadataOut.toMetadataMap.getOrElse(fail("could not parse map")) shouldBe Map(
       0 -> MetadataValueStr("cardano"),
       1 -> MetadataValueLong(14),
       2 -> MetadataValueByteString(ByteString("2512a00e9653fe49a44a5886202e24d77eeb998f")),

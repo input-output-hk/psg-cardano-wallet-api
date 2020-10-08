@@ -97,7 +97,7 @@ object CardanoApiMain {
 
 
         if (hasArgument(CmdLine.netInfo)) {
-          unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, r => trace(r))
+          unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
           unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace.apply))
         } else if (hasArgument(CmdLine.estimateFee)) {
@@ -106,10 +106,10 @@ object CardanoApiMain {
           val addr = arguments.get(CmdLine.address)
           val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
           val payments = Payments(Seq(singlePayment))
-          unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFee(walletId, payments, None).executeBlocking, r => trace(r))
+          unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFee(walletId, payments, None).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
-          unwrap[CardanoApiCodec.Wallet](api.getWallet(walletId).executeBlocking, r => trace(r))
+          unwrap[CardanoApiCodec.Wallet](api.getWallet(walletId).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.updatePassphrase)) {
           val walletId = arguments.get(CmdLine.walletId)
           val oldPassphrase = arguments.get(CmdLine.oldPassphrase)
@@ -123,11 +123,11 @@ object CardanoApiMain {
         } else if (hasArgument(CmdLine.listWalletAddresses)) {
           val walletId = arguments.get(CmdLine.walletId)
           val addressesState = Some(AddressFilter.withName(arguments.get(CmdLine.state)))
-          unwrap[Seq[CardanoApiCodec.WalletAddressId]](api.listAddresses(walletId, addressesState).executeBlocking, r => trace(r))
+          unwrap[Seq[CardanoApiCodec.WalletAddressId]](api.listAddresses(walletId, addressesState).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val txId = arguments.get(CmdLine.txId)
-          unwrap[CardanoApiCodec.CreateTransactionResponse](api.getTransaction(walletId, txId).executeBlocking, r => trace(r))
+          unwrap[CardanoApiCodec.CreateTransactionResponse](api.getTransaction(walletId, txId).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.createTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -143,7 +143,7 @@ object CardanoApiMain {
             payments,
             metadata,
             None
-          ).executeBlocking, r => trace(r))
+          ).executeBlocking, trace(_))
 
         } else if (hasArgument(CmdLine.fundTx)) {
           val walletId = arguments.get(CmdLine.walletId)
@@ -155,7 +155,7 @@ object CardanoApiMain {
           unwrap[CardanoApiCodec.FundPaymentsResponse](api.fundPayments(
             walletId,
             payments
-          ).executeBlocking, r => trace(r))
+          ).executeBlocking, trace(_))
 
         } else if (hasArgument(CmdLine.listWalletTransactions)) {
           val walletId = arguments.get(CmdLine.walletId)
@@ -185,7 +185,7 @@ object CardanoApiMain {
             GenericMnemonicSentence(mnemonic),
             mnemonicSecondaryOpt.map(m => GenericMnemonicSecondaryFactor(m)),
             addressPoolGap
-          ).executeBlocking, r => trace(r))
+          ).executeBlocking, trace(_))
 
         } else {
           trace("No command recognised")

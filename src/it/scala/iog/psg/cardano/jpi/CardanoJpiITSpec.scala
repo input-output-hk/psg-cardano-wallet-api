@@ -14,14 +14,14 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
-class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll with CustomPatienceConfiguration {
+class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     sut.deleteWallet(TestWalletsConfig.walletsMap(3).id)
     super.afterAll()
   }
 
-  private val timeoutValue: Long = 10
+  private val timeoutValue: Long = 30
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
 
@@ -155,7 +155,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
     createTxResponse.id shouldBe getTxResponse.id
     createTxResponse.amount shouldBe getTxResponse.amount
 
-    val responseMetadataMap = createTxResponse.metadata.get.toMapMetadataStr.getOrElse(fail("Invalid metadata json."))
+    val responseMetadataMap = createTxResponse.metadata.get.toMetadataMap.getOrElse(fail("Invalid metadata json."))
 
     responseMetadataMap(Long.MaxValue) shouldBe MetadataValueStr("0" * 64)
     responseMetadataMap(Long.MaxValue - 1) shouldBe MetadataValueStr("1" * 64)
