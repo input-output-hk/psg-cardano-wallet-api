@@ -92,6 +92,12 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
+      def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
+        request.mapper(
+          HttpEntity(resp.asJson.noSpaces)
+            .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
+        )
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
@@ -118,7 +124,7 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("used_addresses.json"))
 
         case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
-          request.mapper(httpEntityFromJson("transactions.json"))
+          toJsonResponse(jsonFileCreatedTransactionsResponse.sortWith(_.id > _.id))
 
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("transaction.json"))
@@ -132,10 +138,7 @@ trait InMemoryCardanoApi {
             order = Order.withName(query("order")),
             minWithdrawal = query("minWithdrawal").toInt
           )
-          request.mapper(
-            HttpEntity(transactions.asJson.noSpaces)
-              .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
-          )
+          toJsonResponse(transactions)
 
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("transaction.json"))

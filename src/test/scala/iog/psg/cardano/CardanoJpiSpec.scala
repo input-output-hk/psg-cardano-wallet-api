@@ -75,7 +75,7 @@ class CardanoJpiSpec
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
 
     transactions.size shouldBe 3
-    transactions.map(_.id) shouldBe transactionsIds
+    transactions.map(_.id) shouldBe transactionsIds.sortWith(_ > _)
   }
 
   it should "return not found error" in {
