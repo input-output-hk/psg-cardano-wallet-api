@@ -61,7 +61,7 @@ trait InMemoryCardanoApi {
   private def getTransactions(
                                walletId: String,
                                start: ZonedDateTime,
-                               `end`: ZonedDateTime,
+                               end: ZonedDateTime,
                                order: Order,
                                minWithdrawal: Int
                              ) =
