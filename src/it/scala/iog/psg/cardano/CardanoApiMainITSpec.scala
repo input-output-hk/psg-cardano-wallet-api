@@ -12,7 +12,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
+class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     Seq(2, 3).map { num =>
@@ -38,7 +38,6 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with Configure with S
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
       override def apply(s: Object): Unit = results = s.toString +: results
-
       override def close(): Unit = ()
     }
 

@@ -4,9 +4,12 @@ import java.time.ZonedDateTime
 
 import io.circe.parser.parse
 import iog.psg.cardano.CardanoApiCodec._
+import iog.psg.cardano.TxMetadataOut
 import org.scalatest.Assertions
 
 trait DummyModel { self: Assertions =>
+
+  final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
   final val addressIdStr =
     "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g"
@@ -18,11 +21,11 @@ trait DummyModel { self: Assertions =>
     index = 0
   )
 
-  final val outAddress =
+  final lazy val outAddress =
     OutAddress(address = addressIdStr, amount = QuantityUnit(quantity = 42000000, unit = Units.lovelace))
 
-  final val timedBlock = TimedBlock(
-    time = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
+  final lazy val timedBlock = TimedBlock(
+    time = dummyDateTime,
     block = Block(
       slotNumber = 1337,
       epochNumber = 14,
@@ -31,7 +34,54 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final val createdTransactionResponse = {
+  final lazy val txMetadataOut = TxMetadataOut(json = parse("""
+                                                         |{
+                                                         |      "0": {
+                                                         |        "string": "cardano"
+                                                         |      },
+                                                         |      "1": {
+                                                         |        "int": 14
+                                                         |      },
+                                                         |      "2": {
+                                                         |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                                         |      },
+                                                         |      "3": {
+                                                         |        "list": [
+                                                         |          {
+                                                         |            "int": 14
+                                                         |          },
+                                                         |          {
+                                                         |            "int": 42
+                                                         |          },
+                                                         |          {
+                                                         |            "string": "1337"
+                                                         |          }
+                                                         |        ]
+                                                         |      },
+                                                         |      "4": {
+                                                         |        "map": [
+                                                         |          {
+                                                         |            "k": {
+                                                         |              "string": "key"
+                                                         |            },
+                                                         |            "v": {
+                                                         |              "string": "value"
+                                                         |            }
+                                                         |          },
+                                                         |          {
+                                                         |            "k": {
+                                                         |              "int": 14
+                                                         |            },
+                                                         |            "v": {
+                                                         |              "int": 42
+                                                         |            }
+                                                         |          }
+                                                         |        ]
+                                                         |      }
+                                                         |    }
+                                                         |""".stripMargin).getOrElse(fail("Invalid metadata json")))
+
+  final lazy val createdTransactionResponse = {
     val commonAmount = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
 
     CreateTransactionResponse(
@@ -50,54 +100,10 @@ trait DummyModel { self: Assertions =>
         )
       ),
       status = TxState.pending,
-      metadata = Some(TxMetadataOut(json = parse("""
-                                                   |{
-                                                   |      "0": {
-                                                   |        "string": "cardano"
-                                                   |      },
-                                                   |      "1": {
-                                                   |        "int": 14
-                                                   |      },
-                                                   |      "2": {
-                                                   |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                                   |      },
-                                                   |      "3": {
-                                                   |        "list": [
-                                                   |          {
-                                                   |            "int": 14
-                                                   |          },
-                                                   |          {
-                                                   |            "int": 42
-                                                   |          },
-                                                   |          {
-                                                   |            "string": "1337"
-                                                   |          }
-                                                   |        ]
-                                                   |      },
-                                                   |      "4": {
-                                                   |        "map": [
-                                                   |          {
-                                                   |            "k": {
-                                                   |              "string": "key"
-                                                   |            },
-                                                   |            "v": {
-                                                   |              "string": "value"
-                                                   |            }
-                                                   |          },
-                                                   |          {
-                                                   |            "k": {
-                                                   |              "int": 14
-                                                   |            },
-                                                   |            "v": {
-                                                   |              "int": 42
-                                                   |            }
-                                                   |          }
-                                                   |        ]
-                                                   |      }
-                                                   |    }
-                                                   |""".stripMargin).getOrElse(fail("Invalid metadata json"))))
+      metadata = Some(txMetadataOut)
     )
   }
+
 
   final val addresses = Seq(
     WalletAddressId(
@@ -114,17 +120,17 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final val unUsedAddresses = addresses.filter(_.state.contains(AddressFilter.unUsed))
-  final val usedAddresses = addresses.filter(_.state.contains(AddressFilter.used))
+  final lazy val unUsedAddresses = addresses.filter(_.state.contains(AddressFilter.unUsed))
+  final lazy val usedAddresses = addresses.filter(_.state.contains(AddressFilter.used))
 
-  final val networkTip = NetworkTip(
+  final lazy val networkTip = NetworkTip(
     epochNumber = 14,
     slotNumber = 1337,
     height = Some(QuantityUnit(1337, Units.block)),
     absoluteSlotNumber = Some(8086)
   )
 
-  final val wallet = Wallet(
+  final lazy val wallet = Wallet(
     id = "2512a00e9653fe49a44a5886202e24d77eeb998f",
     addressPoolGap = 20,
     balance = Balance(
@@ -160,28 +166,26 @@ trait DummyModel { self: Assertions =>
     absoluteSlotNumber = Some(8086)
   )
 
-  final val networkInfo = NetworkInfo(
+  final lazy val networkInfo = NetworkInfo(
     syncProgress = SyncStatus(SyncState.ready, None),
     networkTip = networkTip.copy(height = None),
     nodeTip = nodeTip,
-    nextEpoch = NextEpoch(ZonedDateTime.parse("2019-02-27T14:46:45.000Z"), 14)
+    nextEpoch = NextEpoch(dummyDateTime, 14)
   )
 
-  final val mnemonicSentence = GenericMnemonicSentence(
-    "a b c d e a b c d e a b c d e"
-  )
+  final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
 
-  final val payments = Payments(
-    Seq(
-      Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))
-    )
-  )
+  final lazy val payments = Payments(Seq(Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))))
 
-  final val estimateFeeResponse = {
+  final lazy val estimateFeeResponse = {
     val estimatedMin = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
-    EstimateFeeResponse(estimatedMin = estimatedMin, estimatedMax = estimatedMin.copy(quantity = estimatedMin.quantity * 3))
+    EstimateFeeResponse(
+      estimatedMin = estimatedMin,
+      estimatedMax = estimatedMin.copy(quantity = estimatedMin.quantity * 3)
+    )
   }
 
-  final val fundPaymentsResponse =
+  final lazy val fundPaymentsResponse =
     FundPaymentsResponse(inputs = IndexedSeq(inAddress), outputs = Seq(outAddress))
+
 }

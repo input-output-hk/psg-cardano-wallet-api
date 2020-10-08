@@ -63,10 +63,6 @@ object CardanoApiCodec {
   private[cardano] implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
   private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
 
-  final case class TxMetadataOut(json: Json) {
-    def toMapMetadataStr: Decoder.Result[Map[Long, String]] = json.as[Map[Long, String]]
-  }
-
   private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut)
   private[cardano] implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
 
@@ -79,7 +75,12 @@ object CardanoApiCodec {
   final case class TxMetadataMapIn[K <: Long](m: Map[K, MetadataValue]) extends TxMetadataIn
 
   object JsonMetadata {
-    def apply(str: String): JsonMetadata = JsonMetadata(str.asJson)
+    def apply(rawJson: String): JsonMetadata = parse(rawJson) match {
+      case Left(p: ParsingFailure) => throw p
+      case Right(jsonMeta) => jsonMeta
+    }
+
+    def parse(rawJson: String): Either[ParsingFailure, JsonMetadata] = parser.parse(rawJson).map(JsonMetadata(_))
   }
 
   final case class JsonMetadata(metadataCompliantJson: Json) extends TxMetadataIn
@@ -90,9 +91,9 @@ object CardanoApiCodec {
 
   final case class MetadataValueArray(ary: Seq[MetadataValue]) extends MetadataValue
 
-  final case class MetadataValueByteArray(ary: ByteString) extends MetadataValue
+  final case class MetadataValueByteString(bs: ByteString) extends MetadataValue
 
-  final case class MetadataValueObject(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
+  final case class MetadataValueMap(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
 
   implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
     case MetadataValueLong(l) => l.toString
@@ -105,17 +106,19 @@ object CardanoApiCodec {
   }
 
   implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
-    case MetadataValueLong(s) => s.asJson
-    case MetadataValueStr(s) => s.asJson
-    case MetadataValueArray(s) => s.asJson
-    case MetadataValueObject(s) => s.asJson
-    case MetadataValueByteArray(ary: ByteString) => toMetadataHex(ary)
+    case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
+    case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
+    case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
+    case MetadataValueArray(s) => Json.obj(("list", s.asJson))
+    case MetadataValueMap(s) =>
+      Json.obj(("map", s.map {
+        case (key, value) => Map("k" -> key, "v" -> value)
+      }.asJson))
   }
 
   implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
     case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
     case TxMetadataMapIn(s) => s.asJson
-
   }
 
 

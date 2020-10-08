@@ -7,7 +7,7 @@ import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
 import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
-import iog.psg.cardano.util.{Configure, ModelCompare}
+import iog.psg.cardano.util.{Configure, CustomPatienceConfiguration, ModelCompare}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -21,7 +21,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
     super.afterAll()
   }
 
-  private val timeoutValue: Long = 10
+  private val timeoutValue: Long = 30
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
 
@@ -154,9 +154,11 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
 
     createTxResponse.id shouldBe getTxResponse.id
     createTxResponse.amount shouldBe getTxResponse.amount
-    val Right(mapOut) = createTxResponse.metadata.get.json.as[Map[Long, String]]
-    mapOut(Long.MaxValue) shouldBe "0" * 64
-    mapOut(Long.MaxValue - 1) shouldBe "1" * 64
+
+    val responseMetadataMap = createTxResponse.metadata.get.toMetadataMap.getOrElse(fail("Invalid metadata json."))
+
+    responseMetadataMap(Long.MaxValue) shouldBe MetadataValueStr("0" * 64)
+    responseMetadataMap(Long.MaxValue - 1) shouldBe MetadataValueStr("1" * 64)
   }
 
 
