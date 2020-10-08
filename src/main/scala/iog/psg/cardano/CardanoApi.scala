@@ -220,13 +220,12 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     val baseUri = Uri(s"$wallets/${walletId}/transactions")
 
     val queries =
-      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
+      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order.toString, minWithdrawal))
         .collect {
-          case (queryParamName, Some(o: Order)) => queryParamName -> o.toString
+          case (queryParamName, order: String) if queryParamName == "order" => queryParamName -> order
           case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
           case (queryParamName, Some(minWith: Int)) => queryParamName -> minWith.toString
         }
-
 
     val uriWithQueries = baseUri.withQuery(Query(queries: _*))
 

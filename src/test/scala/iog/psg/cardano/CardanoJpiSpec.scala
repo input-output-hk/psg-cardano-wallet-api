@@ -71,9 +71,8 @@ class CardanoJpiSpec
 
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val builder = ListTransactionsParamBuilder.create(wallet.id)
-    api.listTransactions(builder).toCompletableFuture.get().asScala.map(_.id) shouldBe Seq(
-      createdTransactionResponse.id
-    )
+    val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
+    transactions.map(_.id) should contain oneElementOf Seq(createdTransactionResponse.id)
   }
 
   it should "return not found error" in {

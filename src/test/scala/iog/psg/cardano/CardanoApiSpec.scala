@@ -1,5 +1,7 @@
 package iog.psg.cardano
 
+import java.time.ZonedDateTime
+
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.CardanoApiCodec.AddressFilter
@@ -59,7 +61,17 @@ class CardanoApiSpec
   }
 
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
-    api.listTransactions(wallet.id).executeOrFail().map(_.id) shouldBe Seq(createdTransactionResponse.id)
+    val transactions = api.listTransactions(wallet.id).executeOrFail()
+    transactions.size shouldBe 2
+    transactions.map(_.id) should contain oneElementOf Seq(createdTransactionResponse.id)
+  }
+
+  it should "run request with proper params" in {
+    val start = ZonedDateTime.parse("2000-01-01T00:00:00.000Z")
+    val end = ZonedDateTime.parse("2001-01-01T00:00:00.000Z")
+    val transactions = api.listTransactions(wallet.id, start = Some(start), end = Some(end), order = CardanoApi.Order.ascendingOrder, minWithdrawal = Some(100)).executeOrFail()
+    transactions.size shouldBe 1
+    transactions.head.id shouldBe createdTransactionResponse.id
   }
 
   it should "return not found error" in {
