@@ -24,6 +24,7 @@ It also provides an executable jar to provide rudimentary command line access.
     - [java](#usagejava)
 - [Command line executable jar](#cmdline)
 - [Examples](#examples)
+- [Issues](#issues)
         
 
 ### <a name="building"></a> Building 
@@ -55,12 +56,18 @@ it also uses [circe](https://circe.github.io/circe/) to marshal and unmarshal th
 
 The jar is published in Maven Central, the command line executable jar can be downloaded from the releases section 
 of the [github repository](https://github.com/input-output-hk/psg-cardano-wallet-api)
-    
+
+
+Before you can use this API you need a cardano wallet backend to contact, you can set one up following the instructions 
+[here](https://github.com/input-output-hk/cardano-wallet). The docker setup is recommended.
+ 
+Alternatively, for 'tire kicking' purposes you may try  `http://cardano-wallet-testnet.iog.solutions:8090/v2/`    
+     
 #### <a name="usagescala"></a>Scala
 
 Add the library to your dependencies 
 
-`libraryDependencies += "iog.psg" %% "psg-cardano-wallet-api" % "0.4.1"`
+`libraryDependencies += "iog.psg" %% "psg-cardano-wallet-api" % "0.2.0"`
 
 The api calls return a HttpRequest set up to the correct url and a mapper to take the entity result and 
 map it from Json to the corresponding case classes. Using `networkInfo` as an example...
@@ -89,7 +96,16 @@ networkInfo match {
  
 #### <a name="usagejava"></a>Java
 
-First, add the library to your dependencies, then using `getWallet` as an example...
+First, add the library to your dependencies, 
+```
+<dependency>
+  <groupId>iog.psg</groupId>
+  <artifactId>psg-cardano-wallet-api_2.13</artifactId>
+  <version>0.2.0</version>
+</dependency>
+```
+
+Then, using `getWallet` as an example...
 
 ```
 import iog.psg.cardano.jpi.*;
@@ -122,3 +138,8 @@ For example, to see the [network information](https://input-output-hk.github.io/
 #### <a name="examples"></a> Examples
 
 The best place to find working examples is in the [test](https://github.com/input-output-hk/psg-cardano-wallet-api/tree/develop/src/test) folder 
+
+#### <a name="issues"></a> Issues
+
+This release does *not* cover the entire cardano-wallet API, it focuses on getting the shelley core functionality into the hands of developers, if you need another call covered please log 
+an [issue (or make a PR!)](https://github.com/input-output-hk/psg-cardano-wallet-api/issues)    
