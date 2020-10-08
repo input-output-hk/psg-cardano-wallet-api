@@ -7,6 +7,8 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -81,8 +83,7 @@ class CardanoJpiSpec
     val builder = ListTransactionsParamBuilder.create(wallet.id)
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
 
-    transactions.size shouldBe 3
-    transactions.map(_.id) shouldBe transactionsIds
+    transactions.map(_.id) shouldBe transactionsIdsDesc
   }
 
   it should "return not found error" in {
@@ -99,8 +100,7 @@ class CardanoJpiSpec
       .withMinwithdrawal(100)
 
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
-    transactions.size shouldBe 2
-    transactions.map(_.id) shouldBe oldTransactionsIds.sorted
+    transactions.map(_.id) shouldBe oldTransactionsIdsAsc
   }
 
   "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {

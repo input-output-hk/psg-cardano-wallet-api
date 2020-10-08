@@ -83,16 +83,18 @@ trait DummyModel { self: Assertions =>
 
   final lazy val firstTransactionId = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
 
-  final lazy val oldTransactionsIds = Seq(
+  //Year: 2000
+  final lazy val oldTransactionsIdsAsc = Seq(
     firstTransactionId,
     "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
   )
 
+  //Year: 2020
   final lazy val newTransactionsIds = Seq(
     "2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
   )
 
-  final lazy val transactionsIds = (oldTransactionsIds ++ newTransactionsIds).sorted
+  final lazy val transactionsIdsDesc = (oldTransactionsIdsAsc ++ newTransactionsIds).sortWith(_ > _)
 
   final val addresses = Seq(
     WalletAddressId(

@@ -50,25 +50,25 @@ trait InMemoryCardanoApi {
   }
 
   private def httpEntityFromJson(
-    jsonFileName: String,
-    contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
-  ) = {
+                                  jsonFileName: String,
+                                  contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
+                                ) = {
     val resource = getClass.getResource(s"/jsons/$jsonFileName")
     val file = new File(resource.getFile)
     HttpEntity.fromFile(contentType, file)
   }
 
   private def getTransactions(
-    walletId: String,
-    start: ZonedDateTime,
-    `end`: ZonedDateTime,
-    order: Order,
-    minWithdrawal: Int
-  ) =
+                               walletId: String,
+                               start: ZonedDateTime,
+                               end: ZonedDateTime,
+                               order: Order,
+                               minWithdrawal: Int
+                             ) =
     jsonFileCreatedTransactionsResponse.filter { transaction =>
       val matchesDates = transaction.insertedAt.isEmpty || transaction.insertedAt.exists { tb =>
         val afterStart = start.isBefore(tb.time)
-        val beforeEnd = `end`.isAfter(tb.time)
+        val beforeEnd = end.isAfter(tb.time)
 
         afterStart && beforeEnd
       }
@@ -78,10 +78,11 @@ trait InMemoryCardanoApi {
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
-      request: CardanoApi.CardanoApiRequest[T]
-    )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
+                             request: CardanoApi.CardanoApiRequest[T]
+                           )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
       val apiAddress = request.request.uri.toString().split(baseUrl).lastOption.getOrElse("")
       val method = request.request.method
+      lazy val query = request.request.uri.query().toMap
 
       implicit def univEntToHttpResponse[T](ue: UniversalEntity): HttpResponse =
         HttpResponse(entity = ue)
@@ -102,6 +103,14 @@ trait InMemoryCardanoApi {
           Future.successful(())
         else
           Future.failed(new CardanoApiException("Invalid json body", "400"))
+
+      def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
+        request.mapper(
+          HttpEntity(resp.asJson.noSpaces)
+            .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
+        )
+
+      def getQueryZonedDTParam(name: String) = ZonedDateTime.parse(query(name))
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
@@ -136,24 +145,20 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("used_addresses.json"))
 
         case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
-          request.mapper(httpEntityFromJson("transactions.json"))
+          toJsonResponse(jsonFileCreatedTransactionsResponse.sortWith(_.id > _.id))
 
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("transaction.json"))
 
         case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
-          val query = request.request.uri.query().toMap
           val transactions = getTransactions(
             walletId = jsonFileWallet.id,
-            start = ZonedDateTime.parse(query("start")),
-            end = ZonedDateTime.parse(query("end")),
+            start = getQueryZonedDTParam("start"),
+            end = getQueryZonedDTParam("end"),
             order = Order.withName(query("order")),
             minWithdrawal = query("minWithdrawal").toInt
           )
-          request.mapper(
-            HttpEntity(transactions.asJson.noSpaces)
-              .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
-          )
+          toJsonResponse(transactions)
 
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("transaction.json"))
