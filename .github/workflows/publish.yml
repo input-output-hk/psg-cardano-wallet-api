@@ -12,7 +12,6 @@ on:
 
 jobs:
   package:
-    if: contains(github.ref, 'master') || contains(github.ref, 'develop')
     runs-on: ubuntu-latest
     steps:
       - name: Configure GPG Key
@@ -28,4 +27,14 @@ jobs:
         with:
             java-version: '11.0.8'
       - run: sbt publishSigned sonatypeRelease
+      - name: Package Command Line Jar
+        uses: actions/setup-java@v1.4.2
+        with:
+            java-version: '11.0.8'
+      - run: sbt assembly
+      - name: Upload Command Line Jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: psg-cardano-wallet-api-assembly
+          path: target/scala-2.13/psg-cardano-wallet-api-assembly*.jar
 
