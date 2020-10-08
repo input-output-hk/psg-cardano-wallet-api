@@ -90,16 +90,27 @@ trait InMemoryCardanoApi {
       println(s"apiAddress: $apiAddress method: $method jsonFileWallet.id: ${jsonFileWallet.id}")
 
       (apiAddress, method) match {
-        case ("network/information", HttpMethods.GET)           => request.mapper(httpEntityFromJson("netinfo.json"))
-        case ("wallets", HttpMethods.GET)                       => request.mapper(httpEntityFromJson("wallets.json"))
-        case ("wallets", HttpMethods.POST)                      => request.mapper(httpEntityFromJson("wallet.json"))
-        case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) => request.mapper(httpEntityFromJson("wallet.json"))
+        case ("network/information", HttpMethods.GET)           =>
+          request.mapper(httpEntityFromJson("netinfo.json"))
+
+        case ("wallets", HttpMethods.GET)                       =>
+          request.mapper(httpEntityFromJson("wallets.json"))
+
+        case ("wallets", HttpMethods.POST)                      =>
+          request.mapper(httpEntityFromJson("wallet.json"))
+
+        case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("wallet.json"))
+
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
+
         case (s"wallets/${jsonFileWallet.id}/passphrase", HttpMethods.PUT) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
+
         case (s"wallets/${jsonFileWallet.id}/addresses?state=unused", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("unused_addresses.json"))
+
         case (s"wallets/${jsonFileWallet.id}/addresses?state=used", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("used_addresses.json"))
 
@@ -125,8 +136,10 @@ trait InMemoryCardanoApi {
 
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("estimate_fees.json"))
+
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
+
         case (r"wallets/.+/transactions/.+", HttpMethods.GET) => notFound("Transaction not found")
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
         case _                                                => notFound("Not found")
