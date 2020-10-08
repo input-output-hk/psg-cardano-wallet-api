@@ -1,10 +1,11 @@
 package iog.psg.cardano
 
+import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{ AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder }
-import iog.psg.cardano.util.{ Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare }
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -72,12 +73,26 @@ class CardanoJpiSpec
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val builder = ListTransactionsParamBuilder.create(wallet.id)
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
+
+    transactions.size shouldBe 2
     transactions.map(_.id) should contain oneElementOf Seq(createdTransactionResponse.id)
   }
 
   it should "return not found error" in {
     val builder = ListTransactionsParamBuilder.create("invalid_wallet_id")
     tryGetErrorMessage(api.listTransactions(builder)) shouldBe walletNotFoundError
+  }
+
+  it should "run request with proper params" in {
+    val builder = ListTransactionsParamBuilder.create(wallet.id)
+      .withStartTime(ZonedDateTime.parse("2000-01-01T00:00:00.000Z"))
+      .withEndTime(ZonedDateTime.parse("2001-01-01T00:00:00.000Z"))
+      .withOrder(iog.psg.cardano.jpi.Order.ASCENDING)
+      .withMinwithdrawal(100)
+
+    val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
+    transactions.size shouldBe 1
+    transactions.head.id shouldBe createdTransactionResponse.id
   }
 
   "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
