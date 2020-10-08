@@ -1,8 +1,8 @@
 package iog.psg.cardano
 
 import akka.util.ByteString
-import io.circe.ParsingFailure
 import io.circe.syntax.EncoderOps
+import io.circe.{ParsingFailure, parser}
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.DummyModel
 import org.scalatest.flatspec.AnyFlatSpec
@@ -88,6 +88,54 @@ class TxMetadataCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
           MetadataValueStr("key") -> MetadataValueStr("value"),
           MetadataValueLong(14) -> MetadataValueLong(42)
       )))
+  }
+
+  it should "fail on missing type field" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"0":"cardano"}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Missing value under key: DownField(0)"
+  }
+
+  it should "fail on unsupported type field" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"0":{"superdouble":"cardano"}}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Invalid type 'superdouble': DownField(0)"
+  }
+
+  it should "fail on unsupported type field in list" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"3":{"list":[{"superdouble":14},{"int":42},{"string":"1337"}]}}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Invalid type 'superdouble': DownField(3)"
+  }
+
+  it should "fail on missing type field in list" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"3":{"list":[14,{"int":42},{"string":"1337"}]}}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Missing value under key: DownField(3)"
+  }
+
+  it should "fail on unsupported type field in map" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"4":{"map":[{"k":{"string":"key"},"v":{"superdouble":"value"}},{"k":{"int":14},"v":{"int":42}}]}}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Invalid type 'superdouble': DownField(4)"
+  }
+
+  it should "fail on missing 'k' field in map" in {
+    val jsonWithInvalidTypeField = parser.parse("""{"4":{"map":[{"kx":{"string":"key"},"v":{"superdouble":"value"}},{"k":{"int":14},"v":{"int":42}}]}}""").getOrElse(fail("Invalid json structure"))
+    val tvMeta = TxMetadataOut(jsonWithInvalidTypeField)
+
+    val error = tvMeta.toMetadataMap.swap.getOrElse(fail("Should fail"))
+    error.getMessage() shouldBe "Missing 'k' value: DownField(4)"
   }
 
   "Raw Good TxMetadata" should "be parsed properly" in {
