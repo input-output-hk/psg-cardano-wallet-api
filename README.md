@@ -67,7 +67,7 @@ Alternatively, for 'tire kicking' purposes you may try  `http://cardano-wallet-t
 
 Add the library to your dependencies 
 
-`libraryDependencies += "iog.psg" %% "psg-cardano-wallet-api" % "0.2.0"`
+`libraryDependencies += "solutions.iog" %% "psg-cardano-wallet-api" % "0.2.0"`
 
 The api calls return a HttpRequest set up to the correct url and a mapper to take the entity result and 
 map it from Json to the corresponding case classes. Using `networkInfo` as an example...
@@ -99,7 +99,7 @@ networkInfo match {
 First, add the library to your dependencies, 
 ```
 <dependency>
-  <groupId>iog.psg</groupId>
+  <groupId>solutions.iog</groupId>
   <artifactId>psg-cardano-wallet-api_2.13</artifactId>
   <version>0.2.0</version>
 </dependency>
