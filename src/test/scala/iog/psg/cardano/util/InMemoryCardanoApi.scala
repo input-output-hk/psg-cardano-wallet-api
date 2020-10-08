@@ -82,6 +82,7 @@ trait InMemoryCardanoApi {
                            )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
       val apiAddress = request.request.uri.toString().split(baseUrl).lastOption.getOrElse("")
       val method = request.request.method
+      lazy val query = request.request.uri.query().toMap
 
       implicit def univEntToHttpResponse[T](ue: UniversalEntity): HttpResponse =
         HttpResponse(entity = ue)
@@ -97,6 +98,8 @@ trait InMemoryCardanoApi {
           HttpEntity(resp.asJson.noSpaces)
             .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
         )
+
+      def parseZonedDT(name: String) = ZonedDateTime.parse(query(name))
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
@@ -130,11 +133,10 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("transaction.json"))
 
         case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
-          val query = request.request.uri.query().toMap
           val transactions = getTransactions(
             walletId = jsonFileWallet.id,
-            start = ZonedDateTime.parse(query("start")),
-            end = ZonedDateTime.parse(query("end")),
+            start = parseZonedDT("start"),
+            end = parseZonedDT("end"),
             order = Order.withName(query("order")),
             minWithdrawal = query("minWithdrawal").toInt
           )

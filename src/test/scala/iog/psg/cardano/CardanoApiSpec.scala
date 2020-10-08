@@ -62,8 +62,8 @@ class CardanoApiSpec
 
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val transactions = api.listTransactions(wallet.id).executeOrFail()
-    transactions.size shouldBe transactionsIds.size
-    transactions.map(_.id) shouldBe transactionsIds.sortWith(_ > _)
+    transactions.size shouldBe transactionsIdsDesc.size
+    transactions.map(_.id) shouldBe transactionsIdsDesc
   }
 
   it should "run request with proper params" in {
@@ -78,8 +78,8 @@ class CardanoApiSpec
         minWithdrawal = Some(100)
       )
       .executeOrFail()
-    transactions.size shouldBe oldTransactionsIds.size
-    transactions.map(_.id) shouldBe oldTransactionsIds.sorted
+    transactions.size shouldBe oldTransactionsIdsAsc.size
+    transactions.map(_.id) shouldBe oldTransactionsIdsAsc
   }
 
   it should "return not found error" in {
