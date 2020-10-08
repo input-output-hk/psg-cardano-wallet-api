@@ -12,7 +12,6 @@ on:
 
 jobs:
   package:
-    if: contains(github.ref, 'master') || contains(github.ref, 'develop')
     runs-on: ubuntu-latest
     steps:
       - name: Configure GPG Key
