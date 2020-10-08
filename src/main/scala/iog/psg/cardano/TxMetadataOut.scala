@@ -22,19 +22,19 @@ final case class TxMetadataOut(json: Json) {
 
       def extractStringField(cursor: ACursor): DecodingEither[MetadataValueStr] =
         cursor.downField(ValueTypeString).as[String].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a String type")),
           (value: String) => Right(MetadataValueStr(value))
         )
 
       def extractLongField(cursor: ACursor): DecodingEither[MetadataValueLong] =
         cursor.downField(ValueTypeLong).as[Long].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a Long type")),
           (value: Long) => Right(MetadataValueLong(value))
         )
 
       def extractBytesField(cursor: ACursor): DecodingEither[MetadataValueByteString] =
         cursor.downField(ValueTypeBytes).as[String].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a Bytes type")),
           (value: String) => Right(MetadataValueByteString(ByteString(value)))
         )
 
