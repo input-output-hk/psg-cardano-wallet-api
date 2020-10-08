@@ -68,7 +68,7 @@ trait InMemoryCardanoApi {
       }
 
       matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
-    }
+    }.sortWith((ta, tb) => if (order == Order.descendingOrder) ta.id > tb.id else ta.id < tb.id)
   }
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
@@ -87,7 +87,15 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
-      println(s"apiAddress: $apiAddress method: $method jsonFileWallet.id: ${jsonFileWallet.id}")
+      def unmarshalJsonBody(): Future[Json] = Unmarshal(request.request.entity)
+        .to[String]
+        .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
+
+      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] =
+        if (json.hcursor.keys.getOrElse(Nil).toList == expectedList)
+          Future.successful(())
+        else
+          Future.failed(new CardanoApiException("Invalid json body", "400"))
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET)           => request.mapper(httpEntityFromJson("netinfo.json"))
