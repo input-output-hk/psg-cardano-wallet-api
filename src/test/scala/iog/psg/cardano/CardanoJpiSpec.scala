@@ -4,8 +4,9 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{ AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder }
-import iog.psg.cardano.util.{ Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare }
+import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -117,8 +118,13 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
+    val metadata = TxMetadataMapIn(Map(
+      0L -> MetadataValueStr("0" * 64),
+      1L -> MetadataValueStr("1" * 64)
+    ))
+
     api
-      .createTransaction(wallet.id, "MySecret", payments.payments.asJava)
+      .createTransaction(wallet.id, "MySecret", payments.payments.asJava, metadata, "50")
       .toCompletableFuture
       .get()
       .id shouldBe createdTransactionResponse.id
