@@ -1,13 +1,18 @@
 package iog.psg.cardano.util
 
 import java.io.File
+import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.circe.generic.auto._
+import io.circe.{ parser, Json, ParsingFailure }
 import io.circe.syntax._
-import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage }
+import iog.psg.cardano.CardanoApi.Order.Order
+import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
 import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.jpi.CardanoApiException
 import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
@@ -41,20 +46,39 @@ trait InMemoryCardanoApi {
   }
 
   private def httpEntityFromJson(
-    jsonFileName: String,
-    contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
-  ) = {
+                                  jsonFileName: String,
+                                  contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
+                                ) = {
     val resource = getClass.getResource(s"/jsons/$jsonFileName")
     val file = new File(resource.getFile)
     HttpEntity.fromFile(contentType, file)
   }
 
+  private def getTransactions(
+                               walletId: String,
+                               start: ZonedDateTime,
+                               end: ZonedDateTime,
+                               order: Order,
+                               minWithdrawal: Int
+                             ) =
+    jsonFileCreatedTransactionsResponse.filter { transaction =>
+      val matchesDates = transaction.insertedAt.isEmpty || transaction.insertedAt.exists { tb =>
+        val afterStart = start.isBefore(tb.time)
+        val beforeEnd = end.isAfter(tb.time)
+
+        afterStart && beforeEnd
+      }
+
+      matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
+    }.sortWith((ta, tb) => if (order.toString == Order.descendingOrder.toString) ta.id > tb.id else ta.id < tb.id)
+
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
-      request: CardanoApi.CardanoApiRequest[T]
-    )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
+                             request: CardanoApi.CardanoApiRequest[T]
+                           )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
       val apiAddress = request.request.uri.toString().split(baseUrl).lastOption.getOrElse("")
       val method = request.request.method
+      lazy val query = request.request.uri.query().toMap
 
       implicit def univEntToHttpResponse[T](ue: UniversalEntity): HttpResponse =
         HttpResponse(entity = ue)
@@ -65,29 +89,64 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
+      def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
+        request.mapper(
+          HttpEntity(resp.asJson.noSpaces)
+            .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
+        )
+
+      def getQueryZonedDTParam(name: String) = ZonedDateTime.parse(query(name))
+
       (apiAddress, method) match {
-        case ("network/information", HttpMethods.GET)           => request.mapper(httpEntityFromJson("netinfo.json"))
-        case ("wallets", HttpMethods.GET)                       => request.mapper(httpEntityFromJson("wallets.json"))
-        case ("wallets", HttpMethods.POST)                      => request.mapper(httpEntityFromJson("wallet.json"))
-        case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) => request.mapper(httpEntityFromJson("wallet.json"))
+        case ("network/information", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netinfo.json"))
+
+        case ("wallets", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("wallets.json"))
+
+        case ("wallets", HttpMethods.POST) =>
+          request.mapper(httpEntityFromJson("wallet.json"))
+
+        case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("wallet.json"))
+
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
+
         case (s"wallets/${jsonFileWallet.id}/passphrase", HttpMethods.PUT) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
+
         case (s"wallets/${jsonFileWallet.id}/addresses?state=unused", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("unused_addresses.json"))
+
         case (s"wallets/${jsonFileWallet.id}/addresses?state=used", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("used_addresses.json"))
-        case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.GET) =>
-          request.mapper(httpEntityFromJson("transactions.json"))
+
+        case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
+          toJsonResponse(jsonFileCreatedTransactionsResponse.sortWith(_.id > _.id))
+
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("transaction.json"))
+
+        case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
+          val transactions = getTransactions(
+            walletId = jsonFileWallet.id,
+            start = getQueryZonedDTParam("start"),
+            end = getQueryZonedDTParam("end"),
+            order = Order.withName(query("order")),
+            minWithdrawal = query("minWithdrawal").toInt
+          )
+          toJsonResponse(transactions)
+
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("transaction.json"))
+
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("estimate_fees.json"))
+
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
+
         case (r"wallets/.+/transactions/.+", HttpMethods.GET) => notFound("Transaction not found")
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
         case _                                                => notFound("Not found")

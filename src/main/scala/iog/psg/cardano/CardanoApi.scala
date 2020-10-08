@@ -222,11 +222,10 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     val queries =
       Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
         .collect {
-          case (queryParamName, Some(o: Order)) => queryParamName -> o.toString
+          case (queryParamName, order: Order) => queryParamName -> order.toString
           case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
           case (queryParamName, Some(minWith: Int)) => queryParamName -> minWith.toString
         }
-
 
     val uriWithQueries = baseUri.withQuery(Query(queries: _*))
 
