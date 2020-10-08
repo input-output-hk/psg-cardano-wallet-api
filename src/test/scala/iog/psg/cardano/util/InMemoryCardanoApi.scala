@@ -70,7 +70,7 @@ trait InMemoryCardanoApi {
       }
 
       matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
-    }.sortWith((ta, tb) => if (order == Order.descendingOrder) ta.id > tb.id else ta.id < tb.id)
+    }.sortWith((ta, tb) => if (order.toString == Order.descendingOrder.toString) ta.id > tb.id else ta.id < tb.id)
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
