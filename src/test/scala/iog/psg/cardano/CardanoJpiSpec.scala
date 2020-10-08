@@ -74,7 +74,6 @@ class CardanoJpiSpec
     val builder = ListTransactionsParamBuilder.create(wallet.id)
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
 
-    transactions.size shouldBe transactionsIdsDesc.size
     transactions.map(_.id) shouldBe transactionsIdsDesc
   }
 
@@ -92,7 +91,6 @@ class CardanoJpiSpec
       .withMinwithdrawal(100)
 
     val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
-    transactions.size shouldBe oldTransactionsIdsAsc.size
     transactions.map(_.id) shouldBe oldTransactionsIdsAsc
   }
 
