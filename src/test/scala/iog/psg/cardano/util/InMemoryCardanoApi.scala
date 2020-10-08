@@ -32,8 +32,7 @@ trait InMemoryCardanoApi {
   }
 
   implicit final class InMemoryExecutor[T](req: CardanoApiRequest[T]) {
-    def executeOrFail(): T =
-      inMemoryExecutor.execute(req).futureValue.getOrElse(fail("Request failed."))
+    def executeOrFail(): T = inMemoryExecutor.execute(req).futureValue.getOrElse(fail("Request failed."))
 
     def executeExpectingErrorOrFail(): ErrorMessage =
       inMemoryExecutor.execute(req).futureValue.swap.getOrElse(fail("Request should failed."))
