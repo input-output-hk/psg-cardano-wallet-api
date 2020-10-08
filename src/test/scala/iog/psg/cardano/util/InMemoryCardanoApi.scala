@@ -68,7 +68,7 @@ trait InMemoryCardanoApi {
     jsonFileCreatedTransactionsResponse.filter { transaction =>
       val matchesDates = transaction.insertedAt.isEmpty || transaction.insertedAt.exists { tb =>
         val afterStart = start.isBefore(tb.time)
-        val beforeEnd = `end`.isAfter(tb.time)
+        val beforeEnd = end.isAfter(tb.time)
 
         afterStart && beforeEnd
       }
