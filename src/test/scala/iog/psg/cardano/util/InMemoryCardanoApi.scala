@@ -95,7 +95,7 @@ trait InMemoryCardanoApi {
             .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
         )
 
-      def parseZonedDT(name: String) = ZonedDateTime.parse(query(name))
+      def getQueryZonedDTParam(name: String) = ZonedDateTime.parse(query(name))
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
@@ -131,8 +131,8 @@ trait InMemoryCardanoApi {
         case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
           val transactions = getTransactions(
             walletId = jsonFileWallet.id,
-            start = parseZonedDT("start"),
-            end = parseZonedDT("end"),
+            start = getQueryZonedDTParam("start"),
+            end = getQueryZonedDTParam("end"),
             order = Order.withName(query("order")),
             minWithdrawal = query("minWithdrawal").toInt
           )
