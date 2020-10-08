@@ -4,8 +4,8 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
-import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
+import iog.psg.cardano.jpi.{ AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder }
+import iog.psg.cardano.util.{ Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -51,7 +51,13 @@ class CardanoJpiSpec
 
   "POST /wallets" should "" in {
     api
-      .createRestore(wallet.name, "Pass9128!", mnemonicSentence.mnemonicSentence.toList.asJava, 5)
+      .createRestore(
+        wallet.name,
+        "Pass9128!",
+        mnemonicSentence.mnemonicSentence.toList.asJava,
+        mnemonicSecondFactor.mnemonicSentence.toList.asJava,
+        5
+      )
       .toCompletableFuture
       .get() shouldBe wallet
   }
@@ -84,7 +90,8 @@ class CardanoJpiSpec
   }
 
   it should "run request with proper params" in {
-    val builder = ListTransactionsParamBuilder.create(wallet.id)
+    val builder = ListTransactionsParamBuilder
+      .create(wallet.id)
       .withStartTime(ZonedDateTime.parse("2000-01-01T00:00:00.000Z"))
       .withEndTime(ZonedDateTime.parse("2001-01-01T00:00:00.000Z"))
       .withOrder(iog.psg.cardano.jpi.Order.ASCENDING)

@@ -41,7 +41,9 @@ class CardanoApiSpec
   }
 
   "POST /wallets" should "" in {
-    api.createRestoreWallet(wallet.name, "Pass9128!", mnemonicSentence).executeOrFail() shouldBe wallet
+    api
+      .createRestoreWallet(wallet.name, "Pass9128!", mnemonicSentence, Some(mnemonicSecondFactor), Some(500))
+      .executeOrFail() shouldBe wallet
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {
@@ -69,7 +71,15 @@ class CardanoApiSpec
   it should "run request with proper params" in {
     val start = ZonedDateTime.parse("2000-01-01T00:00:00.000Z")
     val end = ZonedDateTime.parse("2001-01-01T00:00:00.000Z")
-    val transactions = api.listTransactions(wallet.id, start = Some(start), end = Some(end), order = CardanoApi.Order.ascendingOrder, minWithdrawal = Some(100)).executeOrFail()
+    val transactions = api
+      .listTransactions(
+        wallet.id,
+        start = Some(start),
+        end = Some(end),
+        order = CardanoApi.Order.ascendingOrder,
+        minWithdrawal = Some(100)
+      )
+      .executeOrFail()
     transactions.size shouldBe 1
     transactions.head.id shouldBe createdTransactionResponse.id
   }

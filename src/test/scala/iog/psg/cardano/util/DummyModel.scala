@@ -174,6 +174,7 @@ trait DummyModel { self: Assertions =>
   )
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
+  final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")
 
   final lazy val payments = Payments(Seq(Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))))
 

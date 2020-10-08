@@ -5,11 +5,14 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.circe.generic.auto._
+import io.circe.{Json, ParsingFailure, parser}
 import io.circe.syntax._
 import iog.psg.cardano.CardanoApi.Order.Order
 import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
 import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.jpi.CardanoApiException
 import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
@@ -87,6 +90,16 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
+      def unmarshalJsonBody(): Future[Json] = Unmarshal(request.request.entity)
+        .to[String]
+        .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
+
+      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] =
+        if (json.hcursor.keys.getOrElse(Nil).toList == expectedList)
+          Future.successful(())
+        else
+          Future.failed(new CardanoApiException("Invalid json body", "400"))
+
       println(s"apiAddress: $apiAddress method: $method jsonFileWallet.id: ${jsonFileWallet.id}")
 
       (apiAddress, method) match {
@@ -97,7 +110,11 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("wallets.json"))
 
         case ("wallets", HttpMethods.POST)                      =>
-          request.mapper(httpEntityFromJson("wallet.json"))
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _ <- checkIfContainsProperJsonKeys(jsonBody, List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap"))
+            response <-  request.mapper(httpEntityFromJson("wallet.json"))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallet.json"))
