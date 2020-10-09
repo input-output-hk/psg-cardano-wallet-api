@@ -6,8 +6,6 @@ import java.util.concurrent.CompletionStage
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
-import iog.psg.cardano.util._
-import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
