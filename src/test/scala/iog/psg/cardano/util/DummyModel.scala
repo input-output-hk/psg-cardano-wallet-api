@@ -51,7 +51,7 @@ trait DummyModel { self: Assertions =>
                                                          |            "int": 14
                                                          |          },
                                                          |          {
-                                                         |            "int": 42
+                                                         |            "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
                                                          |          },
                                                          |          {
                                                          |            "string": "1337"
@@ -65,7 +65,7 @@ trait DummyModel { self: Assertions =>
                                                          |              "string": "key"
                                                          |            },
                                                          |            "v": {
-                                                         |              "string": "value"
+                                                         |              "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
                                                          |            }
                                                          |          },
                                                          |          {
@@ -165,6 +165,7 @@ trait DummyModel { self: Assertions =>
   )
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
+  final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")
 
   final lazy val payments = Payments(Seq(Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))))
 

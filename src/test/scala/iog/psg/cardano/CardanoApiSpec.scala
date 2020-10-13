@@ -41,7 +41,9 @@ class CardanoApiSpec
   }
 
   "POST /wallets" should "" in {
-    api.createRestoreWallet(wallet.name, "Pass9128!", mnemonicSentence).executeOrFail() shouldBe wallet
+    api
+      .createRestoreWallet(wallet.name, "Pass9128!", mnemonicSentence, Some(mnemonicSecondFactor), Some(500))
+      .executeOrFail() shouldBe wallet
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {

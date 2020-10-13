@@ -5,36 +5,38 @@ import io.circe.CursorOp.DownField
 import io.circe._
 import iog.psg.cardano.CardanoApiCodec._
 
-final case class TxMetadataOut(json: Json) {
+object TxMetadataOut {
+  private val ValueTypeString = "string"
+  private val ValueTypeLong = "int" //named int but will work as long
+  private val ValueTypeBytes = "bytes"
+  private val ValueTypeList = "list"
+  private val ValueTypeMap = "map"
 
   type DecodingEither[T] = Either[DecodingFailure, T]
+  type KeyVal = Map[Long, MetadataValue]
+}
 
-  final val ValueTypeString = "string"
-  final val ValueTypeLong = "int" //named int but will work as long
-  final val ValueTypeBytes = "bytes"
-  final val ValueTypeList = "list"
-  final val ValueTypeMap = "map"
+final case class TxMetadataOut(json: Json) {
+  import TxMetadataOut._
 
   def toMetadataMap: Decoder.Result[Map[Long, MetadataValue]] = {
-    type KeyVal = Map[Long, MetadataValue]
-
     implicit val decodeMap: Decoder[Map[Long, MetadataValue]] = (c: HCursor) => {
 
       def extractStringField(cursor: ACursor): DecodingEither[MetadataValueStr] =
         cursor.downField(ValueTypeString).as[String].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a String type")),
           (value: String) => Right(MetadataValueStr(value))
         )
 
       def extractLongField(cursor: ACursor): DecodingEither[MetadataValueLong] =
         cursor.downField(ValueTypeLong).as[Long].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a Long type")),
           (value: Long) => Right(MetadataValueLong(value))
         )
 
       def extractBytesField(cursor: ACursor): DecodingEither[MetadataValueByteString] =
         cursor.downField(ValueTypeBytes).as[String].fold(
-          err => Left(err),
+          err => Left(err.copy(message = s"Not a Bytes type")),
           (value: String) => Right(MetadataValueByteString(ByteString(value)))
         )
 
@@ -50,7 +52,9 @@ final case class TxMetadataOut(json: Json) {
           case Some(ValueTypeBytes)  =>
             extractBytesField(cursor)
 
-          case _ => Left(DecodingFailure("Invalid type value", List(DownField(key))))
+          case Some(valueType) => Left(DecodingFailure(s"Invalid type '$valueType'", List(DownField(key))))
+
+          case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
         }
       }
 
@@ -114,6 +118,8 @@ final case class TxMetadataOut(json: Json) {
 
             case Some(valueType) if valueType == ValueTypeMap =>
               extractMapField(keyDownField, key).map(valueMap => map.+(key.toLong -> valueMap))
+
+            case Some(valueType) => Left(DecodingFailure(s"Invalid type '$valueType'", List(DownField(key))))
 
             case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
           }

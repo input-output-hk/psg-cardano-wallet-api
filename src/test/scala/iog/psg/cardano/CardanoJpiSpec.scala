@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
+import iog.psg.cardano.CardanoApiCodec.{MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util.{Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare}
 import org.scalatest.concurrent.ScalaFutures
@@ -51,7 +52,13 @@ class CardanoJpiSpec
 
   "POST /wallets" should "" in {
     api
-      .createRestore(wallet.name, "Pass9128!", mnemonicSentence.mnemonicSentence.toList.asJava, 5)
+      .createRestore(
+        wallet.name,
+        "Pass9128!",
+        mnemonicSentence.mnemonicSentence.toList.asJava,
+        mnemonicSecondFactor.mnemonicSentence.toList.asJava,
+        5
+      )
       .toCompletableFuture
       .get() shouldBe wallet
   }
@@ -109,8 +116,13 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
+    val metadata = TxMetadataMapIn(Map(
+      0L -> MetadataValueStr("0" * 64),
+      1L -> MetadataValueStr("1" * 64)
+    ))
+
     api
-      .createTransaction(wallet.id, "MySecret", payments.payments.asJava)
+      .createTransaction(wallet.id, "MySecret", payments.payments.asJava, metadata, "50")
       .toCompletableFuture
       .get()
       .id shouldBe firstTransactionId

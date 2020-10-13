@@ -32,7 +32,11 @@ trait InMemoryCardanoApi {
   }
 
   implicit final class InMemoryExecutor[T](req: CardanoApiRequest[T]) {
-    def executeOrFail(): T = inMemoryExecutor.execute(req).futureValue.getOrElse(fail("Request failed."))
+    def executeOrFail(): T =
+      inMemoryExecutor.execute(req).futureValue match {
+        case Left(value)  => fail(s"Request failed: ${value.message}")
+        case Right(value) => value
+      }
 
     def executeExpectingErrorOrFail(): ErrorMessage =
       inMemoryExecutor.execute(req).futureValue.swap.getOrElse(fail("Request should failed."))
@@ -89,6 +93,17 @@ trait InMemoryCardanoApi {
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
       }
 
+      def unmarshalJsonBody(): Future[Json] =
+        Unmarshal(request.request.entity)
+          .to[String]
+          .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
+
+      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] =
+        if (json.hcursor.keys.getOrElse(Nil).toList == expectedList)
+          Future.successful(())
+        else
+          Future.failed(new CardanoApiException("Invalid json body", "400"))
+
       def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
         request.mapper(
           HttpEntity(resp.asJson.noSpaces)
@@ -105,7 +120,14 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("wallets.json"))
 
         case ("wallets", HttpMethods.POST) =>
-          request.mapper(httpEntityFromJson("wallet.json"))
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _ <- checkIfContainsProperJsonKeys(
+              jsonBody,
+              List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
+            )
+            response <- request.mapper(httpEntityFromJson("wallet.json"))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallet.json"))
