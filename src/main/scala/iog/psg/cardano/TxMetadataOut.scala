@@ -11,16 +11,15 @@ object TxMetadataOut {
   private val ValueTypeBytes = "bytes"
   private val ValueTypeList = "list"
   private val ValueTypeMap = "map"
+
+  type DecodingEither[T] = Either[DecodingFailure, T]
+  type KeyVal = Map[Long, MetadataValue]
 }
 
 final case class TxMetadataOut(json: Json) {
   import TxMetadataOut._
 
-  type DecodingEither[T] = Either[DecodingFailure, T]
-
   def toMetadataMap: Decoder.Result[Map[Long, MetadataValue]] = {
-    type KeyVal = Map[Long, MetadataValue]
-
     implicit val decodeMap: Decoder[Map[Long, MetadataValue]] = (c: HCursor) => {
 
       def extractStringField(cursor: ACursor): DecodingEither[MetadataValueStr] =
