@@ -56,6 +56,10 @@ class CardanoApiSpec
     api.listAddresses(wallet.id, Some(AddressFilter.used)).executeOrFail().map(_.id) shouldBe usedAddresses.map(_.id)
   }
 
+  it should "return wallet's used + unused addresses" in {
+    api.listAddresses(wallet.id, None).executeOrFail().map(_.id) shouldBe addresses.map(_.id)
+  }
+
   it should "return wallet not found error" in {
     api
       .listAddresses("invalid_wallet_id", Some(AddressFilter.used))

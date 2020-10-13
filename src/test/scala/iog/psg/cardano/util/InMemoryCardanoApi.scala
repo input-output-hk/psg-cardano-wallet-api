@@ -144,6 +144,9 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/addresses?state=used", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("used_addresses.json"))
 
+        case (s"wallets/${jsonFileWallet.id}/addresses", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("addresses.json"))
+
         case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
           toJsonResponse(jsonFileCreatedTransactionsResponse.sortWith(_.id > _.id))
 

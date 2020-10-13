@@ -73,6 +73,11 @@ class CardanoJpiSpec
     ids shouldBe usedAddresses.map(_.id)
   }
 
+  it should "return wallet's used + unused addresses" in {
+    val ids = api.listAddresses(wallet.id).toCompletableFuture.get().asScala.toList.map(_.id)
+    ids shouldBe addresses.map(_.id)
+  }
+
   it should "return wallet not found error" in {
     tryGetErrorMessage(api.listAddresses("invalid_wallet_id", AddressFilter.USED)) shouldBe walletNotFoundError
   }
