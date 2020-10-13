@@ -115,7 +115,7 @@ trait InMemoryCardanoApi {
 
       def getQueryZonedDTParam(name: String): ZonedDateTime = ZonedDateTime.parse(query(name))
 
-      def checkValueOrFail[T](jsonValue: T, expectedValue: T, fieldName: String): Future[Unit] =
+      def checkValueOrFail[A](jsonValue: A, expectedValue: A, fieldName: String): Future[Unit] =
         if (jsonValue == expectedValue) Future.successful(())
         else Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
 
@@ -222,14 +222,13 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("transaction.json"))
 
         case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
-          val transactions = getTransactions(
+          getTransactions(
             walletId = jsonFileWallet.id,
             start = getQueryZonedDTParam("start"),
             end = getQueryZonedDTParam("end"),
             order = Order.withName(query("order")),
             minWithdrawal = query("minWithdrawal").toInt
-          )
-          transactions.toJsonResponse()
+          ).toJsonResponse()
 
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           for {
