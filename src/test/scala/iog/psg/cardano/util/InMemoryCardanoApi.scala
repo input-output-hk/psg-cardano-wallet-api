@@ -7,17 +7,16 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.circe.generic.auto._
-import io.circe.{ parser, Json, ParsingFailure }
 import io.circe.syntax._
+import io.circe.{Json, parser}
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
 import iog.psg.cardano.jpi.CardanoApiException
-import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
+import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with JsonFiles =>
