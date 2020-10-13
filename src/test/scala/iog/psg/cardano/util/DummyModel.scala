@@ -11,6 +11,7 @@ trait DummyModel { self: Assertions =>
 
   final val oldPassword = "old_password"
   final val newPassword = "new_password"
+  final val walletPassphrase = "Pass9128!"
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 

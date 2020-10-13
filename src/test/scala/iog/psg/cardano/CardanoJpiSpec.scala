@@ -1,6 +1,7 @@
 package iog.psg.cardano
 
 import java.time.ZonedDateTime
+import java.util.UUID
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
@@ -51,16 +52,19 @@ class CardanoJpiSpec
   }
 
   "POST /wallets" should "" in {
+    val randomName = UUID.randomUUID().toString
+    val addressPoolGap = 500
+
     api
       .createRestore(
-        wallet.name,
-        "Pass9128!",
+        randomName,
+        walletPassphrase,
         mnemonicSentence.mnemonicSentence.toList.asJava,
         mnemonicSecondFactor.mnemonicSentence.toList.asJava,
-        5
+        addressPoolGap
       )
       .toCompletableFuture
-      .get() shouldBe wallet
+      .get() shouldBe wallet.copy(name = randomName, addressPoolGap = addressPoolGap)
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {

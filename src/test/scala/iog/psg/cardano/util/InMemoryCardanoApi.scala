@@ -11,6 +11,7 @@ import io.circe.syntax._
 import io.circe.{ parser, Json }
 import iog.psg.cardano.CardanoApi.Order.Order
 import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
+import iog.psg.cardano.CardanoApiCodec.{ GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Passphrase }
 import iog.psg.cardano.jpi.CardanoApiException
 import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
 import org.scalatest.Assertions
@@ -113,6 +114,12 @@ trait InMemoryCardanoApi {
 
       def getQueryZonedDTParam(name: String) = ZonedDateTime.parse(query(name))
 
+      def checkValueOrFail[T](jsonValue: T, expectedValue: T, invalidFieldName: String) =
+        if (jsonValue == expectedValue) Future.successful()
+        else Future.failed(new CardanoApiException(s"Invalid $invalidFieldName", "400"))
+
+      def getAsString(json: Json, field: String): String = json.\\(field).headOption.flatMap(_.asString).get
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
@@ -127,7 +134,19 @@ trait InMemoryCardanoApi {
               jsonBody,
               List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
             )
-            response <- request.mapper(httpEntityFromJson("wallet.json"))
+            jsonName = jsonBody.\\("name").headOption.flatMap(_.asString).get
+            jsonAddressPoolGap = jsonBody.\\("address_pool_gap").headOption.flatMap(_.asNumber).get.toInt.get
+            jsonPassphrase = jsonBody.\\("passphrase").headOption.flatMap(_.asString).get
+            jsonMnemonicSentence = GenericMnemonicSentence(
+              jsonBody.\\("mnemonic_sentence").headOption.flatMap(_.asArray).get.flatMap(_.asString).mkString(" ")
+            )
+            jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(
+              jsonBody.\\("mnemonic_second_factor").headOption.flatMap(_.asArray).get.flatMap(_.asString).mkString(" ")
+            )
+            _        <- checkValueOrFail(jsonPassphrase, walletPassphrase, "passphrase")
+            _        <- checkValueOrFail(jsonMnemonicSentence, mnemonicSentence, "passphrase")
+            _        <- checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, "passphrase")
+            response <- toJsonResponse(wallet.copy(name = jsonName, addressPoolGap = jsonAddressPoolGap))
           } yield response
 
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
