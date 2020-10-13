@@ -126,7 +126,7 @@ class CardanoJpiSpec
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
     api
-      .createTransaction(wallet.id, "MySecret", payments.payments.asJava, metadata, "50")
+      .createTransaction(wallet.id, walletPassphrase, payments.payments.asJava, txMetadata, withdrawal)
       .toCompletableFuture
       .get()
       .id shouldBe firstTransactionId
@@ -139,7 +139,7 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments.payments.asJava, "50", metadata).toCompletableFuture.get() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments.payments.asJava, withdrawal, txMetadata).toCompletableFuture.get() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {

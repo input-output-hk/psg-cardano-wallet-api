@@ -12,6 +12,7 @@ trait DummyModel { self: Assertions =>
   final val oldPassword = "old_password"
   final val newPassword = "new_password"
   final val walletPassphrase = "Pass9128!"
+  final val withdrawal = "500"
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
@@ -38,10 +39,12 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final lazy val metadata = TxMetadataMapIn(Map(
+  final lazy val metadataMap = Map(
     0L -> MetadataValueStr("0" * 64),
     1L -> MetadataValueStr("1" * 64)
-  ))
+  )
+
+  final lazy val txMetadata = TxMetadataMapIn(metadataMap)
 
   final lazy val txMetadataOut = TxMetadataOut(json = parse("""
                                                          |{

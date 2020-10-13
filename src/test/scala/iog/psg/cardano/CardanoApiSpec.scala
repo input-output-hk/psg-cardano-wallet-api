@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.ErrorMessage
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, MetadataValueStr, TxMetadataMapIn}
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
@@ -111,10 +111,10 @@ class CardanoApiSpec
     api
       .createTransaction(
         fromWalletId = wallet.id,
-        passphrase = "MySecret",
+        passphrase = walletPassphrase,
         payments = payments,
-        metadata = Some(metadata),
-        withdrawal = Some("50")
+        metadata = Some(txMetadata),
+        withdrawal = Some(withdrawal)
       )
       .executeOrFail()
       .id shouldBe firstTransactionId
@@ -126,14 +126,14 @@ class CardanoApiSpec
         fromWalletId = "invalid_wallet_id",
         passphrase = "MySecret",
         payments = payments,
-        metadata = Some(metadata),
-        withdrawal = Some("50")
+        metadata = Some(txMetadata),
+        withdrawal = Some(withdrawal)
       )
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments, Some("50"), Some(metadata)).executeOrFail() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments, Some(withdrawal), Some(txMetadata)).executeOrFail() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {

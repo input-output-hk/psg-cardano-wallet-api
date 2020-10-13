@@ -87,7 +87,7 @@ trait InMemoryCardanoApi {
       implicit def univEntToHttpResponse[T](ue: UniversalEntity): HttpResponse =
         HttpResponse(entity = ue)
 
-      def notFound(msg: String) = {
+      def notFound(msg: String): Future[CardanoApiResponse[T]] = {
         val json: String = ErrorMessage(msg, "404").asJson.noSpaces
         val entity = HttpEntity(json)
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
@@ -106,19 +106,64 @@ trait InMemoryCardanoApi {
           Future.failed(new CardanoApiException("Invalid json body", "400"))
       }
 
-      def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
+      def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]): Future[CardanoApiResponse[T]] =
         request.mapper(
           HttpEntity(resp.asJson.noSpaces)
             .withContentType(ContentType.WithFixedCharset(MediaTypes.`application/json`))
         )
 
-      def getQueryZonedDTParam(name: String) = ZonedDateTime.parse(query(name))
+      def getQueryZonedDTParam(name: String): ZonedDateTime = ZonedDateTime.parse(query(name))
 
-      def checkValueOrFail[T](jsonValue: T, expectedValue: T, invalidFieldName: String) =
+      def checkValueOrFail[T](jsonValue: T, expectedValue: T, fieldName: String): Future[Unit] =
         if (jsonValue == expectedValue) Future.successful()
-        else Future.failed(new CardanoApiException(s"Invalid $invalidFieldName", "400"))
+        else Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
 
       def getAsString(json: Json, field: String): String = json.\\(field).headOption.flatMap(_.asString).get
+
+      def getAsMnemonicString(json: Json, field: String): String =
+        json.\\(field).headOption.flatMap(_.asArray).get.flatMap(_.asString).mkString(" ")
+
+      def checkPaymentsField(json: Json): Future[Unit] = {
+        val jsonPayments = json.\\("payments")
+        val jsonAddresses = jsonPayments.flatMap(_.\\("address")).flatMap(_.asString)
+        for {
+          _ <- checkValueOrFail(jsonAddresses, payments.payments.map(_.address), "payments.address")
+          jsonAmount = jsonPayments.flatMap(_.\\("amount"))
+          jsonAmountQuantities = jsonAmount.flatMap(_.\\("quantity").flatMap(_.asNumber.flatMap(_.toLong)))
+          _ <- checkValueOrFail(jsonAmountQuantities, payments.payments.map(_.amount.quantity), "amount.quantity")
+          jsonAmountUnits = jsonAmount.flatMap(_.\\("unit").flatMap(_.asString))
+          _ <- checkValueOrFail(jsonAmountUnits, payments.payments.map(_.amount.unit.toString), "amount.unit")
+        } yield ()
+      }
+
+      def checkStringField(json: Json, jsonFieldName: String, expectedValue: String): Future[Unit] = {
+        val jsonValueStr = getAsString(json, jsonFieldName)
+        checkValueOrFail(jsonValueStr, expectedValue, jsonFieldName)
+      }
+
+      def checkPassphraseField(json: Json): Future[Unit] =
+        checkStringField(json, "passphrase", walletPassphrase)
+
+      def checkWithdrawalField(json: Json): Future[Unit] =
+        checkStringField(json, "withdrawal", withdrawal)
+
+      def checkMetadataField(json: Json): Future[Unit] =
+        for {
+          metadata <- {
+            val metaResults = json.\\("metadata")
+            if (metaResults.isEmpty) Future.failed(new CardanoApiException(s"Invalid metadata", "400"))
+            else Future.successful(json.\\("metadata").head)
+          }
+          metadataKeys = metadata.hcursor.keys.getOrElse(Nil)
+          _ <- checkValueOrFail(metadataKeys.toList, metadataMap.toList.map(_._1.toString), "metadata.keys")
+          metadataValues = for {
+            key <- metadataKeys.toList
+            value <- metadata.\\(key).flatMap { keyField =>
+              keyField.\\("string").flatMap(_.asString)
+            }
+          } yield value
+          _ <- checkValueOrFail(metadataValues, metadataMap.map(_._2.s), "metadata.values")
+        } yield ()
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
@@ -129,23 +174,20 @@ trait InMemoryCardanoApi {
 
         case ("wallets", HttpMethods.POST) =>
           for {
-            jsonBody <- unmarshalJsonBody()
+            json <- unmarshalJsonBody()
             _ <- checkIfContainsProperJsonKeys(
-              jsonBody,
+              json,
               List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
             )
-            jsonName = jsonBody.\\("name").headOption.flatMap(_.asString).get
-            jsonAddressPoolGap = jsonBody.\\("address_pool_gap").headOption.flatMap(_.asNumber).get.toInt.get
-            jsonPassphrase = jsonBody.\\("passphrase").headOption.flatMap(_.asString).get
-            jsonMnemonicSentence = GenericMnemonicSentence(
-              jsonBody.\\("mnemonic_sentence").headOption.flatMap(_.asArray).get.flatMap(_.asString).mkString(" ")
-            )
+            _ <- checkPassphraseField(json)
+            jsonMnemonicSentence = GenericMnemonicSentence(getAsMnemonicString(json, "mnemonic_sentence"))
+            _ <- checkValueOrFail(jsonMnemonicSentence, mnemonicSentence, "mnemonic_sentence")
             jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(
-              jsonBody.\\("mnemonic_second_factor").headOption.flatMap(_.asArray).get.flatMap(_.asString).mkString(" ")
+              getAsMnemonicString(json, "mnemonic_second_factor")
             )
-            _        <- checkValueOrFail(jsonPassphrase, walletPassphrase, "passphrase")
-            _        <- checkValueOrFail(jsonMnemonicSentence, mnemonicSentence, "passphrase")
-            _        <- checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, "passphrase")
+            _ <- checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, "mnemonic_second_factor")
+            jsonName = getAsString(json, "name")
+            jsonAddressPoolGap = json.\\("address_pool_gap").headOption.flatMap(_.asNumber).get.toInt.get
             response <- toJsonResponse(wallet.copy(name = jsonName, addressPoolGap = jsonAddressPoolGap))
           } yield response
 
@@ -157,15 +199,9 @@ trait InMemoryCardanoApi {
 
         case (s"wallets/${jsonFileWallet.id}/passphrase", HttpMethods.PUT) =>
           for {
-            jsonBody <- unmarshalJsonBody()
-            _ <-
-              if (jsonBody.\\("old_passphrase").headOption.flatMap(_.asString).getOrElse("") == oldPassword)
-                Future.successful(())
-              else Future.failed(new CardanoApiException("Invalid old_passphrase value", "400"))
-            _ <-
-              if (jsonBody.\\("new_passphrase").headOption.flatMap(_.asString).getOrElse("") == newPassword)
-                Future.successful(())
-              else Future.failed(new CardanoApiException("Invalid new_passphrase value", "400"))
+            json <- unmarshalJsonBody()
+            _ <- checkStringField(json, "old_passphrase", oldPassword)
+            _ <- checkStringField(json, "new_passphrase", newPassword)
             response <- request.mapper(HttpResponse(status = StatusCodes.NoContent))
           } yield response
 
@@ -198,6 +234,10 @@ trait InMemoryCardanoApi {
           for {
             jsonBody <- unmarshalJsonBody()
             _        <- checkIfContainsProperJsonKeys(jsonBody, List("passphrase", "payments", "metadata", "withdrawal"))
+            _        <- checkPassphraseField(jsonBody)
+            _        <- checkPaymentsField(jsonBody)
+            _        <- checkMetadataField(jsonBody)
+            _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
 
@@ -205,6 +245,9 @@ trait InMemoryCardanoApi {
           for {
             jsonBody <- unmarshalJsonBody()
             _        <- checkIfContainsProperJsonKeys(jsonBody, List("payments", "withdrawal", "metadata"))
+            _        <- checkPaymentsField(jsonBody)
+            _        <- checkMetadataField(jsonBody)
+            _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
           } yield response
 
