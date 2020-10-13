@@ -97,11 +97,12 @@ trait InMemoryCardanoApi {
           .to[String]
           .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
 
-      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] =
-        if (json.hcursor.keys.getOrElse(Nil).toList == expectedList)
+      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] = {
+        if (json.dropNullValues.hcursor.keys.getOrElse(Nil).toList == expectedList)
           Future.successful(())
         else
           Future.failed(new CardanoApiException("Invalid json body", "400"))
+      }
 
       def toJsonResponse[A](resp: A)(implicit enc: io.circe.Encoder[A]) =
         request.mapper(
@@ -163,7 +164,14 @@ trait InMemoryCardanoApi {
           toJsonResponse(transactions)
 
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
-          request.mapper(httpEntityFromJson("transaction.json"))
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _ <- checkIfContainsProperJsonKeys(
+              jsonBody,
+              List("passphrase", "payments", "metadata", "withdrawal")
+            )
+            response <- request.mapper(httpEntityFromJson("transaction.json"))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("estimate_fees.json"))

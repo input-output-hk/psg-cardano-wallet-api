@@ -121,11 +121,6 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
-    val metadata = TxMetadataMapIn(Map(
-      0L -> MetadataValueStr("0" * 64),
-      1L -> MetadataValueStr("1" * 64)
-    ))
-
     api
       .createTransaction(wallet.id, "MySecret", payments.payments.asJava, metadata, "50")
       .toCompletableFuture

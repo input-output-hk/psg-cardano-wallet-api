@@ -110,8 +110,8 @@ class CardanoApiSpec
         fromWalletId = wallet.id,
         passphrase = "MySecret",
         payments = payments,
-        metadata = None,
-        withdrawal = None
+        metadata = Some(metadata),
+        withdrawal = Some("50")
       )
       .executeOrFail()
       .id shouldBe firstTransactionId
@@ -123,8 +123,8 @@ class CardanoApiSpec
         fromWalletId = "invalid_wallet_id",
         passphrase = "MySecret",
         payments = payments,
-        metadata = None,
-        withdrawal = None
+        metadata = Some(metadata),
+        withdrawal = Some("50")
       )
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }

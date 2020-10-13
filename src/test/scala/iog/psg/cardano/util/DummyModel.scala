@@ -34,6 +34,11 @@ trait DummyModel { self: Assertions =>
     )
   )
 
+  final lazy val metadata = TxMetadataMapIn(Map(
+    0L -> MetadataValueStr("0" * 64),
+    1L -> MetadataValueStr("1" * 64)
+  ))
+
   final lazy val txMetadataOut = TxMetadataOut(json = parse("""
                                                          |{
                                                          |      "0": {
