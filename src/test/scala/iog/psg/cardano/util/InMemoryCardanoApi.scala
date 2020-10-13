@@ -34,7 +34,7 @@ trait InMemoryCardanoApi {
   implicit final class InMemoryExecutor[T](req: CardanoApiRequest[T]) {
     def executeOrFail(): T =
       inMemoryExecutor.execute(req).futureValue match {
-        case Left(value)  => fail("Request failed: " + value.message)
+        case Left(value)  => fail(s"Request failed: ${value.message}")
         case Right(value) => value
       }
 

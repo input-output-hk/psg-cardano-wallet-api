@@ -5,15 +5,18 @@ import io.circe.CursorOp.DownField
 import io.circe._
 import iog.psg.cardano.CardanoApiCodec._
 
+object TxMetadataOut {
+  private val ValueTypeString = "string"
+  private val ValueTypeLong = "int" //named int but will work as long
+  private val ValueTypeBytes = "bytes"
+  private val ValueTypeList = "list"
+  private val ValueTypeMap = "map"
+}
+
 final case class TxMetadataOut(json: Json) {
+  import TxMetadataOut._
 
   type DecodingEither[T] = Either[DecodingFailure, T]
-
-  final val ValueTypeString = "string"
-  final val ValueTypeLong = "int" //named int but will work as long
-  final val ValueTypeBytes = "bytes"
-  final val ValueTypeList = "list"
-  final val ValueTypeMap = "map"
 
   def toMetadataMap: Decoder.Result[Map[Long, MetadataValue]] = {
     type KeyVal = Map[Long, MetadataValue]
