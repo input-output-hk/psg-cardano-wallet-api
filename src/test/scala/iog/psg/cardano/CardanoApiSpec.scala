@@ -130,7 +130,7 @@ class CardanoApiSpec
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments, None).executeOrFail() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments, Some("50"), Some(metadata)).executeOrFail() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {
@@ -146,12 +146,12 @@ class CardanoApiSpec
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
-    api.updatePassphrase(wallet.id, "old_password", "new_password").executeOrFail() shouldBe ()
+    api.updatePassphrase(wallet.id, oldPassword, newPassword).executeOrFail() shouldBe ()
   }
 
   it should "return not found" in {
     api
-      .updatePassphrase("invalid_wallet_id", "old_password", "new_password")
+      .updatePassphrase("invalid_wallet_id", oldPassword, newPassword)
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 

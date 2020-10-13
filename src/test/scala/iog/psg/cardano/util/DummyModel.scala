@@ -9,6 +9,9 @@ import org.scalatest.Assertions
 
 trait DummyModel { self: Assertions =>
 
+  final val oldPassword = "old_password"
+  final val newPassword = "new_password"
+
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
   final val addressIdStr =

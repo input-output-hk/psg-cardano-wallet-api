@@ -8,18 +8,18 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.circe.{Json, parser}
+import io.circe.{ parser, Json }
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
+import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
 import iog.psg.cardano.jpi.CardanoApiException
-import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
+import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait InMemoryCardanoApi {
-  this: ScalaFutures with Assertions with JsonFiles =>
+  this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
 
   implicit val as: ActorSystem
   implicit lazy val ec = as.dispatcher
@@ -49,21 +49,21 @@ trait InMemoryCardanoApi {
   }
 
   private def httpEntityFromJson(
-                                  jsonFileName: String,
-                                  contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
-                                ) = {
+    jsonFileName: String,
+    contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
+  ) = {
     val resource = getClass.getResource(s"/jsons/$jsonFileName")
     val file = new File(resource.getFile)
     HttpEntity.fromFile(contentType, file)
   }
 
   private def getTransactions(
-                               walletId: String,
-                               start: ZonedDateTime,
-                               end: ZonedDateTime,
-                               order: Order,
-                               minWithdrawal: Int
-                             ) =
+    walletId: String,
+    start: ZonedDateTime,
+    end: ZonedDateTime,
+    order: Order,
+    minWithdrawal: Int
+  ) =
     jsonFileCreatedTransactionsResponse.filter { transaction =>
       val matchesDates = transaction.insertedAt.isEmpty || transaction.insertedAt.exists { tb =>
         val afterStart = start.isBefore(tb.time)
@@ -77,8 +77,8 @@ trait InMemoryCardanoApi {
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
-                             request: CardanoApi.CardanoApiRequest[T]
-                           )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
+      request: CardanoApi.CardanoApiRequest[T]
+    )(implicit ec: ExecutionContext, as: ActorSystem): Future[CardanoApiResponse[T]] = {
       val apiAddress = request.request.uri.toString().split(baseUrl).lastOption.getOrElse("")
       val method = request.request.method
       lazy val query = request.request.uri.query().toMap
@@ -98,6 +98,7 @@ trait InMemoryCardanoApi {
           .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
 
       def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] = {
+        println(json.dropNullValues.noSpaces)
         if (json.dropNullValues.hcursor.keys.getOrElse(Nil).toList == expectedList)
           Future.successful(())
         else
@@ -136,7 +137,18 @@ trait InMemoryCardanoApi {
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
 
         case (s"wallets/${jsonFileWallet.id}/passphrase", HttpMethods.PUT) =>
-          request.mapper(HttpResponse(status = StatusCodes.NoContent))
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _ <-
+              if (jsonBody.\\("old_passphrase").headOption.flatMap(_.asString).getOrElse("") == oldPassword)
+                Future.successful(())
+              else Future.failed(new CardanoApiException("Invalid old_passphrase value", "400"))
+            _ <-
+              if (jsonBody.\\("new_passphrase").headOption.flatMap(_.asString).getOrElse("") == newPassword)
+                Future.successful(())
+              else Future.failed(new CardanoApiException("Invalid new_passphrase value", "400"))
+            response <- request.mapper(HttpResponse(status = StatusCodes.NoContent))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}/addresses?state=unused", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("unused_addresses.json"))
@@ -166,15 +178,16 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           for {
             jsonBody <- unmarshalJsonBody()
-            _ <- checkIfContainsProperJsonKeys(
-              jsonBody,
-              List("passphrase", "payments", "metadata", "withdrawal")
-            )
+            _        <- checkIfContainsProperJsonKeys(jsonBody, List("passphrase", "payments", "metadata", "withdrawal"))
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
 
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
-          request.mapper(httpEntityFromJson("estimate_fees.json"))
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkIfContainsProperJsonKeys(jsonBody, List("payments", "withdrawal", "metadata"))
+            response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))

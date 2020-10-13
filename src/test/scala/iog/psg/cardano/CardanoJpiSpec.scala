@@ -135,7 +135,7 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments.payments.asJava, "50", metadata).toCompletableFuture.get() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {
@@ -151,12 +151,12 @@ class CardanoJpiSpec
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
-    api.updatePassphrase(wallet.id, "old_password", "new_password").toCompletableFuture.get() shouldBe null
+    api.updatePassphrase(wallet.id, oldPassword, newPassword).toCompletableFuture.get() shouldBe null
   }
 
   it should "return not found" in {
     tryGetErrorMessage(
-      api.updatePassphrase("invalid_wallet_id", "old_password", "new_password")
+      api.updatePassphrase("invalid_wallet_id", oldPassword, newPassword)
     ) shouldBe walletNotFoundError
   }
 
