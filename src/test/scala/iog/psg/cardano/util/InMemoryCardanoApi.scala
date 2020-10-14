@@ -8,16 +8,16 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.circe.{ parser, Json }
+import io.circe.{Json, parser}
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
-import iog.psg.cardano.CardanoApiCodec.{ GenericMnemonicSecondaryFactor, GenericMnemonicSentence }
+import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
+import iog.psg.cardano.CardanoApiCodec.{GenericMnemonicSecondaryFactor, GenericMnemonicSentence}
 import iog.psg.cardano.jpi.CardanoApiException
-import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
+import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
@@ -27,7 +27,7 @@ trait InMemoryCardanoApi {
   protected val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal", "metadata")
 
   implicit val as: ActorSystem
-  implicit lazy val ec = as.dispatcher
+  implicit lazy val ec: ExecutionContextExecutor = as.dispatcher
 
   final val baseUrl: String = "http://fake:1234/"
 
@@ -154,7 +154,7 @@ trait InMemoryCardanoApi {
       def checkWithdrawalField(json: Json): Future[Unit] =
         checkStringField(json, "withdrawal", withdrawal)
 
-      def checkMetadataField(json: Json): Future[Unit] =
+      def checkMetadataField(json: Json, fieldsToCheck: List[String]): Future[Unit] = if (fieldsToCheck.contains("metadata")) {
         for {
           metadata <- {
             val metaResults = json.\\("metadata")
@@ -171,6 +171,7 @@ trait InMemoryCardanoApi {
           } yield value
           _ <- checkValueOrFail(metadataValues, metadataMap.map(_._2.s), "metadata.values")
         } yield ()
+      } else Future.successful(())
 
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
@@ -244,7 +245,7 @@ trait InMemoryCardanoApi {
             _        <- checkIfContainsProperJsonKeys(jsonBody, postTransactionFieldsToCheck)
             _        <- checkPassphraseField(jsonBody)
             _        <- checkPaymentsField(jsonBody)
-            _        <- if (postTransactionFieldsToCheck.contains("metadata")) checkMetadataField(jsonBody) else Future.successful(())
+            _        <- checkMetadataField(jsonBody, postTransactionFieldsToCheck)
             _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
@@ -254,7 +255,7 @@ trait InMemoryCardanoApi {
             jsonBody <- unmarshalJsonBody()
             _        <- checkIfContainsProperJsonKeys(jsonBody, postEstimateFeeFieldsToCheck)
             _        <- checkPaymentsField(jsonBody)
-            _        <- if (postEstimateFeeFieldsToCheck.contains("metadata")) checkMetadataField(jsonBody) else Future.successful(())
+            _        <- checkMetadataField(jsonBody, postEstimateFeeFieldsToCheck)
             _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
           } yield response
