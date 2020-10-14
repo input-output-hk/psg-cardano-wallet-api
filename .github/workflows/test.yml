@@ -19,21 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Load Variables
+          id: load_envvars
+          run: |
+            echo "BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_1_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_1_MNEMONIC=${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_2_MNEMONIC=${{ secrets.CARDANO_API_WALLET_2_MNEMONIC }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_3_MNEMONIC=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_3_MNEMONIC_SECONDARY=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC_SECONDARY }}" >> $GITHUB_ENV
+            echo "CARDANO_API_WALLET_3_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_3_PASSPHRASE }}" >> $GITHUB_ENV
       - name: Run tests
         uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
-      - run: |
-            echo "BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
-            sbt coverage test it:test coverageReport
-        env:
-          CARDANO_API_WALLET_1_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}
-          CARDANO_API_WALLET_1_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}
-          CARDANO_API_WALLET_2_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_2_MNEMONIC }}
-          CARDANO_API_WALLET_3_MNEMONIC: ${{ secrets.CARDANO_API_WALLET_3_MNEMONIC }}
-          CARDANO_API_WALLET_3_MNEMONIC_SECONDARY: ${{ secrets.CARDANO_API_WALLET_3_MNEMONIC_SECONDARY }}
-          CARDANO_API_WALLET_3_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_3_PASSPHRASE }}
-
+      - run: sbt coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
         with:
