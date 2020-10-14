@@ -26,7 +26,6 @@ jobs:
           echo "CARDANO_API_WALLET_3_MNEMONIC=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_3_MNEMONIC_SECONDARY=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC_SECONDARY }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_3_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_3_PASSPHRASE }}" >> $GITHUB_ENV
-          echo "JAVA_VERSION='11.0.8'" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: Run tests
         uses: actions/setup-java@v1.4.3
