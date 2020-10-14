@@ -31,7 +31,7 @@ jobs:
       - name: Run tests
         uses: actions/setup-java@v1.4.3
         with:
-          java-version: JAVA_VERSION
+          java-version: $JAVA_VERSION
       - run: sbt coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
