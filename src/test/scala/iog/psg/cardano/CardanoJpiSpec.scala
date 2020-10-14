@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage
 import akka.actor.ActorSystem
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
+import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -14,7 +15,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 class CardanoJpiSpec
-    extends AnyFlatSpec
+  extends AnyFlatSpec
     with Matchers
     with Configure
     with ModelCompare
@@ -49,13 +50,27 @@ class CardanoJpiSpec
     api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
   }
 
-  "POST /wallets" should "" in {
+  "POST /wallets" should "create a wallet, using all params" in {
     api
       .createRestore(
         randomWalletName,
         walletPassphrase,
         mnemonicSentence.mnemonicSentence.toList.asJava,
         mnemonicSecondFactor.mnemonicSentence.toList.asJava,
+        addressPoolGap
+      )
+      .toCompletableFuture
+      .get() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
+  }
+
+  it should "create a wallet, without using mnemonicSecondFactor param" in new CustomInMemoryFixture {
+    override val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "address_pool_gap")
+
+    customApi
+      .createRestore(
+        randomWalletName,
+        walletPassphrase,
+        mnemonicSentence.mnemonicSentence.toList.asJava,
         addressPoolGap
       )
       .toCompletableFuture
@@ -168,5 +183,17 @@ class CardanoJpiSpec
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
+
+  private def getCurrentSpecAS: ActorSystem = as
+
+  sealed trait CustomInMemoryFixture extends Configure
+    with ModelCompare
+    with ScalaFutures
+    with InMemoryCardanoApi
+    with DummyModel
+    with JsonFiles {
+    override implicit val as: ActorSystem = getCurrentSpecAS
+    lazy val customApi: jpi.CardanoApi = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
+  }
 
 }

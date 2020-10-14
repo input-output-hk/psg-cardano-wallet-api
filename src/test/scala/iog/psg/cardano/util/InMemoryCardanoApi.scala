@@ -22,6 +22,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
 
+  protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
+
   implicit val as: ActorSystem
   implicit lazy val ec = as.dispatcher
 
@@ -107,11 +109,13 @@ trait InMemoryCardanoApi {
           .to[String]
           .map(str => parser.parse(str).getOrElse(fail("Could not parse json body")))
 
-      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] =
-        if (json.dropNullValues.hcursor.keys.getOrElse(Nil).toList == expectedList)
+      def checkIfContainsProperJsonKeys(json: Json, expectedList: List[String]): Future[Unit] = {
+        val missingFields = expectedList.diff(json.dropNullValues.hcursor.keys.getOrElse(Nil).toList)
+        if (missingFields.isEmpty)
           Future.successful(())
         else
-          Future.failed(new CardanoApiException("Invalid json body", "400"))
+          Future.failed(new CardanoApiException(s"Invalid json body, missing fields: ${missingFields.mkString(", ")}", "400"))
+      }
 
       def getQueryZonedDTParam(name: String): ZonedDateTime = ZonedDateTime.parse(query(name))
 
@@ -174,19 +178,23 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("wallets.json"))
 
         case ("wallets", HttpMethods.POST) =>
+          println("postWalletFieldsToCheck: "+postWalletFieldsToCheck)
           for {
             json <- unmarshalJsonBody()
-            _ <- checkIfContainsProperJsonKeys(
-              json,
-              List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
-            )
+            _ <- checkIfContainsProperJsonKeys(json, postWalletFieldsToCheck)
             _ <- checkPassphraseField(json)
             jsonMnemonicSentence = GenericMnemonicSentence(getAsMnemonicString(json, "mnemonic_sentence"))
             _ <- checkValueOrFail(jsonMnemonicSentence, mnemonicSentence, "mnemonic_sentence")
-            jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(
-              getAsMnemonicString(json, "mnemonic_second_factor")
-            )
-            _ <- checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, "mnemonic_second_factor")
+            _ <- {
+              val fieldName = "mnemonic_second_factor"
+              println("postWalletFieldsToCheck.contains(fieldName): "+postWalletFieldsToCheck.contains(fieldName))
+              if (postWalletFieldsToCheck.contains(fieldName)) {
+                val jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(getAsMnemonicString(json, fieldName))
+                checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, fieldName)
+              } else {
+                Future.successful(())
+              }
+            }
             jsonName = getAsString(json, "name")
             jsonAddressPoolGap = json.\\("address_pool_gap").headOption.flatMap(_.asNumber).get.toInt.get
             response <- wallet.copy(name = jsonName, addressPoolGap = jsonAddressPoolGap).toJsonResponse()
