@@ -22,6 +22,7 @@ jobs:
       - name: Load Variables
         id: load_envvars
         run: |
+          echo "TEST='test vars'" >> $GITHUB_ENV
           echo "BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_1_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_1_MNEMONIC=${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}" >> $GITHUB_ENV
@@ -35,7 +36,7 @@ jobs:
           java-version: '11.0.8'
       - run: |
           echo "-----------> before test"
-          echo $BASE_URL
+          echo $TEST
           sbt coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
