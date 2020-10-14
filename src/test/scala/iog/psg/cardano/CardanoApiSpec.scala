@@ -42,11 +42,9 @@ class CardanoApiSpec
   }
 
   "POST /wallets" should "" in {
-    val randomName = UUID.randomUUID().toString
-    val addressPoolGap = 500
     api
-      .createRestoreWallet(randomName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))
-      .executeOrFail() shouldBe wallet.copy(name = randomName, addressPoolGap = addressPoolGap)
+      .createRestoreWallet(randomWalletName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))
+      .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {
