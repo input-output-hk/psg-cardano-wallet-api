@@ -24,7 +24,7 @@ jobs:
         with:
           java-version: '11.0.8'
       - run: |
-            echo 'BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
+            echo "BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
             sbt coverage test it:test coverageReport
         env:
           CARDANO_API_WALLET_1_PASSPHRASE: ${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}
