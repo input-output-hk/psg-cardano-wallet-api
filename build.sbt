@@ -52,5 +52,5 @@ lazy val rootProject = (project in file("."))
       "commons-codec" % "commons-codec" % commonsCodecVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "it, test",
     ),
-    coverageExcludedFiles := ".*CardanoApiMain.*;",
+    coverageExcludedFiles := ".*iog.psg.cardano.CardanoApiMain.*;",
 )
