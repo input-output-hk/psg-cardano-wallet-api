@@ -54,11 +54,11 @@ trait InMemoryCardanoApi {
   }
 
   private def httpEntityFromJson(
-    jsonFileName: String,
+    httpResponseFromJson: String,
     contentType: ContentType = ContentType.WithFixedCharset(MediaTypes.`application/json`)
   ) =
     HttpResponse(entity = {
-      val resource = getClass.getResource(s"/jsons/$jsonFileName")
+      val resource = getClass.getResource(s"/jsons/$httpResponseFromJson")
       val file = new File(resource.getFile)
       HttpEntity.fromFile(contentType, file)
     })
