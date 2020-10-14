@@ -142,6 +142,17 @@ class CardanoJpiSpec
       .id shouldBe firstTransactionId
   }
 
+  it should "create transaction without metadata and with default withdrawal" in new CustomInMemoryFixture {
+    override val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "withdrawal")
+    override val withdrawal: String = "self"
+
+    customApi
+      .createTransaction(wallet.id, walletPassphrase, payments.payments.asJava)
+      .toCompletableFuture
+      .get()
+      .id shouldBe firstTransactionId
+  }
+
   it should "return not found" in {
     tryGetErrorMessage(
       api.createTransaction("invalid_wallet_id", "MySecret", payments.payments.asJava)
@@ -150,6 +161,13 @@ class CardanoJpiSpec
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments.payments.asJava, withdrawal, txMetadata).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  it should "estimate fee without metadata and with default withdrawal" in new CustomInMemoryFixture {
+    override val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal")
+    override val withdrawal: String = "self"
+
+    customApi.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {

@@ -23,6 +23,8 @@ trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
 
   protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
+  protected val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "metadata", "withdrawal")
+  protected val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal", "metadata")
 
   implicit val as: ActorSystem
   implicit lazy val ec = as.dispatcher
@@ -178,7 +180,6 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("wallets.json"))
 
         case ("wallets", HttpMethods.POST) =>
-          println("postWalletFieldsToCheck: "+postWalletFieldsToCheck)
           for {
             json <- unmarshalJsonBody()
             _ <- checkIfContainsProperJsonKeys(json, postWalletFieldsToCheck)
@@ -187,7 +188,6 @@ trait InMemoryCardanoApi {
             _ <- checkValueOrFail(jsonMnemonicSentence, mnemonicSentence, "mnemonic_sentence")
             _ <- {
               val fieldName = "mnemonic_second_factor"
-              println("postWalletFieldsToCheck.contains(fieldName): "+postWalletFieldsToCheck.contains(fieldName))
               if (postWalletFieldsToCheck.contains(fieldName)) {
                 val jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(getAsMnemonicString(json, fieldName))
                 checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, fieldName)
@@ -241,10 +241,10 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/transactions", HttpMethods.POST) =>
           for {
             jsonBody <- unmarshalJsonBody()
-            _        <- checkIfContainsProperJsonKeys(jsonBody, List("passphrase", "payments", "metadata", "withdrawal"))
+            _        <- checkIfContainsProperJsonKeys(jsonBody, postTransactionFieldsToCheck)
             _        <- checkPassphraseField(jsonBody)
             _        <- checkPaymentsField(jsonBody)
-            _        <- checkMetadataField(jsonBody)
+            _        <- if (postTransactionFieldsToCheck.contains("metadata")) checkMetadataField(jsonBody) else Future.successful(())
             _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
@@ -252,9 +252,9 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           for {
             jsonBody <- unmarshalJsonBody()
-            _        <- checkIfContainsProperJsonKeys(jsonBody, List("payments", "withdrawal", "metadata"))
+            _        <- checkIfContainsProperJsonKeys(jsonBody, postEstimateFeeFieldsToCheck)
             _        <- checkPaymentsField(jsonBody)
-            _        <- checkMetadataField(jsonBody)
+            _        <- if (postEstimateFeeFieldsToCheck.contains("metadata")) checkMetadataField(jsonBody) else Future.successful(())
             _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
           } yield response
