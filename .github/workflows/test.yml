@@ -1,8 +1,5 @@
 name: Clean, build, test, coverage
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 on:
   push:
     branches:
@@ -22,7 +19,7 @@ jobs:
       - name: Load Variables
         id: load_envvars
         run: |
-          echo "TEST='test vars'" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
           echo "BASE_URL=${{ secrets.BASE_URL }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_1_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_1_PASSPHRASE }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_1_MNEMONIC=${{ secrets.CARDANO_API_WALLET_1_MNEMONIC }}" >> $GITHUB_ENV
@@ -34,10 +31,7 @@ jobs:
         uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
-      - run: |
-          echo "-----------> before test"
-          echo $TEST
-          sbt coverage test it:test coverageReport
+      - run: sbt coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
         with:
