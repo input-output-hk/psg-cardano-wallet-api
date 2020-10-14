@@ -1,11 +1,10 @@
 package iog.psg.cardano
 
 import java.time.ZonedDateTime
-import java.util.UUID
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.ErrorMessage
-import iog.psg.cardano.CardanoApiCodec.{AddressFilter, MetadataValueStr, TxMetadataMapIn}
+import iog.psg.cardano.CardanoApiCodec.AddressFilter
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
