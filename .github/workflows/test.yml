@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - develop
+      - task/PSGS-58
   pull_request:
     branches:
       - master
