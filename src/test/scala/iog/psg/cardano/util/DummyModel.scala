@@ -1,6 +1,7 @@
 package iog.psg.cardano.util
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import io.circe.parser.parse
 import iog.psg.cardano.CardanoApiCodec._
@@ -8,6 +9,13 @@ import iog.psg.cardano.TxMetadataOut
 import org.scalatest.Assertions
 
 trait DummyModel { self: Assertions =>
+
+  final val randomWalletName = UUID.randomUUID().toString
+  final val oldPassword = "old_password"
+  final val newPassword = "new_password"
+  final val walletPassphrase = UUID.randomUUID().toString
+  protected val withdrawal = "500"
+  final val addressPoolGap = 500
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
@@ -33,6 +41,13 @@ trait DummyModel { self: Assertions =>
       absoluteSlotNumber = Some(8086)
     )
   )
+
+  final lazy val metadataMap = Map(
+    0L -> MetadataValueStr("0" * 64),
+    1L -> MetadataValueStr("1" * 64)
+  )
+
+  final lazy val txMetadata = TxMetadataMapIn(metadataMap)
 
   final lazy val txMetadataOut = TxMetadataOut(json = parse("""
                                                          |{

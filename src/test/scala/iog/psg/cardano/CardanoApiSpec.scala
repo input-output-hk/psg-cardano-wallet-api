@@ -42,8 +42,8 @@ class CardanoApiSpec
 
   "POST /wallets" should "" in {
     api
-      .createRestoreWallet(wallet.name, "Pass9128!", mnemonicSentence, Some(mnemonicSecondFactor), Some(500))
-      .executeOrFail() shouldBe wallet
+      .createRestoreWallet(randomWalletName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))
+      .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {
@@ -54,6 +54,10 @@ class CardanoApiSpec
 
   it should "return wallet's used addresses" in {
     api.listAddresses(wallet.id, Some(AddressFilter.used)).executeOrFail().map(_.id) shouldBe usedAddresses.map(_.id)
+  }
+
+  it should "return wallet's used + unused addresses" in {
+    api.listAddresses(wallet.id, None).executeOrFail().map(_.id) shouldBe addresses.map(_.id)
   }
 
   it should "return wallet not found error" in {
@@ -104,10 +108,10 @@ class CardanoApiSpec
     api
       .createTransaction(
         fromWalletId = wallet.id,
-        passphrase = "MySecret",
+        passphrase = walletPassphrase,
         payments = payments,
-        metadata = None,
-        withdrawal = None
+        metadata = Some(txMetadata),
+        withdrawal = Some(withdrawal)
       )
       .executeOrFail()
       .id shouldBe firstTransactionId
@@ -119,14 +123,14 @@ class CardanoApiSpec
         fromWalletId = "invalid_wallet_id",
         passphrase = "MySecret",
         payments = payments,
-        metadata = None,
-        withdrawal = None
+        metadata = Some(txMetadata),
+        withdrawal = Some(withdrawal)
       )
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments, None).executeOrFail() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments, Some(withdrawal), Some(txMetadata)).executeOrFail() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {
@@ -142,12 +146,12 @@ class CardanoApiSpec
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
-    api.updatePassphrase(wallet.id, "old_password", "new_password").executeOrFail() shouldBe ()
+    api.updatePassphrase(wallet.id, oldPassword, newPassword).executeOrFail() shouldBe ()
   }
 
   it should "return not found" in {
     api
-      .updatePassphrase("invalid_wallet_id", "old_password", "new_password")
+      .updatePassphrase("invalid_wallet_id", oldPassword, newPassword)
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 

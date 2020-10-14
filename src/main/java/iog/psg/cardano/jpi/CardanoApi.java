@@ -247,9 +247,15 @@ public class CardanoApi {
      */
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
             String walletId, AddressFilter addressFilter) throws CardanoApiException {
-        Enumeration.Value v = CardanoApiCodec.AddressFilter$.MODULE$.Value(addressFilter.name().toLowerCase());
+
+        Optional<Enumeration.Value> addressFilterOpt = Optional.empty();
+        if (addressFilter != null) {
+            Enumeration.Value v = CardanoApiCodec.AddressFilter$.MODULE$.Value(addressFilter.name().toLowerCase());
+            addressFilterOpt = Optional.of(v);
+        }
+
         return helpExecute.execute(
-                api.listAddresses(walletId, scala.Option.apply(v))).thenApply(CollectionConverters::asJava);
+                api.listAddresses(walletId, option(addressFilterOpt))).thenApply(CollectionConverters::asJava);
     }
 
     /**
