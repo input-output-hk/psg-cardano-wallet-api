@@ -27,14 +27,11 @@ jobs:
           echo "CARDANO_API_WALLET_3_MNEMONIC=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_3_MNEMONIC_SECONDARY=${{ secrets.CARDANO_API_WALLET_3_MNEMONIC_SECONDARY }}" >> $GITHUB_ENV
           echo "CARDANO_API_WALLET_3_PASSPHRASE=${{ secrets.CARDANO_API_WALLET_3_PASSPHRASE }}" >> $GITHUB_ENV
+          echo "java-version='11.0.8'" >> $GITHUB_ENV
+          echo "code-coverage-report='target/scala-2.13/scoverage-report'" >> $GITHUB_ENV
       - name: Run tests
         uses: actions/setup-java@v1.4.2
-        with:
-          java-version: '11.0.8'
       - run: sbt coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
-        with:
-          name: code-coverage-report
-          path: target/scala-2.13/scoverage-report
 
