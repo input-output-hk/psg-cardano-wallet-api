@@ -242,27 +242,31 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       """This super simple tool allows developers to access a cardano wallet backend from the command line
         |
         |Usage:
-        |export CMDLINE='java -jar psg-cardano-wallet-api-assembly-<VER>.jar'
-        |$CMDLINE <command> <arguments>
+        |
+        | export CMDLINE='java -jar psg-cardano-wallet-api-assembly-<VER>.jar'
+        | $CMDLINE <command> <arguments>
         |
         |Optional:
-        |-baseUrl <url> <command>
-        |-trace <filename> <command>
-        |-noConsole <command>
+        |
+        | -baseUrl <url> <command>
+        | -trace <filename> <command>
+        | -noConsole <command>
+        |
         |Commands:
-        |-netInfo
-        |-wallets
-        |-deleteWallet -walletId <walletId>
-        |-wallet -walletId <walletId>
-        |-createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
-        |-restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
-        |-estimateFee -walletId <walletId> -amount <amount> -address <address>
-        |-updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
-        |-listAddresses -walletId <walletId> -state <state>
-        |-listTxs -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
-        |-createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
-        |-fundTx -walletId <walletId> -amount <amount> -address <address>
-        |-getTx -walletId <walletId> -txId <txId>""".stripMargin
+        |
+        | -netInfo
+        | -wallets
+        | -deleteWallet -walletId <walletId>
+        | -wallet -walletId <walletId>
+        | -createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+        | -restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+        | -estimateFee -walletId <walletId> -amount <amount> -address <address>
+        | -updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
+        | -listAddresses -walletId <walletId> -state <state>
+        | -listTxs -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
+        | -createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
+        | -fundTx -walletId <walletId> -amount <amount> -address <address>
+        | -getTx -walletId <walletId> -txId <txId>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
