@@ -66,6 +66,12 @@ object CardanoApiCodec {
   private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut.apply)
   private[cardano] implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
 
+  private[cardano] implicit val encodeDelegationNext: Encoder[DelegationNext] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
+
   sealed trait MetadataValue
 
   sealed trait MetadataKey extends MetadataValue
@@ -130,7 +136,7 @@ object CardanoApiCodec {
 
   }
 
-  case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
+  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
 
   object SyncState extends Enumeration {
     type SyncState = Value
@@ -145,17 +151,17 @@ object CardanoApiCodec {
     val delegating: DelegationStatus = Value("delegating")
     val notDelegating: DelegationStatus = Value("not_delegating")
   }
-  final case class DelegationActive(status: DelegationStatus, target: Option[String])
-  @ConfiguredJsonCodec final case class DelegationNext(status: DelegationStatus, changesAt: Option[NextEpoch])
-  final case class Delegation(active: DelegationActive, next: List[DelegationNext])
+  @ConfiguredJsonCodec(decodeOnly = true) final case class DelegationActive(status: DelegationStatus, target: Option[String])
+  @ConfiguredJsonCodec(decodeOnly = true) final case class DelegationNext(status: DelegationStatus, changesAt: Option[NextEpoch])
+  @ConfiguredJsonCodec final case class Delegation(active: DelegationActive, next: List[DelegationNext])
 
-  @ConfiguredJsonCodec case class NetworkTip(
+  @ConfiguredJsonCodec(decodeOnly = true) final case class NetworkTip(
                                               epochNumber: Long,
                                               slotNumber: Long,
                                               height: Option[QuantityUnit],
                                               absoluteSlotNumber: Option[Long])
 
-  @ConfiguredJsonCodec case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
+  @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
