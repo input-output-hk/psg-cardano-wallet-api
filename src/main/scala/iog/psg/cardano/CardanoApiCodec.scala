@@ -278,7 +278,7 @@ object CardanoApiCodec {
                            amount: QuantityUnit
                          )
 
-  case class FundPaymentsResponse(
+  @ConfiguredJsonCodec(encodeOnly = true) case class FundPaymentsResponse(
                                    inputs: IndexedSeq[InAddress],
                                    outputs: Seq[OutAddress]
                                  )

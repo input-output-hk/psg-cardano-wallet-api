@@ -103,7 +103,7 @@ object CardanoApiMain {
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
-          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace.apply))
+          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(resp => trace(resp)))
         } else if (hasArgument(CmdLine.estimateFee)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -159,7 +159,7 @@ object CardanoApiMain {
           unwrap[CardanoApiCodec.FundPaymentsResponse](api.fundPayments(
             walletId,
             payments
-          ).executeBlocking, trace(_))
+          ).executeBlocking, r => trace(r))
 
         } else if (hasArgument(CmdLine.listWalletTransactions)) {
           val walletId = arguments.get(CmdLine.walletId)
@@ -174,7 +174,7 @@ object CardanoApiMain {
             endDate,
             orderOf,
             minWithdrawal = minWithdrawalTx
-          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(trace.apply))
+          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(resp => trace(resp)))
 
         } else if (hasArgument(CmdLine.createWallet) || hasArgument(CmdLine.restoreWallet)) {
           val name = arguments.get(CmdLine.name)
