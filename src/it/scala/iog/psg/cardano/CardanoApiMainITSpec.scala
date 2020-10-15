@@ -50,7 +50,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd line -netInfo" should "support retrieving netInfo" in {
     val cmdLineResults = runCmdLine(CmdLine.netInfo)
-    println(cmdLineResults)
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
   }
 
