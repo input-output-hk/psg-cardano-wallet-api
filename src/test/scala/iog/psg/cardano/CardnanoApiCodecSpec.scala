@@ -33,4 +33,9 @@ class CardnanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
     nt.asJson.noSpaces shouldBe """{"height":{"quantity":1337,"unit":"block"},"slot_number":1337,"epoch_number":14}"""
   }
 
+  it should "drop nulls in SyncStatus" in {
+    val ss = SyncStatus(SyncState.ready, None)
+    ss.asJson.noSpaces shouldBe """{"status":"ready"}"""
+  }
+
 }

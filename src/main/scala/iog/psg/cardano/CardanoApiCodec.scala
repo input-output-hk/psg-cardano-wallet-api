@@ -70,6 +70,7 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
 
   sealed trait MetadataValue
 
@@ -135,7 +136,7 @@ object CardanoApiCodec {
 
   }
 
-  case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
+  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
 
   object SyncState extends Enumeration {
     type SyncState = Value
