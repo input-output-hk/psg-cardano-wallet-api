@@ -1,10 +1,5 @@
 name: Publish to Maven
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  SONA_USER: ${{ secrets.SONA_USER }}
-  SONA_PASS: ${{ secrets.SONA_PASS }}
-
 on:
   push:
     tags:
@@ -14,13 +9,18 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
+      - name: Load Variables
+        id: load_envvars
+        run: |
+            echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+            echo "GPG_SIGNING_KEY=${{ secrets.GPG_SIGNING_KEY }}" >> $GITHUB_ENV
+            echo "SONA_USER=${{ secrets.SONA_USER }}" >> $GITHUB_ENV
+            echo "SONA_PASS=${{ secrets.SONA_PASS }}" >> $GITHUB_ENV
       - name: Configure GPG Key
         run: |
             mkdir -p ~/.gnupg/
             printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
             gpg --import --no-tty --batch --yes ~/.gnupg/private.key
-        env:
-            GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - uses: actions/checkout@v2
       - name: Package
         uses: actions/setup-java@v1.4.2
