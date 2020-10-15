@@ -50,6 +50,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd line -netInfo" should "support retrieving netInfo" in {
     val cmdLineResults = runCmdLine(CmdLine.netInfo)
+    println(cmdLineResults)
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
   }
 
@@ -254,8 +255,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |-wallets
         |-deleteWallet -walletId <walletId>
         |-wallet -walletId <walletId>
-        |-createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
-        |-restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+        |-createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+        |-restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         |-estimateFee -walletId <walletId> -amount <amount> -address <address>
         |-updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
         |-listAddresses -walletId <walletId> -state <state>
@@ -341,12 +342,12 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     results.mkString("\n").stripMargin.trim shouldBe """ Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
                                                        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
                                                        |
-                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
-                                                       | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
-                                                       |""".stripMargin.trim
+                                                       | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -mnemonicSecondary 'ability make always any pulse swallow marriage media dismiss'
+                                                       | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10""".stripMargin.trim
   }
 
   it should "show restoreWallet help" in {
@@ -354,10 +355,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     results.mkString("\n").stripMargin.trim shouldBe """ Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
                                                        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
                                                        |
-                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
                                                        |
                                                        | Examples:
-                                                       | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad''
+                                                       | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
+                                                       | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -mnemonicSecondary 'ability make always any pulse swallow marriage media dismiss'
                                                        | $CMDLINE -restoreWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
                                                        |""".stripMargin.trim
   }
