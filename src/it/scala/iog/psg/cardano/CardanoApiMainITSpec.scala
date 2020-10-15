@@ -238,133 +238,214 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
-
     results.mkString("\n") shouldBe
       """This super simple tool allows developers to access a cardano wallet backend from the command line
         |
         |Usage:
         |export CMDLINE='java -jar psg-cardano-wallet-api-assembly-<VER>.jar'
-        |$CMDLINE [command] [arguments]
+        |$CMDLINE <command> <arguments>
         |
-        |Optional commands:
-        |-trace [filename] [command]
-        | write logs into a defined file ( default file name: cardano-api.log )
-        |
-        | Examples:
-        | $CMDLINE -trace wallets.log -wallets
-        |
-        |-baseUrl [url] [command]
-        | define different api url ( default : http://127.0.0.1:8090/v2/ )
-        |
-        | Examples:
-        | $CMDLINE -baseUrl http://cardano-wallet-testnet.mydomain:8090/v2/ -wallets
-        |
-        |-noConsole [command]
-        | run a command without any logging
-        |
-        | Examples:
-        | $CMDLINE -noConsole -deleteWallet -walletId 1234567890123456789012345678901234567890
-        |
+        |Optional:
+        |-baseUrl <url> <command>
+        |-trace <filename> <command>
+        |-noConsole <command>
         |Commands:
         |-netInfo
-        | Show network information
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation ]
-        |
-        | Examples:
-        | $CMDLINE -netInfo
-        |
         |-wallets
-        | Return a list of known wallets, ordered from oldest to newest
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets ]
-        |
-        | Examples:
-        | $CMDLINE -wallets
-        |
-        |-estimateFee -walletId [walletId] -amount [amount] -address [address]
-        | Estimate fee for the transaction
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee ]
-        |
-        | Examples:
-        | $CMDLINE -estimateFee -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
-        |
-        |-wallet -walletId [walletId]
-        | Get wallet by id
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet ]
-        |
-        | Examples:
-        | $CMDLINE -wallet -walletId 1234567890123456789012345678901234567890
-        |
-        |-updatePassphrase -walletId [walletId] -oldPassphrase [oldPassphrase] -passphrase [newPassphrase]
-        | Update passphrase
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase ]
-        |
-        | Examples:
-        | $CMDLINE -updatePassphrase -walletId 1234567890123456789012345678901234567890 -oldPassphrase OldPassword12345! -passphrase NewPassword12345!]
-        |
-        |-deleteWallet -walletId [walletId]
-        | Delete wallet by id
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet ]
-        |
-        | Examples:
-        | $CMDLINE -deleteWallet -walletId 1234567890123456789012345678901234567890
-        |
-        |-listAddresses -walletId [walletId] -state [state]
-        | Return a list of known addresses, ordered from newest to oldest, state: used, unused
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listAddresses ]
-        |
-        | Examples:
-        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state used
-        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state unused
-        |
-        |-getTx -walletId [walletId] -txId [txId]
-        | Get transaction by id
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction ]
-        |
-        | Examples:
-        | $CMDLINE -getTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890
-        |
-        |-createTx -walletId [walletId] -amount [amount] -address [address] -passphrase [passphrase] -metadata [metadata](optional)
-        | Create and send transaction from the wallet
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction ]
-        |
-        | Examples:
-        | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345!
-        | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345! -metadata 0:0123456789012345678901234567890123456789012345678901234567890123:2:TESTINGCARDANOAPI
-        |
-        |-fundTx -walletId [walletId] -amount [amount] -address [address]
-        | Select coins to cover the given set of payments
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/selectCoins ]
-        |
-        | Examples:
-        | $CMDLINE -fundTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
-        |
-        |-listTxs -walletId [walletId] -start [start_date](optional) -end [end_date](optional) -order [order](optional) -minWithdrawal [minWithdrawal](optional)
-        | Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions ]
-        |
-        | Examples:
-        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890
-        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00
-        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00 -end 2020-09-30T12:00:00+01:00
-        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -order ascending
-        | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -minWithdrawal 1
-        |
-        |-createWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
-        |
-        | Examples:
-        | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
-        | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
-        |
-        |-restoreWallet -name [walletName] -passphrase [passphrase] -mnemonic [mnemonic] -addressPoolGap [address_pool_gap](optional)
-        | Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
-        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
-        |
-        | Examples:
-        | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad''
-        | $CMDLINE -restoreWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
-        |""".stripMargin
+        |-deleteWallet -walletId <walletId>
+        |-wallet -walletId <walletId>
+        |-createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+        |-restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+        |-estimateFee -walletId <walletId> -amount <amount> -address <address>
+        |-updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
+        |-listAddresses -walletId <walletId> -state <state>
+        |-listTxs -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
+        |-createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
+        |-fundTx -walletId <walletId> -amount <amount> -address <address>
+        |-getTx -walletId <walletId> -txId <txId>""".stripMargin
+  }
+
+  it should "show -baseUrl help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.baseUrl)
+
+    results.mkString("\n").stripMargin.trim shouldBe """ define different api url ( default : http://127.0.0.1:8090/v2/ )
+                                                       |
+                                                       | Arguments: <url> <command>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -baseUrl http://cardano-wallet-testnet.mydomain:8090/v2/ -wallets""".stripMargin.trim
+  }
+
+  it should "show -trace help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.traceToFile)
+    results.mkString("\n").stripMargin.trim shouldBe """ write logs into a defined file ( default file name: cardano-api.log )
+                                                       |
+                                                       | Arguments: <filename> <command>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -trace wallets.log -wallets""".stripMargin.trim
+  }
+
+  it should "show -noConsole help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.noConsole)
+    results.mkString("\n").stripMargin.trim shouldBe """ run a command without any logging
+                                                       |
+                                                       | Arguments: <command>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -noConsole -deleteWallet -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show -netInfo help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.netInfo)
+    results.mkString("\n").stripMargin.trim shouldBe """ Show network information
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation ]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -netInfo""".stripMargin.trim
+  }
+
+  it should "show listWallets help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.listWallets)
+    results.mkString("\n").stripMargin.trim shouldBe """ Return a list of known wallets, ordered from oldest to newest
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets ]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -wallets""".stripMargin.trim
+  }
+
+  it should "show deleteWallet help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.deleteWallet)
+    results.mkString("\n").stripMargin.trim shouldBe """ Delete wallet by id
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet ]
+                                                       |
+                                                       | Arguments: -walletId <walletId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -deleteWallet -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show getWallet help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.getWallet)
+    results.mkString("\n").stripMargin.trim shouldBe """ Get wallet by id
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet ]
+                                                       |
+                                                       | Arguments: -walletId <walletId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -wallet -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show createWallet help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.createWallet)
+    results.mkString("\n").stripMargin.trim shouldBe """ Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+                                                       |
+                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
+                                                       | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
+                                                       |""".stripMargin.trim
+  }
+
+  it should "show restoreWallet help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.restoreWallet)
+    results.mkString("\n").stripMargin.trim shouldBe """ Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+                                                       |
+                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-addressPoolGap <mnemonicaddress_pool_gap>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad''
+                                                       | $CMDLINE -restoreWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
+                                                       |""".stripMargin.trim
+  }
+
+  it should "show estimateFee help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.estimateFee)
+    results.mkString("\n").stripMargin.trim shouldBe """ Estimate fee for the transaction
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -amount <amount> -address <address>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -estimateFee -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
+                                                       |""".stripMargin.trim
+  }
+
+  it should "show updatePassphrase help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.updatePassphrase)
+    results.mkString("\n").stripMargin.trim shouldBe """ Update passphrase
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -updatePassphrase -walletId 1234567890123456789012345678901234567890 -oldPassphrase OldPassword12345! -passphrase NewPassword12345!""".stripMargin.trim
+  }
+
+  it should "show listWalletAddresses help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.listWalletAddresses)
+    results.mkString("\n").stripMargin.trim shouldBe """ Return a list of known addresses, ordered from newest to oldest, state: used, unused
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listAddresses ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -state <state>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state used
+                                                       | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state unused""".stripMargin.trim
+  }
+
+  it should "show listWalletTransactions help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.listWalletTransactions)
+    results.mkString("\n").stripMargin.trim shouldBe """ Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890
+                                                       | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00
+                                                       | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -start 2020-01-02T10:15:30+01:00 -end 2020-09-30T12:00:00+01:00
+                                                       | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -order ascending
+                                                       | $CMDLINE -listTxs -walletId 1234567890123456789012345678901234567890 -minWithdrawal 1""".stripMargin.trim
+  }
+
+  it should "show createTx help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.createTx)
+    results.mkString("\n").stripMargin.trim shouldBe """ Create and send transaction from the wallet
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345!
+                                                       | $CMDLINE -createTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890 -passphrase Password12345! -metadata 0:0123456789012345678901234567890123456789012345678901234567890123:2:TESTINGCARDANOAPI
+                                                       |""".stripMargin.trim
+  }
+
+  it should "show fundTx help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.fundTx)
+    results.mkString("\n").stripMargin.trim shouldBe """ Select coins to cover the given set of payments
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/selectCoins ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -amount <amount> -address <address>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -fundTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
+                                                       | """.stripMargin.trim
+  }
+
+  it should "show getTx help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.getTx)
+    results.mkString("\n").stripMargin.trim shouldBe """ Get transaction by id
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -txId <txId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -getTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)
