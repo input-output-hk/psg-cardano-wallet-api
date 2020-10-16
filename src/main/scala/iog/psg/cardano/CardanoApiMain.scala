@@ -104,7 +104,7 @@ object CardanoApiMain {
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
-          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(resp => trace(resp)))
+          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
