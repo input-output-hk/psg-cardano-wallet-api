@@ -75,6 +75,17 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
 
+  private[cardano] implicit val decodeQuantityUnit: Decoder[QuantityUnit] = (c: HCursor) => {
+    for {
+      quantityDC <- c.downField("quantity").as[BigDecimal]
+      quantity <-  Try(quantityDC.toLong).toEither.left.map(_ => DecodingFailure("quantity", c.history))
+      unitsStr <- c.downField("unit").as[String]
+      units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+    } yield {
+      QuantityUnit(quantity, units)
+    }
+  }
+
   sealed trait MetadataValue
 
   sealed trait MetadataKey extends MetadataValue

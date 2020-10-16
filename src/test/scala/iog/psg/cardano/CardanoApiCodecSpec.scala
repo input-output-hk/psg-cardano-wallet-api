@@ -1,6 +1,7 @@
 package iog.psg.cardano
 
-import io.circe.syntax.EncoderOps
+import io.circe.jawn.decode
+import io.circe.syntax._
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.DummyModel
 import org.scalatest.flatspec.AnyFlatSpec
@@ -73,6 +74,11 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
     )
 
     b.asJson.noSpaces shouldBe """{"slot_number":1,"epoch_number":2,"height":{"quantity":42000000,"unit":"lovelace"}}"""
+  }
+
+  "Quantity" should "be decoded to Long" in {
+    val decodedQU = decode[QuantityUnit]("""{"quantity":123.45,"unit":"lovelace"}""")
+    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123
   }
 
 }
