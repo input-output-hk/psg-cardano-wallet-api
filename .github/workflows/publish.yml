@@ -12,10 +12,12 @@ jobs:
       - name: Load Variables
         id: load_envvars
         run: |
-            echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
-            echo "GPG_SIGNING_KEY=${{ secrets.GPG_SIGNING_KEY }}" >> $GITHUB_ENV
-            echo "SONA_USER=${{ secrets.SONA_USER }}" >> $GITHUB_ENV
-            echo "SONA_PASS=${{ secrets.SONA_PASS }}" >> $GITHUB_ENV
+            echo 'GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}' >> $GITHUB_ENV
+            echo 'GPG_SIGNING_KEY<<EOF' >> $GITHUB_ENV
+            echo '${{ secrets.GPG_SIGNING_KEY }}' >> $GITHUB_ENV
+            echo 'EOF' >> $GITHUB_ENV
+            echo 'SONA_USER=${{ secrets.SONA_USER }}' >> $GITHUB_ENV
+            echo 'SONA_PASS=${{ secrets.SONA_PASS }}' >> $GITHUB_ENV
       - name: Configure GPG Key
         run: |
             mkdir -p ~/.gnupg/
