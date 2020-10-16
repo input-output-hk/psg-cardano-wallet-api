@@ -45,7 +45,7 @@ object NoOpTrace extends Trace {
 }
 
 object ConsoleTrace extends Trace {
-  override def apply(s: String): Unit = println(s: String)
+  override def apply(s: String): Unit = println(s)
   override def close(): Unit = ()
 }
 
