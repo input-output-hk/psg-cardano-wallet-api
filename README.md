@@ -67,7 +67,7 @@ Alternatively, for 'tire kicking' purposes you may try  `http://cardano-wallet-t
 
 Add the library to your dependencies 
 
-`libraryDependencies += "solutions.iog" %% "psg-cardano-wallet-api" % "0.2.0"`
+`libraryDependencies += "solutions.iog" %% "psg-cardano-wallet-api" % "0.2.2"`
 
 The api calls return a HttpRequest set up to the correct url and a mapper to take the entity result and 
 map it from Json to the corresponding case classes. Using `networkInfo` as an example...
