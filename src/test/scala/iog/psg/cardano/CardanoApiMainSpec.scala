@@ -3,6 +3,7 @@ package iog.psg.cardano
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import CardanoApiCodec.NetworkInfo
+import io.circe.Encoder
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.util.{ArgumentParser, DummyModel, ModelCompare, Trace}
 import org.scalatest.flatspec.AnyFlatSpec

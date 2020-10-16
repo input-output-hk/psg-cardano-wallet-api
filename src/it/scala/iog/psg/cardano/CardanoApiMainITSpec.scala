@@ -3,6 +3,9 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import io.circe.Encoder
+import io.circe.generic.auto._
+import io.circe.parser.{decode, _}
 import iog.psg.cardano.CardanoApiCodec.WalletAddressId
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.TestWalletsConfig.baseUrl
@@ -12,10 +15,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import io.circe.parser.decode
-import io.circe.generic.auto._
-import io.circe.parser._
 
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
@@ -42,7 +41,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
-      override def apply(s: String): Unit = results = s +: results
+      override implicit def s2Str[A](s: A)(implicit enc: Encoder[A]): String = {
+        import io.circe.syntax._
+        s.asJson.noSpaces
+      }
+      override def apply(s: String): Unit = results = (s: String) +: results
       override def close(): Unit = ()
     }
 
@@ -171,7 +174,10 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.name, testWalletName,
       CmdLine.mnemonic, testWalletMnemonic)
 
-    assert(cmdLineResults.exists(_.contains(s""""id" : "$testWalletId"""")))
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val id = jsonResponse.\\("id").headOption.flatMap(_.asString).getOrElse(fail("Missing id field"))
+
+    id shouldBe testWalletId
   }
 
   "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in new TestWalletFixture(walletNum = 1){
@@ -180,8 +186,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.state, "unused",
       CmdLine.walletId, testWalletId)
 
-    assert(cmdLineResults.exists(_.contains(""""state" : "unused"""")))
-    assert(cmdLineResults.exists(!_.contains(""""state" : "used"""")))
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val states = jsonResponse.\\("state").flatMap(_.asString)
+
+    assert(states.contains("unused"))
+    assert(!states.contains("used"))
   }
 
   it should "list used wallet addresses" in new TestWalletFixture(walletNum = 1){
@@ -190,8 +199,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.state, "used",
       CmdLine.walletId, testWalletId)
 
-    assert(cmdLineResults.exists(!_.contains(""""state" : "unused"""")))
-    assert(cmdLineResults.exists(_.contains(""""state" : "used"""")))
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val states = jsonResponse.\\("state").flatMap(_.asString)
+
+    assert(!states.contains("unused"))
+    assert(states.contains("used"))
   }
 
   "The Cmd Line -fundTx" should "fund payments" in new TestWalletFixture(walletNum = 1){

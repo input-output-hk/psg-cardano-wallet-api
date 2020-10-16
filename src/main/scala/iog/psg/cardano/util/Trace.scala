@@ -11,19 +11,15 @@ trait Trace extends AutoCloseable {
 
   parent =>
 
+  implicit def s2Str[A](s: A)(implicit enc: Encoder[A]): String = s.asJson.spaces2
   def apply(s: String): Unit
-  def apply[A](s: A)(implicit enc: Encoder[A]): Unit = apply(s.asJson.spaces2)
 
   def withTrace(other: Trace): Trace = other match {
     case NoOpTrace => this
     case _ =>
       new Trace {
-        override def apply(s: String): Unit = {
-          parent.apply(s)
-          other.apply(s)
-        }
 
-        override def apply[A](s: A)(implicit enc: Encoder[A]): Unit = {
+        override def apply(s: String): Unit = {
           parent.apply(s)
           other.apply(s)
         }
@@ -43,14 +39,13 @@ trait Trace extends AutoCloseable {
 
 object NoOpTrace extends Trace {
   override def apply(s: String): Unit = ()
-  override def apply[A](s: A)(implicit enc: Encoder[A]): Unit = ()
   override def close(): Unit = ()
 
   override def withTrace(other: Trace): Trace = other
 }
 
 object ConsoleTrace extends Trace {
-  override def apply(s: String): Unit = println(s)
+  override def apply(s: String): Unit = println(s: String)
   override def close(): Unit = ()
 }
 
