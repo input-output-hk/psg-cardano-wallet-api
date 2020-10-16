@@ -174,7 +174,7 @@ object CardanoApiMain {
             endDate,
             orderOf,
             minWithdrawal = minWithdrawalTx
-          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(resp => trace(resp)))
+          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(trace(_)))
 
         } else if (hasArgument(CmdLine.createWallet) || hasArgument(CmdLine.restoreWallet)) {
           val name = arguments.get(CmdLine.name)
