@@ -101,7 +101,7 @@ First, add the library to your dependencies,
 <dependency>
   <groupId>solutions.iog</groupId>
   <artifactId>psg-cardano-wallet-api_2.13</artifactId>
-  <version>0.2.0</version>
+  <version>0.2.2</version>
 </dependency>
 ```
 
