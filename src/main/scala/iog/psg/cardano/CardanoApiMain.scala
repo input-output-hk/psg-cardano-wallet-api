@@ -91,7 +91,7 @@ object CardanoApiMain {
 
       implicit val system: ActorSystem = ActorSystem("SingleRequest")
       import system.dispatcher
-      import trace.s2Str
+      import trace._
 
       Try {
 

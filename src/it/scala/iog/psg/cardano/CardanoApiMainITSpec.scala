@@ -41,10 +41,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
-      override implicit def s2Str[A](s: A)(implicit enc: Encoder[A]): String = {
-        import io.circe.syntax._
-        s.asJson.noSpaces
-      }
       override def apply(s: String): Unit = results = (s: String) +: results
       override def close(): Unit = ()
     }

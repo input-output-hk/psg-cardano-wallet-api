@@ -7,12 +7,10 @@ import io.circe.Encoder
 import scala.util.Try
 import io.circe.syntax._
 
-trait Trace extends AutoCloseable {
+trait Trace extends AutoCloseable { parent =>
 
-  parent =>
-
-  implicit def s2Str[A](s: A)(implicit enc: Encoder[A]): String = s.asJson.spaces2
   def apply(s: String): Unit
+  def apply[A](s: A)(implicit enc: Encoder[A]): Unit = apply(s.asJson.spaces2)
 
   def withTrace(other: Trace): Trace = other match {
     case NoOpTrace => this
