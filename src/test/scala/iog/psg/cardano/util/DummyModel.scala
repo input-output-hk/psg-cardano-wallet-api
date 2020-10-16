@@ -1,6 +1,7 @@
 package iog.psg.cardano.util
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import io.circe.parser.parse
 import iog.psg.cardano.CardanoApiCodec._
@@ -8,6 +9,13 @@ import iog.psg.cardano.TxMetadataOut
 import org.scalatest.Assertions
 
 trait DummyModel { self: Assertions =>
+
+  final val randomWalletName = UUID.randomUUID().toString
+  final val oldPassword = "old_password"
+  final val newPassword = "new_password"
+  final val walletPassphrase = UUID.randomUUID().toString
+  protected val withdrawal = "500"
+  final val addressPoolGap = 500
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 
@@ -34,6 +42,13 @@ trait DummyModel { self: Assertions =>
     )
   )
 
+  final lazy val metadataMap = Map(
+    0L -> MetadataValueStr("0" * 64),
+    1L -> MetadataValueStr("1" * 64)
+  )
+
+  final lazy val txMetadata = TxMetadataMapIn(metadataMap)
+
   final lazy val txMetadataOut = TxMetadataOut(json = parse("""
                                                          |{
                                                          |      "0": {
@@ -51,7 +66,7 @@ trait DummyModel { self: Assertions =>
                                                          |            "int": 14
                                                          |          },
                                                          |          {
-                                                         |            "int": 42
+                                                         |            "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
                                                          |          },
                                                          |          {
                                                          |            "string": "1337"
@@ -65,7 +80,7 @@ trait DummyModel { self: Assertions =>
                                                          |              "string": "key"
                                                          |            },
                                                          |            "v": {
-                                                         |              "string": "value"
+                                                         |              "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
                                                          |            }
                                                          |          },
                                                          |          {
@@ -81,29 +96,20 @@ trait DummyModel { self: Assertions =>
                                                          |    }
                                                          |""".stripMargin).getOrElse(fail("Invalid metadata json")))
 
-  final lazy val createdTransactionResponse = {
-    val commonAmount = QuantityUnit(quantity = 42000000, unit = Units.lovelace)
+  final lazy val firstTransactionId = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
 
-    CreateTransactionResponse(
-      id = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1",
-      amount = commonAmount,
-      insertedAt = Some(timedBlock),
-      pendingSince = Some(timedBlock),
-      depth = Some(QuantityUnit(quantity = 1337, unit = Units.block)),
-      direction = TxDirection.outgoing,
-      inputs = Seq(inAddress),
-      outputs = Seq(outAddress),
-      withdrawals = Seq(
-        StakeAddress(
-          stakeAddress = "stake1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2x",
-          amount = commonAmount
-        )
-      ),
-      status = TxState.pending,
-      metadata = Some(txMetadataOut)
-    )
-  }
+  //Year: 2000
+  final lazy val oldTransactionsIdsAsc = Seq(
+    firstTransactionId,
+    "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
+  )
 
+  //Year: 2020
+  final lazy val newTransactionsIds = Seq(
+    "2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
+  )
+
+  final lazy val transactionsIdsDesc = (oldTransactionsIdsAsc ++ newTransactionsIds).sortWith(_ > _)
 
   final val addresses = Seq(
     WalletAddressId(
@@ -174,6 +180,7 @@ trait DummyModel { self: Assertions =>
   )
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
+  final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")
 
   final lazy val payments = Payments(Seq(Payment(unUsedAddresses.head.id, QuantityUnit(100000, Units.lovelace))))
 

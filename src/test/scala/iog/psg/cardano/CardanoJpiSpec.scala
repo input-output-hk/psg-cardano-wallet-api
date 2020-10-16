@@ -1,10 +1,12 @@
 package iog.psg.cardano
 
+import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{ AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder }
-import iog.psg.cardano.util.{ Configure, DummyModel, InMemoryCardanoApi, JsonFiles, ModelCompare }
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.util._
+import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +15,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 class CardanoJpiSpec
-    extends AnyFlatSpec
+  extends AnyFlatSpec
     with Matchers
     with Configure
     with ModelCompare
@@ -48,11 +50,31 @@ class CardanoJpiSpec
     api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
   }
 
-  "POST /wallets" should "" in {
+  "POST /wallets" should "create a wallet, using all params" in {
     api
-      .createRestore(wallet.name, "Pass9128!", mnemonicSentence.mnemonicSentence.toList.asJava, 5)
+      .createRestore(
+        randomWalletName,
+        walletPassphrase,
+        mnemonicSentence.mnemonicSentence.toList.asJava,
+        mnemonicSecondFactor.mnemonicSentence.toList.asJava,
+        addressPoolGap
+      )
       .toCompletableFuture
-      .get() shouldBe wallet
+      .get() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
+  }
+
+  it should "create a wallet, without using mnemonicSecondFactor param" in new CustomInMemoryFixture {
+    override val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "address_pool_gap")
+
+    customApi
+      .createRestore(
+        randomWalletName,
+        walletPassphrase,
+        mnemonicSentence.mnemonicSentence.toList.asJava,
+        addressPoolGap
+      )
+      .toCompletableFuture
+      .get() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
   }
 
   "GET /wallets/{walletId}/addresses?state=unused" should "return wallet's unused addresses" in {
@@ -65,15 +87,20 @@ class CardanoJpiSpec
     ids shouldBe usedAddresses.map(_.id)
   }
 
+  it should "return wallet's used + unused addresses" in {
+    val ids = api.listAddresses(wallet.id).toCompletableFuture.get().asScala.toList.map(_.id)
+    ids shouldBe addresses.map(_.id)
+  }
+
   it should "return wallet not found error" in {
     tryGetErrorMessage(api.listAddresses("invalid_wallet_id", AddressFilter.USED)) shouldBe walletNotFoundError
   }
 
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val builder = ListTransactionsParamBuilder.create(wallet.id)
-    api.listTransactions(builder).toCompletableFuture.get().asScala.map(_.id) shouldBe Seq(
-      createdTransactionResponse.id
-    )
+    val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
+
+    transactions.map(_.id) shouldBe transactionsIdsDesc
   }
 
   it should "return not found error" in {
@@ -81,12 +108,24 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.listTransactions(builder)) shouldBe walletNotFoundError
   }
 
+  it should "run request with proper params" in {
+    val builder = ListTransactionsParamBuilder
+      .create(wallet.id)
+      .withStartTime(ZonedDateTime.parse("2000-01-01T00:00:00.000Z"))
+      .withEndTime(ZonedDateTime.parse("2001-01-01T00:00:00.000Z"))
+      .withOrder(iog.psg.cardano.jpi.Order.ASCENDING)
+      .withMinwithdrawal(100)
+
+    val transactions = api.listTransactions(builder).toCompletableFuture.get().asScala
+    transactions.map(_.id) shouldBe oldTransactionsIdsAsc
+  }
+
   "GET /wallets/{walletId}/transactions/{transactionId}" should "return transaction" in {
     api
-      .getTransaction(wallet.id, createdTransactionResponse.id)
+      .getTransaction(wallet.id, firstTransactionId)
       .toCompletableFuture
       .get()
-      .id shouldBe createdTransactionResponse.id
+      .id shouldBe firstTransactionId
   }
 
   it should "return not found error" in {
@@ -97,10 +136,21 @@ class CardanoJpiSpec
 
   "POST /wallets/{walletId}/transactions" should "create transaction" in {
     api
-      .createTransaction(wallet.id, "MySecret", payments.payments.asJava)
+      .createTransaction(wallet.id, walletPassphrase, payments.payments.asJava, txMetadata, withdrawal)
       .toCompletableFuture
       .get()
-      .id shouldBe createdTransactionResponse.id
+      .id shouldBe firstTransactionId
+  }
+
+  it should "create transaction without metadata and with default withdrawal" in new CustomInMemoryFixture {
+    override val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "withdrawal")
+    override val withdrawal: String = "self"
+
+    customApi
+      .createTransaction(wallet.id, walletPassphrase, payments.payments.asJava)
+      .toCompletableFuture
+      .get()
+      .id shouldBe firstTransactionId
   }
 
   it should "return not found" in {
@@ -110,7 +160,14 @@ class CardanoJpiSpec
   }
 
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
-    api.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
+    api.estimateFee(wallet.id, payments.payments.asJava, withdrawal, txMetadata).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  it should "estimate fee without metadata and with default withdrawal" in new CustomInMemoryFixture {
+    override val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal")
+    override val withdrawal: String = "self"
+
+    customApi.estimateFee(wallet.id, payments.payments.asJava).toCompletableFuture.get() shouldBe estimateFeeResponse
   }
 
   it should "return not found" in {
@@ -126,12 +183,12 @@ class CardanoJpiSpec
   }
 
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
-    api.updatePassphrase(wallet.id, "old_password", "new_password").toCompletableFuture.get() shouldBe null
+    api.updatePassphrase(wallet.id, oldPassword, newPassword).toCompletableFuture.get() shouldBe null
   }
 
   it should "return not found" in {
     tryGetErrorMessage(
-      api.updatePassphrase("invalid_wallet_id", "old_password", "new_password")
+      api.updatePassphrase("invalid_wallet_id", oldPassword, newPassword)
     ) shouldBe walletNotFoundError
   }
 
@@ -144,5 +201,17 @@ class CardanoJpiSpec
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
+
+  private def getCurrentSpecAS: ActorSystem = as
+
+  sealed trait CustomInMemoryFixture extends Configure
+    with ModelCompare
+    with ScalaFutures
+    with InMemoryCardanoApi
+    with DummyModel
+    with JsonFiles {
+    override implicit val as: ActorSystem = getCurrentSpecAS
+    lazy val customApi: jpi.CardanoApi = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
+  }
 
 }
