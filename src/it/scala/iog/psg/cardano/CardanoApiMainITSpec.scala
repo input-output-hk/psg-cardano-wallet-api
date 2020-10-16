@@ -13,6 +13,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import io.circe.parser.decode
+import io.circe.generic.auto._
+import io.circe.parser._
+
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
@@ -458,9 +462,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   private def getUnusedAddressWallet1 = getUnusedAddress(TestWalletsConfig.walletsMap(1).id)
 
   private def getUnusedAddress(walletId: String): String = {
-    import io.circe.parser.decode
-    import io.circe.generic.auto._
-
     val cmdResults: Seq[String] = runCmdLine(
       CmdLine.listWalletAddresses,
       CmdLine.state, "unused",
@@ -470,7 +471,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   }
 
   private def extractTxId(toStringCreateTransactionResult: String): String = {
-    import io.circe.parser._
     val json = parse(toStringCreateTransactionResult).getOrElse(fail("Invalid json"))
     json.\\("id").head.asString.get
   }
