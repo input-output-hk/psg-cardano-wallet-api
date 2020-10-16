@@ -71,6 +71,9 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
 
   sealed trait MetadataValue
 
@@ -217,7 +220,7 @@ object CardanoApiCodec {
                           nextEpoch: NextEpoch
                         )
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateRestore(
                             name: String,
                             passphrase: String,
@@ -289,7 +292,7 @@ object CardanoApiCodec {
                                    outputs: Seq[OutAddress]
                                  )
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class Block(
                     slotNumber: Int,
                     epochNumber: Int,
@@ -310,7 +313,7 @@ object CardanoApiCodec {
                                   estimatedMax: QuantityUnit
                                 )
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateTransactionResponse(
                                         id: String,
                                         amount: QuantityUnit,
@@ -328,7 +331,7 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec
   final case class Passphrase(lastUpdatedAt: ZonedDateTime)
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class Wallet(
                      id: String,
                      addressPoolGap: Int,

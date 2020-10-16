@@ -3,6 +3,10 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import io.circe.Encoder
+import io.circe.generic.auto._
+import io.circe.parser.{decode, _}
+import iog.psg.cardano.CardanoApiCodec.WalletAddressId
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
@@ -37,7 +41,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     var results: Seq[String] = Seq.empty
     implicit val memTrace = new Trace {
-      override def apply(s: Object): Unit = results = s.toString +: results
+      override def apply(s: String): Unit = results = (s: String) +: results
       override def close(): Unit = ()
     }
 
@@ -80,8 +84,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.amount, testAmountToTransfer.get,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
-
-    assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
+    assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
   }
 
   it should "estimate transaction costs with metadata" in new TestWalletFixture(walletNum = 1){
@@ -94,7 +97,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.metadata, testMetadata.get,
       CmdLine.walletId, testWalletId)
 
-    assert(cmdLineResults.exists(_.contains("EstimateFeeResponse(QuantityUnit(")))
+    assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
   }
 
   "The Cmd Line -wallet [walletId]" should "get our wallet" in new TestWalletFixture(walletNum = 1){
@@ -167,7 +170,10 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.name, testWalletName,
       CmdLine.mnemonic, testWalletMnemonic)
 
-    assert(cmdLineResults.exists(_.contains(s"Wallet($testWalletId")))
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val id = jsonResponse.\\("id").headOption.flatMap(_.asString).getOrElse(fail("Missing id field"))
+
+    id shouldBe testWalletId
   }
 
   "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in new TestWalletFixture(walletNum = 1){
@@ -176,8 +182,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.state, "unused",
       CmdLine.walletId, testWalletId)
 
-    assert(cmdLineResults.exists(_.contains("Some(unused)")))
-    assert(cmdLineResults.exists(!_.contains("Some(used)")))
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val states = jsonResponse.\\("state").flatMap(_.asString)
+
+    assert(states.contains("unused"))
+    assert(!states.contains("used"))
   }
 
   it should "list used wallet addresses" in new TestWalletFixture(walletNum = 1){
@@ -186,8 +195,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.state, "used",
       CmdLine.walletId, testWalletId)
 
-    assert(cmdLineResults.exists(_.contains("Some(used)")))
-    cmdLineResults.count(_.contains("Some(unused)")) shouldBe 0
+    val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
+    val states = jsonResponse.\\("state").flatMap(_.asString)
+
+    assert(!states.contains("unused"))
+    assert(states.contains("used"))
   }
 
   "The Cmd Line -fundTx" should "fund payments" in new TestWalletFixture(walletNum = 1){
@@ -221,7 +233,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.getTx,
       CmdLine.txId, txId,
       CmdLine.walletId, testWalletId)
-
+    
     assert(resultsGetTx.last.contains(txId), "The getTx result didn't contain the id")
 
     val postTxTime = ZonedDateTime.now().plusMinutes(5)
@@ -458,23 +470,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   private def getUnusedAddressWallet1 = getUnusedAddress(TestWalletsConfig.walletsMap(1).id)
 
   private def getUnusedAddress(walletId: String): String = {
-    val results = runCmdLine(
+    val cmdResults: Seq[String] = runCmdLine(
       CmdLine.listWalletAddresses,
       CmdLine.state, "unused",
       CmdLine.walletId, walletId)
 
-    val all = results.last.split(",")
-    val cleanedUp = all.map(s => {
-      if (s.indexOf("addr") > 0)
-        Some(s.substring(s.indexOf("addr")))
-      else None
-    }) collect {
-      case Some(goodAddr) => goodAddr
-    }
-    cleanedUp.head
+    decode[Seq[WalletAddressId]](cmdResults.last).toOption.getOrElse(Nil).last.id
   }
 
-  private def extractTxId(toStringCreateTransactionResult: String): String =
-    toStringCreateTransactionResult.split(",").head.stripPrefix("CreateTransactionResponse(")
+  private def extractTxId(toStringCreateTransactionResult: String): String = {
+    val json = parse(toStringCreateTransactionResult).getOrElse(fail("Invalid json"))
+    json.\\("id").headOption.flatMap(_.asString).getOrElse(fail(s"Could not parse id from json: ${toStringCreateTransactionResult}"))
+  }
 
 }

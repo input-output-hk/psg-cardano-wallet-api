@@ -7,6 +7,7 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
 import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import io.circe.Encoder
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
 
@@ -76,7 +77,6 @@ object CardanoApiMain {
     run(arguments)
   }
 
-
   private[cardano] def run(arguments: ArgumentParser)(implicit trace: Trace, apiRequestExecutor: ApiRequestExecutor): Unit = {
 
     if (arguments.noArgs || arguments.contains(CmdLine.help)) {
@@ -103,7 +103,7 @@ object CardanoApiMain {
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
-          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace.apply))
+          unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -159,7 +159,7 @@ object CardanoApiMain {
           unwrap[CardanoApiCodec.FundPaymentsResponse](api.fundPayments(
             walletId,
             payments
-          ).executeBlocking, trace(_))
+          ).executeBlocking, r => trace(r.toString))
 
         } else if (hasArgument(CmdLine.listWalletTransactions)) {
           val walletId = arguments.get(CmdLine.walletId)
@@ -174,7 +174,7 @@ object CardanoApiMain {
             endDate,
             orderOf,
             minWithdrawal = minWithdrawalTx
-          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(trace.apply))
+          ).executeBlocking, r => if (r.isEmpty) trace("No txs returned") else r.foreach(trace(_)))
 
         } else if (hasArgument(CmdLine.createWallet) || hasArgument(CmdLine.restoreWallet)) {
           val name = arguments.get(CmdLine.name)
