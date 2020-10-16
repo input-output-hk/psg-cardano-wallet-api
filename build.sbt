@@ -23,7 +23,7 @@ lazy val rootProject = (project in file("."))
     licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
     description := "A java/scala wrapper for the cardano wallet backend API",
     usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F"),
-    isSnapshot := true,
+    isSnapshot := false,
     publishTo := Some {
       // publish to the sonatype repository
       val sonaUrl = "https://oss.sonatype.org/"
