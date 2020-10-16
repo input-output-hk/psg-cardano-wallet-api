@@ -71,7 +71,6 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeInAddress: Encoder[InAddress] = dropNulls(deriveConfiguredEncoder)
 
   sealed trait MetadataValue
 
@@ -285,7 +284,7 @@ object CardanoApiCodec {
                            amount: QuantityUnit
                          )
 
-  @ConfiguredJsonCodec(encodeOnly = true) case class FundPaymentsResponse(
+  case class FundPaymentsResponse(
                                    inputs: IndexedSeq[InAddress],
                                    outputs: Seq[OutAddress]
                                  )

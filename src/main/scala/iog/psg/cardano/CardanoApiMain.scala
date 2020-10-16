@@ -159,7 +159,7 @@ object CardanoApiMain {
           unwrap[CardanoApiCodec.FundPaymentsResponse](api.fundPayments(
             walletId,
             payments
-          ).executeBlocking, r => trace(r))
+          ).executeBlocking, r => trace(r.toString))
 
         } else if (hasArgument(CmdLine.listWalletTransactions)) {
           val walletId = arguments.get(CmdLine.walletId)
