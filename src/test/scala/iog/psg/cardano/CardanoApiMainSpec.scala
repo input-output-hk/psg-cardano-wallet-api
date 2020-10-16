@@ -18,7 +18,8 @@ class CardanoApiMainSpec extends AnyFlatSpec with Matchers with ModelCompare wit
     override val expectedRequestUrl: String = "http://127.0.0.1:8090/v2/network/information"
     override val response: CardanoApiResponse[NetworkInfo] = Right(networkInfo)
     override val args: Array[String] = Array(CmdLine.netInfo)
-    getTraceResults shouldBe "baseurl:http://127.0.0.1:8090/v2/, -netInfo, NetworkInfo(SyncStatus(ready,None),NetworkTip(14,1337,None,Some(8086)),NodeTip(QuantityUnit(1337,block),1337,14,Some(8086)),NextEpoch(2000-01-02T03:04:05Z,14))"
+
+    getTraceResults should include(""""status" : "ready"""")
   }
 
   it should "fail with exception during executing request" in new ApiRequestExecutorFixture[NetworkInfo] {

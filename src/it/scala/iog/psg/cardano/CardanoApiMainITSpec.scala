@@ -472,7 +472,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   private def extractTxId(toStringCreateTransactionResult: String): String = {
     val json = parse(toStringCreateTransactionResult).getOrElse(fail("Invalid json"))
-    json.\\("id").head.asString.get
+    json.\\("id").headOption.flatMap(_.asString).getOrElse(fail(s"Could not parse id from json: ${toStringCreateTransactionResult}"))
   }
 
 }
