@@ -73,24 +73,37 @@ The api calls return a HttpRequest set up to the correct url and a mapper to tak
 map it from Json to the corresponding case classes. Using `networkInfo` as an example...
 
 ```
-import iog.psg.cardano.CardanoApi.CardanoApiOps._
-import iog.psg.cardano.CardanoApi._
+import akka.actor.ActorSystem
+import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestOps}
+import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, defaultMaxWaitTime}
+import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
+import iog.psg.cardano.CardanoApiCodec.NetworkInfo
 
-implicit val as = ActorSystem("MyActorSystem")
-val baseUri = "http://localhost:8090/v2/"
-import as.dispatcher
+import scala.concurrent.Future
 
-val api = new CardanoApi(baseUri)
+object Main {
 
-val networkInfoF: Future[CardanoApiResponse[NetworkInfo]] =
-    api.networkInfo.toFuture.execute
+  def main(args: Array[String]): Unit = {
 
-val networkInfo: CardanoApiResponse[NetworkInfo] =
-    api.networkInfo.toFuture.executeBlocking
+    implicit val requestExecutor = ApiRequestExecutor
 
-networkInfo match {
-  case Left(ErrorMessage(message, code)) => //do something
-  case Right(netInfo: NetworkInfo) => // good! 
+    implicit val as = ActorSystem("MyActorSystem")
+    val baseUri = "http://localhost:8090/v2/"
+    import as.dispatcher
+
+    val api = new CardanoApi(baseUri)
+
+    val networkInfoF: Future[CardanoApiResponse[NetworkInfo]] =
+      api.networkInfo.execute
+
+    val networkInfo: CardanoApiResponse[NetworkInfo] =
+      api.networkInfo.executeBlocking
+
+    networkInfo match {
+      case Left(ErrorMessage(message, code)) => //do something
+      case Right(netInfo: NetworkInfo) => // good!
+    }
+  }
 }
 ```
  
