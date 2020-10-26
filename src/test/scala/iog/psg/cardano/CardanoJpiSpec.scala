@@ -4,9 +4,8 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
-import iog.psg.cardano.jpi.{AddressFilter, CardanoApiImpl, JpiResponseCheck, ListTransactionsParamBuilder}
+import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
-import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -211,7 +210,7 @@ class CardanoJpiSpec
     with DummyModel
     with JsonFiles {
     override implicit val as: ActorSystem = getCurrentSpecAS
-    lazy val customApi: CardanoApiImpl = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
+    lazy val customApi: jpi.CardanoApi = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
   }
 
 }

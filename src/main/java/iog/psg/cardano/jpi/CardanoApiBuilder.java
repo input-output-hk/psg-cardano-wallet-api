@@ -67,7 +67,7 @@ public class CardanoApiBuilder {
         } else {
             helpExecute = new HelpExecute(ec, actorSystem) {
                 @Override
-                public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApiImpl.CardanoApiRequest<T> request) throws CardanoApiException {
+                public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
                     return apiRequestExecutor.execute(request);
                 }
             };

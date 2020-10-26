@@ -25,10 +25,11 @@ object CardanoApi {
   def apply(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem): CardanoApi =
     new CardanoApiImpl(baseUriWithPort)
 
-  final case class ErrorMessage(message: String, code: String)
+  implicit val defaultMaxWaitTime: FiniteDuration = 15.seconds
 
   type CardanoApiResponse[T] = Either[ErrorMessage, T]
 
+  final case class ErrorMessage(message: String, code: String)
   final case class CardanoApiRequest[T](request: HttpRequest, mapper: HttpResponse => Future[CardanoApiResponse[T]])
 
   object Order extends Enumeration {
@@ -36,8 +37,6 @@ object CardanoApi {
     val ascendingOrder = Value("ascending")
     val descendingOrder = Value("descending")
   }
-
-  implicit val defaultMaxWaitTime: FiniteDuration = 15.seconds
 
   object CardanoApiOps {
 
