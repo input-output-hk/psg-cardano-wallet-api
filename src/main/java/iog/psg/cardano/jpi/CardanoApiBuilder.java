@@ -73,7 +73,7 @@ public class CardanoApiBuilder {
             };
         }
 
-        iog.psg.cardano.CardanoApiImpl api = new iog.psg.cardano.CardanoApiImpl(url, ec, actorSystem);
+        iog.psg.cardano.CardanoApi api = iog.psg.cardano.CardanoApi.apply(url, ec, actorSystem);
 
         return new CardanoApiImpl(api, helpExecute);
     }

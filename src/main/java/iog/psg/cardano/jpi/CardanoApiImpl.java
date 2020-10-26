@@ -13,7 +13,7 @@ import java.util.concurrent.CompletionStage;
 
 public class CardanoApiImpl implements CardanoApi {
 
-    private final iog.psg.cardano.CardanoApiImpl api;
+    private final iog.psg.cardano.CardanoApi api;
     private final HelpExecute helpExecute;
 
     private CardanoApiImpl() {
@@ -27,7 +27,7 @@ public class CardanoApiImpl implements CardanoApi {
      * @param api iog.psg.cardano.CardanoApi instance
      * @param helpExecute og.psg.cardano.jpi.HelpExecute instance
      */
-    public CardanoApiImpl(iog.psg.cardano.CardanoApiImpl api, HelpExecute helpExecute) {
+    public CardanoApiImpl(iog.psg.cardano.CardanoApi api, HelpExecute helpExecute) {
         this.helpExecute = helpExecute;
         this.api = api;
         Objects.requireNonNull(api, "Api cannot be null");
