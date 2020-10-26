@@ -48,7 +48,7 @@ public class CardanoApiBuilder {
         return this;
     }
 
-    public CardanoApi build() {
+    public CardanoApiImpl build() {
 
         if (actorSystem == null) {
             actorSystem = ActorSystem.create("CardanoJPIActorSystem");
@@ -75,7 +75,7 @@ public class CardanoApiBuilder {
 
         iog.psg.cardano.CardanoApiImpl api = new iog.psg.cardano.CardanoApiImpl(url, ec, actorSystem);
 
-        return new CardanoApi(api, helpExecute);
+        return new CardanoApiImpl(api, helpExecute);
     }
 
 }

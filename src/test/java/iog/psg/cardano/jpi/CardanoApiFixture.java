@@ -6,11 +6,11 @@ import java.util.Objects;
 
 public class CardanoApiFixture {
 
-    public CardanoApi getJpi() {
+    public CardanoApiImpl getJpi() {
         return jpi;
     }
 
-    private final CardanoApi jpi;
+    private final CardanoApiImpl jpi;
 
     private CardanoApiFixture() {
         jpi = null;

@@ -1,7 +1,7 @@
 package iog.psg.cardano;
 
 import akka.actor.ActorSystem;
-import iog.psg.cardano.jpi.CardanoApi;
+import iog.psg.cardano.jpi.CardanoApiImpl;
 import iog.psg.cardano.jpi.*;
 import scala.Enumeration;
 
@@ -22,7 +22,7 @@ public class TestMain {
                             .withActorSystem(as)
                             .withExecutorService(es);
 
-            CardanoApi api = builder.build();
+            CardanoApiImpl api = builder.build();
             String passphrase = "password10";
             String menmString = "receive post siren monkey mistake morning teach section mention rural idea say offer number ribbon toward rigid pluck begin ticket auto";
             List<String> menmLst = Arrays.asList(menmString.split(" "));
