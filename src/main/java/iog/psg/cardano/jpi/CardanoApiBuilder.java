@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 
 public class CardanoApiBuilder {
 
-    final private String url;
+    private final String url;
     private ExecutorService executorService;
     private ActorSystem actorSystem;
     private ApiRequestExecutor apiRequestExecutor;
@@ -48,7 +48,7 @@ public class CardanoApiBuilder {
         return this;
     }
 
-    public CardanoApiImpl build() {
+    public CardanoApi build() {
 
         if (actorSystem == null) {
             actorSystem = ActorSystem.create("CardanoJPIActorSystem");
@@ -62,7 +62,7 @@ public class CardanoApiBuilder {
 
         HelpExecute helpExecute;
 
-        if(apiRequestExecutor == null) {
+        if (apiRequestExecutor == null) {
             helpExecute = new HelpExecute(ec, actorSystem);
         } else {
             helpExecute = new HelpExecute(ec, actorSystem) {
