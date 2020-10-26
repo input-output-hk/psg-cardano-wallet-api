@@ -322,6 +322,21 @@ public class CardanoApi {
     }
 
     /**
+     * Update wallet's name
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet #putWallet]]
+     *
+     * @param walletId wallet's id
+     * @param name new wallet's name
+     * @return update wallet request
+     * @throws CardanoApiException
+     */
+    public CompletionStage<CardanoApiCodec.Wallet> updateName(
+            String walletId,
+            String name) throws CardanoApiException {
+        return helpExecute.execute(api.updateName(walletId, name));
+    }
+
+    /**
      * Gives network information
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation">#getNetworkInformation</a>
      *

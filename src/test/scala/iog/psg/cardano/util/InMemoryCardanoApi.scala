@@ -204,6 +204,13 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallet.json"))
 
+        case (s"wallets/${jsonFileWallet.id}", HttpMethods.PUT) =>
+          for {
+            json <- unmarshalJsonBody()
+            newName = json.\\("name").headOption.flatMap(_.asString).getOrElse("Error - missing name")
+            response <- jsonFileWallet.copy(name = newName).toJsonResponse()
+          } yield response
+
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
 

@@ -20,11 +20,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   override def afterAll(): Unit = {
     Seq(2, 3).map { num =>
-    val walletId = TestWalletsConfig.walletsMap(num).id
+      val walletId = TestWalletsConfig.walletsMap(num).id
       runCmdLine(
         CmdLine.deleteWallet,
-        CmdLine.walletId, walletId)
+        CmdLine.walletId, walletId
+      )
     }
+    val wallet1 = TestWalletsConfig.walletsMap(1)
+    runCmdLine(CmdLine.updateName,
+      CmdLine.walletId, wallet1.id,
+      CmdLine.name, wallet1.name
+    )
     super.afterAll()
   }
 
@@ -106,6 +112,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains(testWalletId)), "Test wallet not found.")
+  }
+
+  "The Cmd Line -updateName -wallet [walletId] -name [name]" should "update wallet's name" in new TestWalletFixture(walletNum = 1){
+    val newName = s"${testWalletName}_updated"
+    val cmdLineResults = runCmdLine(
+      CmdLine.updateName,
+      CmdLine.walletId, testWalletId,
+      CmdLine.name, newName
+    )
+
+    assert(cmdLineResults.exists(_.contains(newName)), "wallet's name not updated.")
   }
 
   "The Cmd Line -createWallet" should "create wallet 2" in new TestWalletFixture(walletNum = 2){

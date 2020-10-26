@@ -145,6 +145,17 @@ class CardanoApiSpec
     api.fundPayments("invalid_wallet_id", payments).executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "PUT /wallets/{walletId" should "update name" in {
+    val newName = s"${wallet.name}_updated"
+    api.updateName(wallet.id, newName).executeOrFail().name shouldBe newName
+  }
+
+  it should "return not found" in {
+    api
+      .updateName("invalid_wallet_id", "random_name")
+      .executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
   "PUT /wallets/{walletId/passphrase" should "update passphrase" in {
     api.updatePassphrase(wallet.id, oldPassword, newPassword).executeOrFail() shouldBe ()
   }

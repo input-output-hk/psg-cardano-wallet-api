@@ -67,9 +67,13 @@ public class JpiResponseCheck {
         return w.id().contentEquals(walletId);
     }
 
+    public String updateWalletName(String walletId, String name) throws CardanoApiException, ExecutionException, InterruptedException, TimeoutException {
+        CompletionStage<CardanoApiCodec.Wallet> walletCS = jpi.updateName(walletId, name);
+        return walletCS.thenApply(w -> w.name()).toCompletableFuture().get(timeout, timeoutUnit);
+    }
+
     public void passwordChange(String walletId, String passphrase, String newPassphrase) throws CardanoApiException, InterruptedException, ExecutionException, TimeoutException {
         jpi.updatePassphrase(walletId, passphrase, newPassphrase).toCompletableFuture().get(timeout, timeoutUnit);
-
     }
 
 

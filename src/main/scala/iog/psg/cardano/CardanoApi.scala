@@ -115,6 +115,28 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   )
 
   /**
+   * Update wallet's name
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet #putWallet]]
+   *
+   * @param walletId wallet's id
+   * @param name new wallet's name
+   * @return update wallet request
+   */
+  def updateName(walletId: String, name: String): Future[CardanoApiRequest[Wallet]] = {
+    val body = Map("name" -> name)
+    Marshal(body).to[RequestEntity].map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets/$walletId",
+          entity = marshalled,
+          method = PUT
+        ),
+        _.toWallet
+      )
+    }
+  }
+
+  /**
    * Gives network information
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation #getNetworkInformation]]
    *

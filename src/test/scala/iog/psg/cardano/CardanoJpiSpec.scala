@@ -192,6 +192,16 @@ class CardanoJpiSpec
     ) shouldBe walletNotFoundError
   }
 
+  "PUT /wallets/{walletId" should "update name" in {
+    val newName = s"${wallet.name}_updated"
+    api.updateName(wallet.id, newName).toCompletableFuture.get().name shouldBe newName
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api
+      .updateName("invalid_wallet_id", "random_name")) shouldBe walletNotFoundError
+  }
+
   "DELETE /wallets/{walletId" should "delete wallet" in {
     api.deleteWallet(wallet.id).toCompletableFuture.get() shouldBe null
   }

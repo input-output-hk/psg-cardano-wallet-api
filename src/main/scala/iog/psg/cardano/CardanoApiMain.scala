@@ -23,6 +23,7 @@ object CardanoApiMain {
     val netInfo = "-netInfo"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
+    val updateName = "-updateName"
     val deleteWallet = "-deleteWallet"
     val getWallet = "-wallet"
     val createWallet = "-createWallet"
@@ -121,6 +122,10 @@ object CardanoApiMain {
 
           unwrap[Unit](api.updatePassphrase(walletId, oldPassphrase, newPassphrase).executeBlocking, _ => trace("Unit result from update passphrase"))
 
+        } else if (hasArgument(CmdLine.updateName)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val name = arguments.get(CmdLine.name)
+          unwrap[CardanoApiCodec.Wallet](api.updateName(walletId, name).executeBlocking,trace(_))
         } else if (hasArgument(CmdLine.deleteWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[Unit](api.deleteWallet(walletId).executeBlocking, _ => trace("Unit result from delete wallet"))
