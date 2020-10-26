@@ -159,6 +159,14 @@ class CardanoJpiSpec
     ) shouldBe walletNotFoundError
   }
 
+  "DELETE /wallets/{walletId}/transactions" should "forget pending transaction" in {
+    api.deleteTransaction(wallet.id, firstTransactionId).toCompletableFuture.get() shouldBe null
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.deleteTransaction("invalid_wallet_id", firstTransactionId)) shouldBe walletNotFoundError
+  }
+
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments.payments.asJava, withdrawal, txMetadata).toCompletableFuture.get() shouldBe estimateFeeResponse
   }

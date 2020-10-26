@@ -375,6 +375,26 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   }
 
   /**
+   * Forget pending transaction
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction #deleteTransaction]]
+   *
+   * @param walletId wallet's id
+   * @param transactionId transaction's id
+   * @return forget pending transaction request
+   */
+  def deleteTransaction(walletId: String, transactionId: String): CardanoApiRequest[Unit] = {
+    val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = DELETE
+      ),
+      _.toUnit
+    )
+  }
+
+  /**
    * Update Passphrase
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase #putWalletPassphrase]]
    * @param walletId wallet's id

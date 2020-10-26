@@ -100,6 +100,10 @@ trait InMemoryCardanoApi {
       val method = request.request.method
       lazy val query = request.request.uri.query().toMap
 
+      def noContentResponse(): Future[CardanoApiResponse[T]] = {
+        request.mapper(HttpResponse(status = StatusCodes.NoContent))
+      }
+
       def notFound(msg: String): Future[CardanoApiResponse[T]] = {
         val json: String = ErrorMessage(msg, "404").asJson.noSpaces
         val entity = HttpEntity(json)
@@ -256,6 +260,9 @@ trait InMemoryCardanoApi {
             _        <- checkWithdrawalField(jsonBody)
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
+
+        case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.DELETE) =>
+          noContentResponse()
 
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           for {

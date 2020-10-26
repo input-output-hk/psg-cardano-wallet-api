@@ -177,6 +177,10 @@ public class CardanoApi {
                 api.getTransaction(walletId, transactionId));
     }
 
+    public CompletionStage<Void> deleteTransaction(String walletId, String transactionId) throws CardanoApiException {
+        return helpExecute.execute(api.deleteTransaction(walletId, transactionId)).thenApply(x -> null);
+    }
+
     /**
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
      * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which

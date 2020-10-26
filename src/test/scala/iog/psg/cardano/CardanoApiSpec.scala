@@ -129,6 +129,14 @@ class CardanoApiSpec
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "DELETE /wallets/{walletId}/transactions" should "forget pending transaction" in {
+    api.deleteTransaction(wallet.id, firstTransactionId).executeOrFail() shouldBe ()
+  }
+
+  it should "return not found" in {
+    api.deleteTransaction("invalid_wallet_id", firstTransactionId).executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments, Some(withdrawal), Some(txMetadata)).executeOrFail() shouldBe estimateFeeResponse
   }
@@ -145,7 +153,7 @@ class CardanoApiSpec
     api.fundPayments("invalid_wallet_id", payments).executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
-  "PUT /wallets/{walletId" should "update name" in {
+  "PUT /wallets/{walletId}" should "update name" in {
     val newName = s"${wallet.name}_updated"
     api.updateName(wallet.id, newName).executeOrFail().name shouldBe newName
   }
