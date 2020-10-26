@@ -112,8 +112,8 @@ public class JpiResponseCheck {
     public static CardanoApi buildWithPredefinedApiExecutor(iog.psg.cardano.ApiRequestExecutor executor, ActorSystem as) {
         CardanoApiBuilder builder = CardanoApiBuilder.create("http://fake:1234/").withApiExecutor(new ApiRequestExecutor() {
             @Override
-            public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
-                Future<Either<iog.psg.cardano.CardanoApi.ErrorMessage, T>> sResponse = executor.execute(request, as.dispatcher(), as);
+            public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApiImpl.CardanoApiRequest<T> request) throws CardanoApiException {
+                Future<Either<iog.psg.cardano.CardanoApiImpl.ErrorMessage, T>> sResponse = executor.execute(request, as.dispatcher(), as);
                 CompletionStage<T> jResponse = toJava(HelpExecute.unwrap(sResponse, as.dispatcher()));
                 return jResponse;
             }
@@ -125,7 +125,7 @@ public class JpiResponseCheck {
     public static CardanoApi buildWithDummyApiExecutor() {
         CardanoApiBuilder builder = CardanoApiBuilder.create("http://fake/").withApiExecutor(new ApiRequestExecutor() {
             @Override
-            public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
+            public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApiImpl.CardanoApiRequest<T> request) throws CardanoApiException {
                 CompletableFuture<T> result = new CompletableFuture<>();
 
                 if(request.request().uri().path().endsWith("wallets", true)) {

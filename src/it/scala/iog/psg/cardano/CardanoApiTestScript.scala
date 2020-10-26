@@ -45,7 +45,7 @@ object CardanoApiTestScript {
       println(s"Using wallet name '$walletNameFrom''")
 
       import system.dispatcher
-      val api = new CardanoApi(baseUri)
+      val api = new CardanoApiImpl(baseUri)
       implicit val apiRequestExecutor: ApiRequestExecutor = ApiRequestExecutor
 
       @tailrec

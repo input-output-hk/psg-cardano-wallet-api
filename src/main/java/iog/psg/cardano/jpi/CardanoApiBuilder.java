@@ -67,13 +67,13 @@ public class CardanoApiBuilder {
         } else {
             helpExecute = new HelpExecute(ec, actorSystem) {
                 @Override
-                public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApi.CardanoApiRequest<T> request) throws CardanoApiException {
+                public <T> CompletionStage<T> execute(iog.psg.cardano.CardanoApiImpl.CardanoApiRequest<T> request) throws CardanoApiException {
                     return apiRequestExecutor.execute(request);
                 }
             };
         }
 
-        iog.psg.cardano.CardanoApi api = new iog.psg.cardano.CardanoApi(url, ec, actorSystem);
+        iog.psg.cardano.CardanoApiImpl api = new iog.psg.cardano.CardanoApiImpl(url, ec, actorSystem);
 
         return new CardanoApi(api, helpExecute);
     }

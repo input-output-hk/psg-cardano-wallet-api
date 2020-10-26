@@ -98,7 +98,7 @@ object CardanoApiMain {
 
         trace(s"baseurl:$url")
 
-        val api = new CardanoApi(url)
+        val api = new CardanoApiImpl(url)
 
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
