@@ -184,6 +184,9 @@ trait InMemoryCardanoApi {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
 
+        case ("network/clock", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netclock.json"))
+
         case ("wallets", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallets.json"))
 

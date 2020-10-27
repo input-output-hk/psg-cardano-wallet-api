@@ -189,6 +189,11 @@ trait DummyModel { self: Assertions =>
     nextEpoch = NextEpoch(dummyDateTime, 14)
   )
 
+  final lazy val networkClock = NetworkClock(
+    status = "available",
+    offset = QuantityUnit(14, Units.microsecond)
+  )
+
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
   final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")
 

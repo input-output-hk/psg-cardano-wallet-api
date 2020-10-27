@@ -152,6 +152,20 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   )
 
   /**
+   * Gives network clock information
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock #getNetworkClock]]
+   *
+   * @return network clock info request
+   */
+  def networkClock: CardanoApiRequest[NetworkClock] = CardanoApiRequest(
+    HttpRequest(
+      uri = s"$network/clock",
+      method = GET
+    ),
+    _.toNetworkClockResponse
+  )
+
+  /**
    * Create and restore a wallet from a mnemonic sentence or account public key.
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
    *
@@ -464,6 +478,13 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     )
   }
 
+  /**
+   * Return the UTxOs distribution across the whole wallet, in the form of a histogram
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics #getUTxOsStatistics]]
+   *
+   * @param walletId wallet's id
+   * @return get UTxOs statistics request
+   */
   def getUTxOsStatistics(walletId: String): CardanoApiRequest[UTxOStatistics] = {
     val uri = Uri(s"$wallets/$walletId/statistics/utxos")
     CardanoApiRequest(

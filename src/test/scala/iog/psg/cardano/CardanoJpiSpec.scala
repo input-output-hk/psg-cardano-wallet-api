@@ -50,6 +50,10 @@ class CardanoJpiSpec
     api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
   }
 
+  "GET /network/clock" should "return network clock" in {
+    api.networkClock.toCompletableFuture.get() shouldBe networkClock
+  }
+
   "POST /wallets" should "create a wallet, using all params" in {
     api
       .createRestore(

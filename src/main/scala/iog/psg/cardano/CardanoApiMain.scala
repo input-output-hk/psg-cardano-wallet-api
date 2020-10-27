@@ -20,6 +20,7 @@ object CardanoApiMain {
     val traceToFile = "-trace"
     val noConsole = "-noConsole"
     val netInfo = "-netInfo"
+    val netClockInfo = "-netClockInfo"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
     val updateName = "-updateName"
@@ -105,6 +106,8 @@ object CardanoApiMain {
 
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.netClockInfo)) {
+          unwrap[CardanoApiCodec.NetworkClock](api.networkClock.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
           unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {
@@ -241,8 +244,8 @@ object CardanoApiMain {
       trace(s"\n $description\n$docsUrl\n$argumentsLine$examplesStr\n")
     }
 
-    //TODO UPDATE HELP
     val cmdLineNetInfo = s"${CmdLine.netInfo}"
+    val cmdLineNetClockInfo = s"${CmdLine.netClockInfo}"
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineGetWallet = s"${CmdLine.getWallet} ${CmdLine.walletId} <walletId>"
@@ -277,6 +280,7 @@ object CardanoApiMain {
 
       trace("\nCommands:\n")
       trace(" "+cmdLineNetInfo)
+      trace(" "+cmdLineNetClockInfo)
       trace(" "+cmdLineListWallets)
       trace(" "+cmdLineDeleteWallet)
       trace(" "+cmdLineGetWallet)
@@ -326,6 +330,15 @@ object CardanoApiMain {
             apiDocOperation = "getNetworkInformation",
             examples = List(
               s"${CmdLine.netInfo}"
+            )
+          )
+        case CmdLine.netClockInfo =>
+          beautifyTrace(
+            arguments = "",
+            description = "Show network clock information",
+            apiDocOperation = "getNetworkClock",
+            examples = List(
+              s"${CmdLine.netClockInfo}"
             )
           )
         case CmdLine.listWallets =>

@@ -41,6 +41,10 @@ class CardanoApiSpec
     api.networkInfo.executeOrFail() shouldBe networkInfo
   }
 
+  "GET /network/clock" should "return network clock" in {
+    api.networkClock.executeOrFail() shouldBe networkClock
+  }
+
   "POST /wallets" should "" in {
     api
       .createRestoreWallet(randomWalletName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))

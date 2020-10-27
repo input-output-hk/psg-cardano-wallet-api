@@ -62,6 +62,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
   }
 
+  "The Cmd line -netClockInfo" should "support retrieving netClockInfo" in {
+    val cmdLineResults = runCmdLine(CmdLine.netClockInfo)
+    assert(cmdLineResults.exists(_.contains("available")), s"Testnet API service not available - '$baseUrl' \n $cmdLineResults")
+  }
+
   "The Cmd Line -wallets" should "show our test wallet in the list" in new TestWalletFixture(walletNum = 1) {
 
     val cmdLineResults = runCmdLine(
@@ -300,6 +305,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |Commands:
         |
         | -netInfo
+        | -netClockInfo
         | -wallets
         | -deleteWallet -walletId <walletId>
         | -wallet -walletId <walletId>
@@ -356,6 +362,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -netInfo""".stripMargin.trim
+  }
+
+  it should "show -netClockInfo help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.netClockInfo)
+    results.mkString("\n").stripMargin.trim shouldBe """ Show network clock information
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock ]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -netClockInfo""".stripMargin.trim
   }
 
   it should "show listWallets help" in {

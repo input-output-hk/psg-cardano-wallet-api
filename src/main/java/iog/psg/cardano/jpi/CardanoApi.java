@@ -169,6 +169,7 @@ public class CardanoApi {
      * @param walletId wallet's id
      * @param transactionId transaction's id
      * @return get transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
             String walletId, String transactionId) throws CardanoApiException {
@@ -177,6 +178,15 @@ public class CardanoApi {
                 api.getTransaction(walletId, transactionId));
     }
 
+    /**
+     * Forget pending transaction
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction">#deleteTransaction</a>
+     *
+     * @param walletId wallet's id
+     * @param transactionId transaction's id
+     * @return forget pending transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
     public CompletionStage<Void> deleteTransaction(String walletId, String transactionId) throws CardanoApiException {
         return helpExecute.execute(api.deleteTransaction(walletId, transactionId)).thenApply(x -> null);
     }
@@ -190,6 +200,7 @@ public class CardanoApi {
      * @param walletId wallet's id
      * @param payments A list of target outputs ( address, amount )
      * @return estimatedfee response
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
@@ -262,6 +273,14 @@ public class CardanoApi {
                 api.listAddresses(walletId, option(addressFilterOpt))).thenApply(CollectionConverters::asJava);
     }
 
+    /**
+     * Give useful information about the structure of a given address.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/inspectAddress">#inspectAddress</a>
+     *
+     * @param addressId
+     * @return address inspect request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
     public CompletionStage<CardanoApiCodec.WalletAddress> inspectAddress(
             String addressId) throws CardanoApiException {
         return helpExecute.execute(api.inspectAddress(addressId));
@@ -332,7 +351,7 @@ public class CardanoApi {
 
     /**
      * Update wallet's name
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet #putWallet]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet">#putWallet</a>
      *
      * @param walletId wallet's id
      * @param name new wallet's name
@@ -356,6 +375,25 @@ public class CardanoApi {
         return helpExecute.execute(api.networkInfo());
     }
 
+    /**
+     * Gives network clock information
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock">#getNetworkClock</a>
+     *
+     * @return network clock info request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    public CompletionStage<CardanoApiCodec.NetworkClock> networkClock() throws CardanoApiException {
+        return helpExecute.execute(api.networkClock());
+    }
+
+    /**
+     * Return the UTxOs distribution across the whole wallet, in the form of a histogram
+     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics #getUTxOsStatistics]]
+     *
+     * @param walletId wallet's id
+     * @return get UTxOs statistics request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
     public CompletionStage<CardanoApiCodec.UTxOStatistics> getUTxOsStatistics(String walletId) throws CardanoApiException {
         return helpExecute.execute(api.getUTxOsStatistics(walletId));
     }
