@@ -356,6 +356,10 @@ public class CardanoApi {
         return helpExecute.execute(api.networkInfo());
     }
 
+    public CompletionStage<CardanoApiCodec.UTxOStatistics> getUTxOsStatistics(String walletId) throws CardanoApiException {
+        return helpExecute.execute(api.getUTxOsStatistics(walletId));
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }

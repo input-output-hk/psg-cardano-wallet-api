@@ -280,6 +280,9 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
 
+        case (s"wallets/${jsonFileWallet.id}/statistics/utxos", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("utxos.json"))
+
         case (r"wallets/.+/transactions/.+", HttpMethods.GET) => notFound("Transaction not found")
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
         case (s"addresses/${addressToInspect.id}", HttpMethods.GET) =>

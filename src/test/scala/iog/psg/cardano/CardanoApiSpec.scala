@@ -191,6 +191,14 @@ class CardanoApiSpec
     api.inspectAddress("invalid_address_id").executeExpectingErrorOrFail() shouldBe addressNotFoundError
   }
 
+  "GET /wallets/{walletId}/statistics/utxos" should "get UTxOs statistics" in {
+    api.getUTxOsStatistics(wallet.id).executeOrFail() shouldBe uTxOStatistics
+  }
+
+  it should "return not found" in {
+    api.getUTxOsStatistics("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

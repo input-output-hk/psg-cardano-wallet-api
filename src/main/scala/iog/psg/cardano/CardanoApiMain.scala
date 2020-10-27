@@ -5,9 +5,8 @@ import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
-import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
-import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units, Wallet, WalletAddress}
-import io.circe.Encoder
+import iog.psg.cardano.CardanoApi._
+import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
 
@@ -53,6 +52,7 @@ object CardanoApiMain {
     val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
+    val getUTxOsStatistics = "-getUTxO"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -205,6 +205,9 @@ object CardanoApiMain {
             addressPoolGap
           ).executeBlocking, trace(_))
 
+        } else if (hasArgument(CmdLine.getUTxOsStatistics)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          unwrap[UTxOStatistics](api.getUTxOsStatistics(walletId).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -255,6 +258,7 @@ object CardanoApiMain {
     val cmdLineListWalletTransactions = s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]"
     val cmdLineCreateWallet = s"${CmdLine.createWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineRestoreWallet = s"${CmdLine.restoreWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
+    val cmdLineGetUTxOsStatistics = s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} <walletId>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -288,6 +292,7 @@ object CardanoApiMain {
       trace(" "+cmdLineDeleteTx)
       trace(" "+cmdLineFundTx)
       trace(" "+cmdLineGetTx)
+      trace(" "+cmdLineGetUTxOsStatistics)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -466,6 +471,15 @@ object CardanoApiMain {
             apiDocOperation = "deleteTransaction",
             examples = List(
               s"${CmdLine.deleteTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
+            )
+          )
+        case CmdLine.getUTxOsStatistics =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId>",
+            description = "Return the UTxOs distribution across the whole wallet, in the form of a histogram",
+            apiDocOperation = "getUTxOsStatistics",
+            examples = List(
+              s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} $exampleWalletId"
             )
           )
         case cmd => trace(s"$cmd help not supported")

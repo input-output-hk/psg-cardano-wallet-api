@@ -3,7 +3,6 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.parser.{decode, _}
 import iog.psg.cardano.CardanoApiCodec.WalletAddressId
@@ -274,6 +273,14 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("Shelley")), "address_style")
   }
 
+  "The Cmd Lines -getUTxO" should "get UTxOs statistics" in new TestWalletFixture(walletNum = 1){
+    val results = runCmdLine(
+      CmdLine.getUTxOsStatistics,
+      CmdLine.walletId, testWalletId
+    )
+    assert(results.exists(_.contains("distribution")), "UTxOs distribution across the whole wallet")
+  }
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
     results.mkString("\n") shouldBe
@@ -307,7 +314,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
         | -deleteTx -walletId <walletId> -txId <txId>
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
-        | -getTx -walletId <walletId> -txId <txId>""".stripMargin
+        | -getTx -walletId <walletId> -txId <txId>
+        | -getUTxO -walletId <walletId>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -525,6 +533,18 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -getTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890""".stripMargin.trim
+  }
+
+  it should "show getUTxO help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.getUTxOsStatistics)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Return the UTxOs distribution across the whole wallet, in the form of a histogram
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics ]
+        |
+        | Arguments: -walletId <walletId>
+        |
+        | Examples:
+        | $CMDLINE -getUTxO -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

@@ -464,4 +464,15 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
     )
   }
 
+  def getUTxOsStatistics(walletId: String): CardanoApiRequest[UTxOStatistics] = {
+    val uri = Uri(s"$wallets/$walletId/statistics/utxos")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = GET,
+      ),
+      _.toUTxOStatisticsResponse
+    )
+  }
+
 }

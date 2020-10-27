@@ -357,6 +357,13 @@ object CardanoApiCodec {
                      tip: NetworkTip
                    )
 
+  @ConfiguredJsonCodec
+  case class UTxOStatistics(
+    total: QuantityUnit,
+    scale: String,
+    distribution: Map[String, Long]
+                           )
+
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
   }
@@ -436,6 +443,9 @@ object CardanoApiCodec {
 
     def toEstimateFeeResponse: Future[CardanoApiResponse[EstimateFeeResponse]] =
       to[EstimateFeeResponse](Unmarshal(_).to[CardanoApiResponse[EstimateFeeResponse]])
+
+    def toUTxOStatisticsResponse: Future[CardanoApiResponse[UTxOStatistics]] =
+      to[UTxOStatistics](Unmarshal(_).to[CardanoApiResponse[UTxOStatistics]])
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

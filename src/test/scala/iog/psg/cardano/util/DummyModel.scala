@@ -42,72 +42,66 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final lazy val metadataMap = Map(
-    0L -> MetadataValueStr("0" * 64),
-    1L -> MetadataValueStr("1" * 64)
-  )
+  final lazy val metadataMap = Map(0L -> MetadataValueStr("0" * 64), 1L -> MetadataValueStr("1" * 64))
 
   final lazy val txMetadata = TxMetadataMapIn(metadataMap)
 
-  final lazy val txMetadataOut = TxMetadataOut(json = parse("""
-                                                         |{
-                                                         |      "0": {
-                                                         |        "string": "cardano"
-                                                         |      },
-                                                         |      "1": {
-                                                         |        "int": 14
-                                                         |      },
-                                                         |      "2": {
-                                                         |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                                         |      },
-                                                         |      "3": {
-                                                         |        "list": [
-                                                         |          {
-                                                         |            "int": 14
-                                                         |          },
-                                                         |          {
-                                                         |            "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                                         |          },
-                                                         |          {
-                                                         |            "string": "1337"
-                                                         |          }
-                                                         |        ]
-                                                         |      },
-                                                         |      "4": {
-                                                         |        "map": [
-                                                         |          {
-                                                         |            "k": {
-                                                         |              "string": "key"
-                                                         |            },
-                                                         |            "v": {
-                                                         |              "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
-                                                         |            }
-                                                         |          },
-                                                         |          {
-                                                         |            "k": {
-                                                         |              "int": 14
-                                                         |            },
-                                                         |            "v": {
-                                                         |              "int": 42
-                                                         |            }
-                                                         |          }
-                                                         |        ]
-                                                         |      }
-                                                         |    }
-                                                         |""".stripMargin).getOrElse(fail("Invalid metadata json")))
+  final lazy val txMetadataOut =
+    TxMetadataOut(json = parse("""
+                                 |{
+                                 |      "0": {
+                                 |        "string": "cardano"
+                                 |      },
+                                 |      "1": {
+                                 |        "int": 14
+                                 |      },
+                                 |      "2": {
+                                 |        "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                 |      },
+                                 |      "3": {
+                                 |        "list": [
+                                 |          {
+                                 |            "int": 14
+                                 |          },
+                                 |          {
+                                 |            "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                 |          },
+                                 |          {
+                                 |            "string": "1337"
+                                 |          }
+                                 |        ]
+                                 |      },
+                                 |      "4": {
+                                 |        "map": [
+                                 |          {
+                                 |            "k": {
+                                 |              "string": "key"
+                                 |            },
+                                 |            "v": {
+                                 |              "bytes": "2512a00e9653fe49a44a5886202e24d77eeb998f"
+                                 |            }
+                                 |          },
+                                 |          {
+                                 |            "k": {
+                                 |              "int": 14
+                                 |            },
+                                 |            "v": {
+                                 |              "int": 42
+                                 |            }
+                                 |          }
+                                 |        ]
+                                 |      }
+                                 |    }
+                                 |""".stripMargin).getOrElse(fail("Invalid metadata json")))
 
   final lazy val firstTransactionId = "1423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
 
   //Year: 2000
-  final lazy val oldTransactionsIdsAsc = Seq(
-    firstTransactionId,
-    "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
-  )
+  final lazy val oldTransactionsIdsAsc =
+    Seq(firstTransactionId, "3423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1")
 
   //Year: 2020
-  final lazy val newTransactionsIds = Seq(
-    "2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1"
-  )
+  final lazy val newTransactionsIds = Seq("2423856bc91c49e928f6f30f4e8d665d53eb4ab6028bd0ac971809d514c92db1")
 
   final lazy val transactionsIdsDesc = (oldTransactionsIdsAsc ++ newTransactionsIds).sortWith(_ > _)
 
@@ -118,26 +112,25 @@ trait DummyModel { self: Assertions =>
     spendingKeyHash = "stringstringstringstringstringstringstringstringstringst",
     stakeKeyHash = "stringstringstringstringstringstringstringstringstringst",
     scriptHash = Some("stringstringstringstringstringstringstringstringstringstringstri"),
-    pointer = Some(Pointer(
-      slotNum = 0,
-      transactionIndex = 1,
-      outputIndex = 2
-    )),
+    pointer = Some(Pointer(slotNum = 0, transactionIndex = 1, outputIndex = 2)),
     addressRoot = Some("string"),
     derivationPath = Some("string_path")
   )
 
   final val addressesIds = Seq(
     WalletAddressId(
-      id = "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id =
+        "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     ),
     WalletAddressId(
-      id = "addr2sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id =
+        "addr2sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.used)
     ),
     WalletAddressId(
-      id = "addr3sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
+      id =
+        "addr3sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
     )
   )
@@ -211,5 +204,29 @@ trait DummyModel { self: Assertions =>
 
   final lazy val fundPaymentsResponse =
     FundPaymentsResponse(inputs = IndexedSeq(inAddress), outputs = Seq(outAddress))
+
+  final lazy val uTxOStatistics = UTxOStatistics(
+    total = QuantityUnit(quantity = 42000000, unit = Units.lovelace),
+    scale = "log10",
+    distribution = Map(
+      "10" -> 1,
+      "100" -> 0,
+      "1000" -> 8,
+      "10000" -> 14,
+      "100000" -> 32,
+      "1000000" -> 3,
+      "10000000" -> 0,
+      "100000000" -> 12,
+      "1000000000" -> 0,
+      "10000000000" -> 0,
+      "100000000000" -> 0,
+      "1000000000000" -> 0,
+      "10000000000000" -> 0,
+      "100000000000000" -> 0,
+      "1000000000000000" -> 0,
+      "10000000000000000" -> 0,
+      "45000000000000000" -> 0
+    )
+  )
 
 }
