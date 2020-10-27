@@ -399,6 +399,17 @@ public class CardanoApi {
     }
 
     /**
+     * Gives network parameters
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters">#getNetworkParameters</a>
+     *
+     * @return network parameters request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    public CompletionStage<CardanoApiCodec.NetworkParameters> networkParameters() throws CardanoApiException {
+        return helpExecute.execute(api.networkParameters());
+    }
+
+    /**
      * Return the UTxOs distribution across the whole wallet, in the form of a histogram
      * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics #getUTxOsStatistics]]
      *

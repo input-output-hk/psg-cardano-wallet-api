@@ -170,6 +170,22 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   }
 
   /**
+   * Gives network parameters
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters #getNetworkParameters]]
+   *
+   * @return network parameters request
+   */
+  def networkParameters(): CardanoApiRequest[NetworkParameters] = {
+    CardanoApiRequest(
+      HttpRequest(
+        uri = s"${network}/parameters",
+        method = GET
+      ),
+      _.toNetworkParametersResponse
+    )
+  }
+
+  /**
    * Create and restore a wallet from a mnemonic sentence or account public key.
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
    *

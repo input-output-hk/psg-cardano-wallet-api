@@ -198,6 +198,22 @@ trait DummyModel { self: Assertions =>
     status = "available",
     offset = QuantityUnit(99, Units.microsecond)
   )
+  
+  final lazy val networkParameters = NetworkParameters(
+    genesisBlockHash = "3c07030e36bfffe67e2e2ec09e5293d384637cd2f004356ef320f3fe6c52041a",
+    blockchain_start_time = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
+    slotLength = QuantityUnit(10, Units.second),
+    epochLength = QuantityUnit(42000, Units.slot),
+    epochStability = QuantityUnit(1337, Units.block),
+    activeSlotCoefficient = QuantityUnit(42, Units.percent),
+    decentralizationLevel = QuantityUnit(42, Units.percent),
+    desiredPoolNumber = 100,
+    minimumUtxoValue = QuantityUnit(42000000, Units.lovelace), 
+    hardforkAt = NextEpoch(
+      epochStartTime = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
+      epochNumber = 14
+    )
+  )
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
   final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")

@@ -57,14 +57,19 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     results.reverse
   }
 
-  "The Cmd line -netInfo" should "support retrieving netInfo" in {
+  "The Cmd line -netInfo" should "support retrieving network information" in {
     val cmdLineResults = runCmdLine(CmdLine.netInfo)
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
   }
 
-  "The Cmd line -netClockInfo" should "support retrieving netClockInfo" in {
+  "The Cmd line -netClockInfo" should "support retrieving network clock information" in {
     val cmdLineResults = runCmdLine(CmdLine.netClockInfo)
     assert(cmdLineResults.exists(_.contains("available")), s"Testnet API service not available - '$baseUrl' \n $cmdLineResults")
+  }
+
+  "The Cmd line -netParams" should "support retrieving network params" in {
+    val cmdLineResults = runCmdLine(CmdLine.netParams)
+    assert(cmdLineResults.exists(_.contains("genesis_block_hash")), s"Testnet API service not available - '$baseUrl' \n $cmdLineResults")
   }
 
   "The Cmd Line -wallets" should "show our test wallet in the list" in new TestWalletFixture(walletNum = 1) {
@@ -306,6 +311,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |
         | -netInfo
         | -netClockInfo
+        | -netParams
         | -wallets
         | -deleteWallet -walletId <walletId>
         | -wallet -walletId <walletId>
@@ -371,6 +377,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -netClockInfo""".stripMargin.trim
+  }
+
+  it should "show -netParams help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.netParams)
+    results.mkString("\n").stripMargin.trim shouldBe """ Returns the set of network parameters for the current epoch.
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters ]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -netParams""".stripMargin.trim
   }
 
   it should "show listWallets help" in {

@@ -240,6 +240,20 @@ object CardanoApiCodec {
                           offset: QuantityUnit
                         )
 
+  @ConfiguredJsonCodec
+  case class NetworkParameters(
+                                genesisBlockHash: String,
+                                blockchain_start_time: ZonedDateTime,
+                                slotLength: QuantityUnit,
+                                epochLength: QuantityUnit,
+                                epochStability: QuantityUnit,
+                                activeSlotCoefficient: QuantityUnit,
+                                decentralizationLevel: QuantityUnit,
+                                desiredPoolNumber: Long,
+                                minimumUtxoValue: QuantityUnit,
+                                hardforkAt: NextEpoch
+                              )
+
   @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateRestore(
                             name: String,
@@ -264,7 +278,9 @@ object CardanoApiCodec {
     val percent = Value("percent")
     val lovelace = Value("lovelace")
     val block = Value("block")
+    val slot = Value("slot")
     val microsecond = Value("microsecond")
+    val second = Value("second")
   }
 
 
@@ -405,6 +421,9 @@ object CardanoApiCodec {
 
     def toNetworkClockResponse: Future[CardanoApiResponse[NetworkClock]]
     = to[NetworkClock](Unmarshal(_).to[CardanoApiResponse[NetworkClock]])
+
+    def toNetworkParametersResponse: Future[CardanoApiResponse[NetworkParameters]]
+    = to[NetworkParameters](Unmarshal(_).to[CardanoApiResponse[NetworkParameters]])
 
     def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] = {
       response.entity.contentType match {

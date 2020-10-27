@@ -21,6 +21,7 @@ object CardanoApiMain {
     val noConsole = "-noConsole"
     val netInfo = "-netInfo"
     val netClockInfo = "-netClockInfo"
+    val netParams = "-netParams"
     val forceNtpCheck = "-forceNtpCheck"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
@@ -110,6 +111,8 @@ object CardanoApiMain {
         } else if (hasArgument(CmdLine.netClockInfo)) {
           val forceNtpCheck = arguments(CmdLine.forceNtpCheck).map(_.toBoolean)
           unwrap[CardanoApiCodec.NetworkClock](api.networkClock(forceNtpCheck).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.netParams)) {
+          unwrap[CardanoApiCodec.NetworkParameters](api.networkParameters().executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
           unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {
@@ -248,6 +251,7 @@ object CardanoApiMain {
 
     val cmdLineNetInfo = s"${CmdLine.netInfo}"
     val cmdLineNetClockInfo = s"${CmdLine.netClockInfo}"
+    val cmdLineNetParams = s"${CmdLine.netParams}"
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineGetWallet = s"${CmdLine.getWallet} ${CmdLine.walletId} <walletId>"
@@ -283,6 +287,7 @@ object CardanoApiMain {
       trace("\nCommands:\n")
       trace(" "+cmdLineNetInfo)
       trace(" "+cmdLineNetClockInfo)
+      trace(" "+cmdLineNetParams)
       trace(" "+cmdLineListWallets)
       trace(" "+cmdLineDeleteWallet)
       trace(" "+cmdLineGetWallet)
@@ -336,11 +341,21 @@ object CardanoApiMain {
           )
         case CmdLine.netClockInfo =>
           beautifyTrace(
-            arguments = "",
+            arguments = s"[${CmdLine.forceNtpCheck} <forceNtpCheck>]",
             description = "Show network clock information",
             apiDocOperation = "getNetworkClock",
             examples = List(
-              s"${CmdLine.netClockInfo}"
+              s"${CmdLine.netClockInfo}",
+              s"${CmdLine.netClockInfo} ${CmdLine.forceNtpCheck} true",
+            )
+          )
+        case CmdLine.netParams =>
+          beautifyTrace(
+            arguments = "",
+            description = "Returns the set of network parameters for the current epoch.",
+            apiDocOperation = "getNetworkParameters",
+            examples = List(
+              s"${CmdLine.netParams}"
             )
           )
         case CmdLine.listWallets =>
