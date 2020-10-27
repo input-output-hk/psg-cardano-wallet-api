@@ -50,8 +50,16 @@ class CardanoJpiSpec
     api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
   }
 
-  "GET /network/clock" should "return network clock" in {
-    api.networkClock.toCompletableFuture.get() shouldBe networkClock
+  "GET /network/clock" should "return network clock with forced ntp check" in {
+    api.networkClock(true).toCompletableFuture.get() shouldBe networkClockForced
+  }
+
+  it should "return network clock without forced ntp check" in {
+    api.networkClock(false).toCompletableFuture.get() shouldBe networkClock
+  }
+
+  it should "return network clock without forced ntp check param" in {
+    api.networkClock().toCompletableFuture.get() shouldBe networkClock
   }
 
   "POST /wallets" should "create a wallet, using all params" in {

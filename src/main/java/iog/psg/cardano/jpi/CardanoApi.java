@@ -383,7 +383,19 @@ public class CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     public CompletionStage<CardanoApiCodec.NetworkClock> networkClock() throws CardanoApiException {
-        return helpExecute.execute(api.networkClock());
+        return networkClock(null);
+    }
+
+    /**
+     * Gives network clock information
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock">#getNetworkClock</a>
+     *
+     * @param forceNtpCheck When this flag is set, the request will block until NTP server responds or will timeout after a while without any answer from the NTP server.
+     * @return network clock info request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    public CompletionStage<CardanoApiCodec.NetworkClock> networkClock(Boolean forceNtpCheck) throws CardanoApiException {
+        return helpExecute.execute(api.networkClock(option(forceNtpCheck)));
     }
 
     /**

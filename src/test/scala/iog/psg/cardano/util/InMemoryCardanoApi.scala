@@ -180,11 +180,16 @@ trait InMemoryCardanoApi {
         } yield ()
       } else Future.successful(())
 
+      val networkClockR = "network/clock(.+)?".r
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
 
-        case ("network/clock", HttpMethods.GET) =>
+        case ("network/clock?forceNtpCheck=true", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netclockforced.json"))
+
+        case (networkClockR(_), HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netclock.json"))
 
         case ("wallets", HttpMethods.GET) =>

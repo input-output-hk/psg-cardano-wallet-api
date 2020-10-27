@@ -21,6 +21,7 @@ object CardanoApiMain {
     val noConsole = "-noConsole"
     val netInfo = "-netInfo"
     val netClockInfo = "-netClockInfo"
+    val forceNtpCheck = "-forceNtpCheck"
     val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
     val updateName = "-updateName"
@@ -107,7 +108,8 @@ object CardanoApiMain {
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.netClockInfo)) {
-          unwrap[CardanoApiCodec.NetworkClock](api.networkClock.executeBlocking, trace(_))
+          val forceNtpCheck = arguments(CmdLine.forceNtpCheck).map(_.toBoolean)
+          unwrap[CardanoApiCodec.NetworkClock](api.networkClock(forceNtpCheck).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
           unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {

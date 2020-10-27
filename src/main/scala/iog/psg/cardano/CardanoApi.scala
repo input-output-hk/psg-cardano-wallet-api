@@ -155,15 +155,19 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
    * Gives network clock information
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock #getNetworkClock]]
    *
+   * @param forceNtpCheck When this flag is set, the request will block until NTP server responds or will timeout after a while without any answer from the NTP server.
    * @return network clock info request
    */
-  def networkClock: CardanoApiRequest[NetworkClock] = CardanoApiRequest(
-    HttpRequest(
-      uri = s"$network/clock",
-      method = GET
-    ),
-    _.toNetworkClockResponse
-  )
+  def networkClock(forceNtpCheck: Option[Boolean] = None): CardanoApiRequest[NetworkClock] = {
+    val url = s"$network/clock${forceNtpCheck.map(force => s"?forceNtpCheck=$force").getOrElse("")}"
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toNetworkClockResponse
+    )
+  }
 
   /**
    * Create and restore a wallet from a mnemonic sentence or account public key.

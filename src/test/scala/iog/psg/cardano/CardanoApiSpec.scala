@@ -42,7 +42,15 @@ class CardanoApiSpec
   }
 
   "GET /network/clock" should "return network clock" in {
-    api.networkClock.executeOrFail() shouldBe networkClock
+    api.networkClock(forceNtpCheck = Some(true)).executeOrFail() shouldBe networkClockForced
+  }
+
+  it should "return network clock without forced ntp check" in {
+    api.networkClock(Some(false)).executeOrFail() shouldBe networkClock
+  }
+
+  it should "return network clock without forced ntp check param" in {
+    api.networkClock().executeOrFail() shouldBe networkClock
   }
 
   "POST /wallets" should "" in {
