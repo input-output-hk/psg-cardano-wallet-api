@@ -38,7 +38,7 @@ object CardanoApiMain {
     val mnemonicSecondary = "-mnemonicSecondary"
     val addressPoolGap = "-addressPoolGap"
     val listWalletAddresses = "-listAddresses"
-    val inspectWalletAddresses = "-inspectAddress"
+    val inspectWalletAddress = "-inspectAddress"
     val listWalletTransactions = "-listTxs"
     val state = "-state"
     val walletId = "-walletId"
@@ -135,7 +135,7 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val addressesState = Some(AddressFilter.withName(arguments.get(CmdLine.state)))
           unwrap[Seq[CardanoApiCodec.WalletAddressId]](api.listAddresses(walletId, addressesState).executeBlocking, trace(_))
-        } else if (hasArgument(CmdLine.inspectWalletAddresses)) {
+        } else if (hasArgument(CmdLine.inspectWalletAddress)) {
           val address = arguments.get(CmdLine.address)
           unwrap[WalletAddress](api.inspectAddress(address).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getTx)) {
@@ -243,11 +243,14 @@ object CardanoApiMain {
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineGetWallet = s"${CmdLine.getWallet} ${CmdLine.walletId} <walletId>"
+    val cmdLineUpdateName = s"${CmdLine.updateName} ${CmdLine.walletId} <walletId> ${CmdLine.name} <name>"
     val cmdLineUpdatePassphrase = s"${CmdLine.updatePassphrase} ${CmdLine.walletId} <walletId> ${CmdLine.oldPassphrase} <oldPassphrase> ${CmdLine.passphrase} <newPassphrase>"
     val cmdLineDeleteWallet = s"${CmdLine.deleteWallet} ${CmdLine.walletId} <walletId>"
     val cmdLineListWalletAddresses = s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} <walletId> ${CmdLine.state} <state>"
+    val cmdLineInspectWalletAddress = s"${CmdLine.inspectWalletAddress} ${CmdLine.address} <address>"
     val cmdLineGetTx = s"${CmdLine.getTx} ${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>"
     val cmdLineCreateTx = s"${CmdLine.createTx} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address> ${CmdLine.passphrase} <passphrase> [${CmdLine.metadata} <metadata>]"
+    val cmdLineDeleteTx = s"${CmdLine.deleteTx} ${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>"
     val cmdLineFundTx = s"${CmdLine.fundTx} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineListWalletTransactions = s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]"
     val cmdLineCreateWallet = s"${CmdLine.createWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
@@ -273,13 +276,16 @@ object CardanoApiMain {
       trace(" "+cmdLineListWallets)
       trace(" "+cmdLineDeleteWallet)
       trace(" "+cmdLineGetWallet)
+      trace(" "+cmdLineUpdateName)
       trace(" "+cmdLineCreateWallet)
       trace(" "+cmdLineRestoreWallet)
       trace(" "+cmdLineEstimateFee)
       trace(" "+cmdLineUpdatePassphrase)
       trace(" "+cmdLineListWalletAddresses)
+      trace(" "+cmdLineInspectWalletAddress)
       trace(" "+cmdLineListWalletTransactions)
       trace(" "+cmdLineCreateTx)
+      trace(" "+cmdLineDeleteTx)
       trace(" "+cmdLineFundTx)
       trace(" "+cmdLineGetTx)
     } else {
@@ -344,6 +350,15 @@ object CardanoApiMain {
               s"${CmdLine.getWallet} ${CmdLine.walletId} $exampleWalletId"
             )
           )
+        case CmdLine.updateName =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.name} <name>",
+            description = "Update wallet's name",
+            apiDocOperation = "putWallet",
+            examples = List(
+              s"${CmdLine.updateName} ${CmdLine.walletId} $exampleWalletId ${CmdLine.name} new_name"
+            )
+          )
         case CmdLine.createWallet =>
           beautifyTrace(
             arguments = s"${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]",
@@ -394,6 +409,15 @@ object CardanoApiMain {
               s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} $exampleWalletId ${CmdLine.state} ${AddressFilter.unUsed}"
             )
           )
+        case CmdLine.inspectWalletAddress =>
+          beautifyTrace(
+            arguments = s"${CmdLine.address} <address>",
+            description = "Give useful information about the structure of a given address.",
+            apiDocOperation = "inspectAddress",
+            examples = List(
+              s"${CmdLine.inspectWalletAddress} ${CmdLine.address} $exampleAddress"
+            )
+          )
         case CmdLine.listWalletTransactions =>
           beautifyTrace(
             arguments = s"${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]",
@@ -433,6 +457,15 @@ object CardanoApiMain {
             apiDocOperation = "getTransaction",
             examples = List(
               s"${CmdLine.getTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
+            )
+          )
+        case CmdLine.deleteTx =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>",
+            description = "Delete pending transaction by id",
+            apiDocOperation = "deleteTransaction",
+            examples = List(
+              s"${CmdLine.deleteTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
             )
           )
         case cmd => trace(s"$cmd help not supported")

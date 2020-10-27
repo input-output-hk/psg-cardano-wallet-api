@@ -268,7 +268,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Lines -inspectAddress" should "inspect address" in new TestWalletFixture(walletNum = 1){
     val unusedAddr = getUnusedAddressWallet1
     val results = runCmdLine(
-      CmdLine.inspectWalletAddresses,
+      CmdLine.inspectWalletAddress,
       CmdLine.address, unusedAddr
     )
     assert(results.exists(_.contains("Shelley")), "address_style")
@@ -296,13 +296,16 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -wallets
         | -deleteWallet -walletId <walletId>
         | -wallet -walletId <walletId>
+        | -updateName -walletId <walletId> -name <name>
         | -createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -estimateFee -walletId <walletId> -amount <amount> -address <address>
         | -updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
         | -listAddresses -walletId <walletId> -state <state>
+        | -inspectAddress -address <address>
         | -listTxs -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
         | -createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
+        | -deleteTx -walletId <walletId> -txId <txId>
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
         | -getTx -walletId <walletId> -txId <txId>""".stripMargin
   }
@@ -378,6 +381,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | $CMDLINE -wallet -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
   }
 
+  it should "show updateName help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.updateName)
+    results.mkString("\n").stripMargin.trim shouldBe """ Update wallet's name
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -name <name>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -updateName -walletId 1234567890123456789012345678901234567890 -name new_name""".stripMargin.trim
+  }
+
   it should "show createWallet help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.createWallet)
     results.mkString("\n").stripMargin.trim shouldBe """ Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
@@ -440,6 +454,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state unused""".stripMargin.trim
   }
 
+  it should "show inspectWalletAddress help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.inspectWalletAddress)
+    results.mkString("\n").stripMargin.trim shouldBe """ Give useful information about the structure of a given address.
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/inspectAddress ]
+                                                       |
+                                                       | Arguments: -address <address>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -inspectAddress -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
   it should "show listWalletTransactions help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.listWalletTransactions)
     results.mkString("\n").stripMargin.trim shouldBe """ Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )
@@ -478,6 +503,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | Examples:
                                                        | $CMDLINE -fundTx -walletId 1234567890123456789012345678901234567890 -amount 20000 -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890
                                                        | """.stripMargin.trim
+  }
+
+  it should "show deleteTx help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.deleteTx)
+    results.mkString("\n").stripMargin.trim shouldBe """ Delete pending transaction by id
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -txId <txId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -deleteTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890""".stripMargin.trim
   }
 
   it should "show getTx help" in {
