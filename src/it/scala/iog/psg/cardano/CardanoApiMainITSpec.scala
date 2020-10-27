@@ -265,6 +265,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(foundTx, s"Couldn't find txId $txId in transactions ")
   }
 
+  "The Cmd Lines -inspectAddress" should "inspect address" in new TestWalletFixture(walletNum = 1){
+    val unusedAddr = getUnusedAddressWallet1
+    val results = runCmdLine(
+      CmdLine.inspectWalletAddresses,
+      CmdLine.address, unusedAddr
+    )
+    assert(results.exists(_.contains("Shelley")), "address_style")
+  }
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
     results.mkString("\n") shouldBe

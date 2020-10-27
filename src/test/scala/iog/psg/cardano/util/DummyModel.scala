@@ -111,7 +111,23 @@ trait DummyModel { self: Assertions =>
 
   final lazy val transactionsIdsDesc = (oldTransactionsIdsAsc ++ newTransactionsIds).sortWith(_ > _)
 
-  final val addresses = Seq(
+  final lazy val address = WalletAddress(
+    addressStyle = "Shelley",
+    stakeReference = "none",
+    networkTag = 123,
+    spendingKeyHash = "stringstringstringstringstringstringstringstringstringst",
+    stakeKeyHash = "stringstringstringstringstringstringstringstringstringst",
+    scriptHash = Some("stringstringstringstringstringstringstringstringstringstringstri"),
+    pointer = Some(Pointer(
+      slotNum = 0,
+      transactionIndex = 1,
+      outputIndex = 2
+    )),
+    addressRoot = Some("string"),
+    derivationPath = Some("string_path")
+  )
+
+  final val addressesIds = Seq(
     WalletAddressId(
       id = "addr1sjck9mdmfyhzvjhydcjllgj9vjvl522w0573ncustrrr2rg7h9azg4cyqd36yyd48t5ut72hgld0fg2xfvz82xgwh7wal6g2xt8n996s3xvu5g",
       state = Some(AddressFilter.unUsed)
@@ -126,8 +142,9 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final lazy val unUsedAddresses = addresses.filter(_.state.contains(AddressFilter.unUsed))
-  final lazy val usedAddresses = addresses.filter(_.state.contains(AddressFilter.used))
+  final lazy val unUsedAddresses = addressesIds.filter(_.state.contains(AddressFilter.unUsed))
+  final lazy val usedAddresses = addressesIds.filter(_.state.contains(AddressFilter.used))
+  final lazy val addressToInspect = unUsedAddresses.head
 
   final lazy val networkTip = NetworkTip(
     epochNumber = 14,

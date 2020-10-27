@@ -262,6 +262,11 @@ public class CardanoApi {
                 api.listAddresses(walletId, option(addressFilterOpt))).thenApply(CollectionConverters::asJava);
     }
 
+    public CompletionStage<CardanoApiCodec.WalletAddress> inspectAddress(
+            String addressId) throws CardanoApiException {
+        return helpExecute.execute(api.inspectAddress(addressId));
+    }
+
     /**
      * list of known addresses, ordered from newest to oldest
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>

@@ -16,12 +16,13 @@ class CardanoApiSpec
     with ModelCompare
     with ScalaFutures
     with InMemoryCardanoApi
-    with DummyModel
     with JsonFiles
+    with DummyModel
     with CustomPatienceConfiguration {
 
   lazy val api = new CardanoApi(baseUrl)
 
+  private val addressNotFoundError = ErrorMessage(s"Addresses not found", "404")
   private val walletNotFoundError = ErrorMessage(s"Wallet not found", "404")
 
   "GET /wallets" should "return wallets list" in {
@@ -57,7 +58,7 @@ class CardanoApiSpec
   }
 
   it should "return wallet's used + unused addresses" in {
-    api.listAddresses(wallet.id, None).executeOrFail().map(_.id) shouldBe addresses.map(_.id)
+    api.listAddresses(wallet.id, None).executeOrFail().map(_.id) shouldBe addressesIds.map(_.id)
   }
 
   it should "return wallet not found error" in {
@@ -65,7 +66,7 @@ class CardanoApiSpec
       .listAddresses("invalid_wallet_id", Some(AddressFilter.used))
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
-
+  
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val transactions = api.listTransactions(wallet.id).executeOrFail()
     transactions.map(_.id) shouldBe transactionsIdsDesc
@@ -174,12 +175,20 @@ class CardanoApiSpec
       .executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
-  "DELETE /wallets/{walletId" should "delete wallet" in {
+  "DELETE /wallets/{walletId}" should "delete wallet" in {
     api.deleteWallet(wallet.id).executeOrFail() shouldBe ()
   }
 
   it should "return not found" in {
     api.deleteWallet("invalid_wallet_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
+  "GET /addresses/{addressId}" should "inspect address" in {
+    api.inspectAddress(addressToInspect.id).executeOrFail() shouldBe address
+  }
+
+  it should "return not found" in {
+    api.inspectAddress("invalid_address_id").executeExpectingErrorOrFail() shouldBe addressNotFoundError
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")

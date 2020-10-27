@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage
 import akka.actor.ActorSystem
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
-import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -29,6 +28,7 @@ class CardanoJpiSpec
   private def tryGetErrorMessage[T](completionStage: CompletionStage[T]) =
     Try(completionStage.toCompletableFuture.get()).toEither.swap.getOrElse(fail("should fail")).getMessage
 
+  private val addressNotFoundError = "iog.psg.cardano.jpi.CardanoApiException: Message: Addresses not found, Code: 404"
   private val walletNotFoundError = "iog.psg.cardano.jpi.CardanoApiException: Message: Wallet not found, Code: 404"
 
   "GET /wallets" should "return wallets list" in {
@@ -89,7 +89,7 @@ class CardanoJpiSpec
 
   it should "return wallet's used + unused addresses" in {
     val ids = api.listAddresses(wallet.id).toCompletableFuture.get().asScala.toList.map(_.id)
-    ids shouldBe addresses.map(_.id)
+    ids shouldBe addressesIds.map(_.id)
   }
 
   it should "return wallet not found error" in {
@@ -216,6 +216,14 @@ class CardanoJpiSpec
 
   it should "return not found" in {
     tryGetErrorMessage(api.deleteWallet("invalid_wallet_id")) shouldBe walletNotFoundError
+  }
+
+  "GET /addresses/{addressId}" should "inspect address" in {
+    api.inspectAddress(addressToInspect.id).toCompletableFuture.get() shouldBe address
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.inspectAddress("invalid_address_id")) shouldBe addressNotFoundError
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")

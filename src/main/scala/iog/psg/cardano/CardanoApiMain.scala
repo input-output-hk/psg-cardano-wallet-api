@@ -6,7 +6,7 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
-import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units, Wallet, WalletAddress}
 import io.circe.Encoder
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
@@ -38,6 +38,7 @@ object CardanoApiMain {
     val mnemonicSecondary = "-mnemonicSecondary"
     val addressPoolGap = "-addressPoolGap"
     val listWalletAddresses = "-listAddresses"
+    val inspectWalletAddresses = "-inspectAddress"
     val listWalletTransactions = "-listTxs"
     val state = "-state"
     val walletId = "-walletId"
@@ -48,6 +49,7 @@ object CardanoApiMain {
     val createTx = "-createTx"
     val fundTx = "-fundTx"
     val getTx = "-getTx"
+    val deleteTx = "-deleteTx"
     val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
@@ -133,10 +135,17 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val addressesState = Some(AddressFilter.withName(arguments.get(CmdLine.state)))
           unwrap[Seq[CardanoApiCodec.WalletAddressId]](api.listAddresses(walletId, addressesState).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.inspectWalletAddresses)) {
+          val address = arguments.get(CmdLine.address)
+          unwrap[WalletAddress](api.inspectAddress(address).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val txId = arguments.get(CmdLine.txId)
           unwrap[CardanoApiCodec.CreateTransactionResponse](api.getTransaction(walletId, txId).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.deleteTx)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val txId = arguments.get(CmdLine.txId)
+          unwrap[Unit](api.deleteTransaction(walletId, txId).executeBlocking, _ => trace("Unit result from delete transaction"))
         } else if (hasArgument(CmdLine.createTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -229,6 +238,7 @@ object CardanoApiMain {
       trace(s"\n $description\n$docsUrl\n$argumentsLine$examplesStr\n")
     }
 
+    //TODO UPDATE HELP
     val cmdLineNetInfo = s"${CmdLine.netInfo}"
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"

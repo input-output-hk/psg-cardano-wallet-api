@@ -74,6 +74,7 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
 
   sealed trait MetadataValue
 
@@ -167,6 +168,19 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
+
+  @ConfiguredJsonCodec(decodeOnly = true) final case class Pointer(slotNum: Long, transactionIndex: Long, outputIndex: Long)
+
+  @ConfiguredJsonCodec(decodeOnly = true) final case class WalletAddress(
+                                  addressStyle: String,
+                                  stakeReference: String,
+                                  networkTag: Long,
+                                  spendingKeyHash: String,
+                                  stakeKeyHash: String,
+                                  scriptHash: Option[String],
+                                  pointer: Option[Pointer],
+                                  addressRoot: Option[String],
+                                  derivationPath: Option[String])
 
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
@@ -377,7 +391,6 @@ object CardanoApiCodec {
 
 
     def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] = {
-
       response.entity.contentType match {
         case WithFixedCharset(MediaTypes.`application/json`) =>
           // Load into memory using toStrict
@@ -405,6 +418,12 @@ object CardanoApiCodec {
 
     def toWalletAddressIds: Future[CardanoApiResponse[Seq[WalletAddressId]]]
     = to[Seq[WalletAddressId]](Unmarshal(_).to[CardanoApiResponse[Seq[WalletAddressId]]])
+
+    def toWalletAddress: Future[CardanoApiResponse[WalletAddress]]
+    = to[WalletAddress]({ strict =>
+      println(strict.getData().utf8String)
+      Unmarshal(strict).to[CardanoApiResponse[WalletAddress]]
+    })
 
     def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
     = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])

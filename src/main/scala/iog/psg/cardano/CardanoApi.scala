@@ -80,6 +80,7 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
   import CardanoApiCodec._
   import AddressFilter.AddressFilter
 
+  private val addresses = s"${baseUriWithPort}addresses"
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
 
@@ -216,6 +217,25 @@ class CardanoApi(baseUriWithPort: String)(implicit ec: ExecutionContext, as: Act
       _.toWalletAddressIds
     )
 
+  }
+
+  /**
+   * Give useful information about the structure of a given address.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/inspectAddress #inspectAddress]]
+   *
+   * @param addressId
+   * @return address inspect request
+   */
+  def inspectAddress(addressId: String): CardanoApiRequest[WalletAddress] = {
+    val url = Uri(s"$addresses/$addressId")
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toWalletAddress
+    )
   }
 
   /**
