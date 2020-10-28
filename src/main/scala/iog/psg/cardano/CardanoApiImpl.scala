@@ -1,0 +1,234 @@
+package iog.psg.cardano
+
+import java.time.ZonedDateTime
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.Uri.Query
+import akka.http.scaladsl.model._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.generic.auto._
+import io.circe.generic.extras.Configuration
+import iog.psg.cardano.CardanoApi.Order.Order
+
+import scala.concurrent.{ExecutionContext, Future}
+
+private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) extends CardanoApi {
+
+  import CardanoApiCodec._
+  import AddressFilter.AddressFilter
+  import iog.psg.cardano.CardanoApi._
+
+  private val wallets = s"${baseUriWithPort}wallets"
+  private val network = s"${baseUriWithPort}network"
+
+  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
+
+  override def listWallets: CardanoApiRequest[Seq[Wallet]] = CardanoApiRequest(
+    HttpRequest(
+      uri = wallets,
+      method = GET
+    ),
+    _.toWallets
+  )
+
+  override def getWallet(walletId: String): CardanoApiRequest[Wallet] = CardanoApiRequest(
+    HttpRequest(
+      uri = s"$wallets/$walletId",
+      method = GET
+    ),
+    _.toWallet
+  )
+
+  override def networkInfo: CardanoApiRequest[NetworkInfo] = CardanoApiRequest(
+    HttpRequest(
+      uri = s"${network}/information",
+      method = GET
+    ),
+    _.toNetworkInfoResponse
+  )
+
+  override def createRestoreWallet(
+                                    name: String,
+                                    passphrase: String,
+                                    mnemonicSentence: MnemonicSentence,
+                                    mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                                    addressPoolGap: Option[Int] = None
+                                  ): Future[CardanoApiRequest[Wallet]] = {
+
+    val createRestore =
+      CreateRestore(
+        name,
+        passphrase,
+        mnemonicSentence.mnemonicSentence,
+        mnemonicSecondFactor.map(_.mnemonicSentence),
+        addressPoolGap
+      )
+
+    Marshal(createRestore).to[RequestEntity].map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toWallet
+      )
+    }
+
+  }
+
+  override def listAddresses(walletId: String,
+                             state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]] = {
+
+    val baseUri = Uri(s"$wallets/${walletId}/addresses")
+
+    val url = state.map { s =>
+      baseUri.withQuery(Query("state" -> s.toString))
+    }.getOrElse(baseUri)
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toWalletAddressIds
+    )
+
+  }
+
+  override def listTransactions(walletId: String,
+                                start: Option[ZonedDateTime] = None,
+                                end: Option[ZonedDateTime] = None,
+                                order: Order = Order.descendingOrder,
+                                minWithdrawal: Option[Int] = None): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
+    val baseUri = Uri(s"$wallets/${walletId}/transactions")
+
+    val queries =
+      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
+        .collect {
+          case (queryParamName, order: Order) => queryParamName -> order.toString
+          case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
+          case (queryParamName, Some(minWith: Int)) => queryParamName -> minWith.toString
+        }
+
+    val uriWithQueries = baseUri.withQuery(Query(queries: _*))
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uriWithQueries,
+        method = GET
+      ),
+      _.toCreateTransactionResponses
+    )
+  }
+
+  override def createTransaction(fromWalletId: String,
+                                 passphrase: String,
+                                 payments: Payments,
+                                 metadata: Option[TxMetadataIn],
+                                 withdrawal: Option[String]
+                                ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
+
+
+    val createTx = CreateTransaction(passphrase, payments.payments, metadata, withdrawal)
+
+    Marshal(createTx).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets/$fromWalletId/transactions",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toCreateTransactionResponse
+      )
+    }
+  }
+
+  override def estimateFee(fromWalletId: String,
+                           payments: Payments,
+                           withdrawal: Option[String],
+                           metadataIn: Option[TxMetadataIn] = None
+                          ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
+
+    val estimateFees = EstimateFee(payments.payments, withdrawal, metadataIn)
+
+    Marshal(estimateFees).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets/$fromWalletId/payment-fees",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toEstimateFeeResponse
+      )
+    }
+  }
+
+  override def fundPayments(walletId: String,
+                            payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]] = {
+    Marshal(payments).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets/${walletId}/coin-selections/random",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toFundPaymentsResponse
+      )
+    }
+  }
+
+  override def getTransaction[T <: TxMetadataIn](
+                                                  walletId: String,
+                                                  transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
+
+    val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = GET
+      ),
+      _.toCreateTransactionResponse
+    )
+  }
+
+  override def updatePassphrase(
+                                 walletId: String,
+                                 oldPassphrase: String,
+                                 newPassphrase: String): Future[CardanoApiRequest[Unit]] = {
+
+    val uri = Uri(s"$wallets/${walletId}/passphrase")
+    val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
+
+    Marshal(updater).to[RequestEntity] map { marshalled => {
+      CardanoApiRequest(
+        HttpRequest(
+          uri = uri,
+          method = PUT,
+          entity = marshalled
+        ),
+        _.toUnit
+      )
+    }
+    }
+  }
+
+  override def deleteWallet(
+                             walletId: String
+                           ): CardanoApiRequest[Unit] = {
+
+    val uri = Uri(s"$wallets/${walletId}")
+
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = DELETE,
+      ),
+      _.toUnit
+    )
+  }
+
+}
