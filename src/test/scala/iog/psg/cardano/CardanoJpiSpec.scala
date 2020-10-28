@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage
 import akka.actor.ActorSystem
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
-import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
