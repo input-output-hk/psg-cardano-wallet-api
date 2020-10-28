@@ -20,7 +20,7 @@ class CardanoApiSpec
     with DummyModel
     with CustomPatienceConfiguration {
 
-  lazy val api = new CardanoApi(baseUrl)
+  lazy val api = CardanoApi(baseUrl)
 
   private val addressNotFoundError = ErrorMessage(s"Addresses not found", "404")
   private val walletNotFoundError = ErrorMessage(s"Wallet not found", "404")
