@@ -372,11 +372,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   it should "show -netClockInfo help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.netClockInfo)
+    println(results.mkString("\n").stripMargin.trim)
     results.mkString("\n").stripMargin.trim shouldBe """ Show network clock information
                                                        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock ]
                                                        |
+                                                       | Arguments: [-forceNtpCheck <forceNtpCheck>]
+                                                       |
                                                        | Examples:
-                                                       | $CMDLINE -netClockInfo""".stripMargin.trim
+                                                       | $CMDLINE -netClockInfo
+                                                       | $CMDLINE -netClockInfo -forceNtpCheck true""".stripMargin.trim
   }
 
   it should "show -netParams help" in {
