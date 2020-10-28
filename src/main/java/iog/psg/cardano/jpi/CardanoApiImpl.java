@@ -35,15 +35,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Create and restore a wallet from a mnemonic sentence or account public key.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet">#postWallet</a>
-     *
-     * @param name wallet's name
-     * @param passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
-     * @param mnemonicWordList A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39> )
-     * @param addressPoolGap An optional number of consecutive unused addresses allowed
-     * @return Created wallet
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.Wallet> createRestore(
@@ -55,17 +47,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Create and restore a wallet from a mnemonic sentence or account public key.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet">#postWallet</a>
-     *
-     * @param name wallet's name
-     * @param passphrase A master passphrase to lock and protect the wallet for sensitive operation (e.g. sending funds)
-     * @param mnemonicWordList A list of mnemonic words [ 15 .. 24 ] items ( can be generated using https://iancoleman.io/bip39> )
-     * @param mnemonicSecondFactor A passphrase used to encrypt the mnemonic sentence. [ 9 .. 12 ] items
-     * @param addressPoolGap An optional number of consecutive unused addresses allowed
-     * @return Created wallet
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
-     *
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.Wallet> createRestore(
@@ -88,18 +70,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Create and send transaction from the wallet.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction">#postTransaction</a>
-     *
-     * @param fromWalletId wallet's id
-     * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
-     * @param payments A list of target outputs ( address, amount )
-     * @param withdrawal nullable, when provided, instruments the server to automatically withdraw rewards from the source
-     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
-     *                   as they cost).
-     * @param metadata   Extra application data attached to the transaction.
-     * @return created transaction
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
    @Override
    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
@@ -117,14 +88,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Create and send transaction from the wallet.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction">#postTransaction</a>
-     *
-     * @param fromWalletId wallet's id
-     * @param passphrase The wallet's master passphrase. [ 0 .. 255 ] characters
-     * @param payments A list of target outputs ( address, amount )
-     * @return created transaction
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
@@ -137,12 +101,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Get wallet details by id
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getWallet">#getWallet</a>
-     *
-     * @param fromWalletId wallet's id
-     * @return wallet
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.Wallet> getWallet(
@@ -153,12 +112,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Delete wallet by id
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteWallet">#deleteWallet</a>
-     *
-     * @param fromWalletId wallet's id
-     * @return void
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<Void> deleteWallet(
@@ -169,12 +123,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Get transaction by id.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getTransaction">#getTransaction</a>
-     *
-     * @param walletId wallet's id
-     * @param transactionId transaction's id
-     * @return get transaction request
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
@@ -185,14 +134,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
-     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
-     * is lower than at least 90% of the fees observed.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
-     *
-     * @param walletId wallet's id
-     * @param payments A list of target outputs ( address, amount )
-     * @return estimatedfee response
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
@@ -201,19 +143,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
-     * distribution of their fees. The estimated_max is the highest fee observed, and the estimated_min is the fee which
-     * is lower than at least 90% of the fees observed.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransactionFee">#estimateFee</a>
-     *
-     * @param walletId wallet's id
-     * @param payments A list of target outputs ( address, amount )
-     * @param withdrawal nullable, when provided, instruments the server to automatically withdraw rewards from the source
-     *                   wallet when they are deemed sufficient (i.e. they contribute to the balance for at least as much
-     *                   as they cost).
-     * @param metadata  Extra application data attached to the transaction.
-     * @return estimated fee response
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
@@ -229,13 +159,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Select coins to cover the given set of payments.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Coin-Selections">#CoinSelections</a>
-     *
-     * @param walletId wallet's id
-     * @param payments A list of target outputs ( address, amount )
-     * @return fund payments
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
@@ -246,14 +170,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * list of known addresses, ordered from newest to oldest
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>
-     *
-     *
-     * @param walletId wallet's id
-     * @param addressFilter addresses state: used, unused
-     * @return list of wallet's addresses
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
@@ -270,12 +187,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * list of known addresses, ordered from newest to oldest
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses">#Addresses</a>
-     *
-     * @param walletId wallet's id
-     * @return list of wallet's addresses
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
@@ -284,12 +196,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Lists all incoming and outgoing wallet's transactions.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions">#listTransactions</a>
-     *
-     * @param builder ListTransactionsParamBuilder
-     * @return list of wallet's transactions
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<List<CardanoApiCodec.CreateTransactionResponse>> listTransactions(
@@ -305,11 +212,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * list of known wallets, ordered from oldest to newest.
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listWallets">#listWallets</a>
-     *
-     * @return wallets's list
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<List<CardanoApiCodec.Wallet>> listWallets() throws CardanoApiException {
@@ -319,13 +222,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Update Passphrase
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase">#putWalletPassphrase</a>
-     * @param walletId wallet's id
-     * @param oldPassphrase current passphrase
-     * @param newPassphrase new passphrase
-     * @return void
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<Void> updatePassphrase(
@@ -337,11 +234,7 @@ public class CardanoApiImpl implements CardanoApi {
     }
 
     /**
-     * Gives network information
-     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation">#getNetworkInformation</a>
-     *
-     * @return network info
-     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     * {@inheritDoc}
      */
     @Override
     public CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException {
