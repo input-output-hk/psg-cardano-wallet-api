@@ -356,6 +356,7 @@ object CardanoApiCodec {
                                         amount: QuantityUnit,
                                         insertedAt: Option[TimedBlock],
                                         pendingSince: Option[TimedBlock],
+                                        expiresAt: Option[TimedBlock],
                                         depth: Option[QuantityUnit],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],

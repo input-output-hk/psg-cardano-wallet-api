@@ -300,4 +300,5 @@ trait CardanoApi {
    */
   def postExternalTransaction(binary: String): CardanoApiRequest[PostExternalTransactionResponse]
 
+  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String])
 }
