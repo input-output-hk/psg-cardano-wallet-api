@@ -295,7 +295,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.inspectWalletAddress,
       CmdLine.address, unusedAddr
     )
-    assert(results.exists(_.contains("Shelley")), "missing address_style")
+    assert(results.exists(_.contains("address_style")), "missing address_style")
   }
 
   "The Cmd Lines -getUTxO" should "get UTxOs statistics" in new TestWalletFixture(walletNum = 1){
