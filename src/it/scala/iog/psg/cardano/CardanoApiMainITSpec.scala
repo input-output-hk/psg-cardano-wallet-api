@@ -280,7 +280,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.inspectWalletAddress,
       CmdLine.address, unusedAddr
     )
-    assert(results.exists(_.contains("Shelley")), "address_style")
+    assert(results.exists(_.contains("Shelley")), "missing address_style")
   }
 
   "The Cmd Lines -getUTxO" should "get UTxOs statistics" in new TestWalletFixture(walletNum = 1){
@@ -288,7 +288,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.getUTxOsStatistics,
       CmdLine.walletId, testWalletId
     )
-    assert(results.exists(_.contains("distribution")), "UTxOs distribution across the whole wallet")
+    assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
   }
 
   "The Cmd Line --help" should "show possible commands" in {
@@ -372,7 +372,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   it should "show -netClockInfo help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.netClockInfo)
-    println(results.mkString("\n").stripMargin.trim)
     results.mkString("\n").stripMargin.trim shouldBe """ Show network clock information
                                                        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock ]
                                                        |

@@ -297,8 +297,6 @@ trait InMemoryCardanoApi {
         case (r"wallets/.+/transactions/.+", HttpMethods.GET) => notFound("Transaction not found")
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
         case (s"addresses/${addressToInspect.id}", HttpMethods.GET) =>
-          //println("apiAddress: "+apiAddress)
-          //println("addressToInspect: "+addressToInspect)
           request.mapper(httpEntityFromJson("address_inspect.json"))
         case (r"addresses/.+", _)                             => notFound("Addresses not found")
         case _                                                => notFound("Not found")

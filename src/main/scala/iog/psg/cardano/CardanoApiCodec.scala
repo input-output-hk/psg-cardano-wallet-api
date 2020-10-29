@@ -172,15 +172,15 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true) final case class Pointer(slotNum: Long, transactionIndex: Long, outputIndex: Long)
 
   @ConfiguredJsonCodec(decodeOnly = true) final case class WalletAddress(
-                                  addressStyle: String,
-                                  stakeReference: String,
-                                  networkTag: Long,
-                                  spendingKeyHash: String,
-                                  stakeKeyHash: String,
-                                  scriptHash: Option[String],
-                                  pointer: Option[Pointer],
-                                  addressRoot: Option[String],
-                                  derivationPath: Option[String])
+                                                                          addressStyle: String,
+                                                                          stakeReference: String,
+                                                                          networkTag: Long,
+                                                                          spendingKeyHash: String,
+                                                                          stakeKeyHash: String,
+                                                                          scriptHash: Option[String],
+                                                                          pointer: Option[Pointer],
+                                                                          addressRoot: Option[String],
+                                                                          derivationPath: Option[String])
 
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
@@ -235,24 +235,24 @@ object CardanoApiCodec {
                         )
 
   @ConfiguredJsonCodec
-  case class NetworkClock(
-                          status: String,
-                          offset: QuantityUnit
-                        )
+  final case class NetworkClock(
+                                 status: String,
+                                 offset: QuantityUnit
+                               )
 
   @ConfiguredJsonCodec
-  case class NetworkParameters(
-                                genesisBlockHash: String,
-                                blockchain_start_time: ZonedDateTime,
-                                slotLength: QuantityUnit,
-                                epochLength: QuantityUnit,
-                                epochStability: QuantityUnit,
-                                activeSlotCoefficient: QuantityUnit,
-                                decentralizationLevel: QuantityUnit,
-                                desiredPoolNumber: Long,
-                                minimumUtxoValue: QuantityUnit,
-                                hardforkAt: NextEpoch
-                              )
+  final case class NetworkParameters(
+                                      genesisBlockHash: String,
+                                      blockchain_start_time: ZonedDateTime,
+                                      slotLength: QuantityUnit,
+                                      epochLength: QuantityUnit,
+                                      epochStability: QuantityUnit,
+                                      activeSlotCoefficient: QuantityUnit,
+                                      decentralizationLevel: QuantityUnit,
+                                      desiredPoolNumber: Long,
+                                      minimumUtxoValue: QuantityUnit,
+                                      hardforkAt: NextEpoch
+                                    )
 
   @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateRestore(
@@ -381,11 +381,7 @@ object CardanoApiCodec {
                    )
 
   @ConfiguredJsonCodec
-  case class UTxOStatistics(
-    total: QuantityUnit,
-    scale: String,
-    distribution: Map[String, Long]
-                           )
+  final case class UTxOStatistics(total: QuantityUnit, scale: String, distribution: Map[String, Long])
 
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
@@ -455,10 +451,7 @@ object CardanoApiCodec {
     = to[Seq[WalletAddressId]](Unmarshal(_).to[CardanoApiResponse[Seq[WalletAddressId]]])
 
     def toWalletAddress: Future[CardanoApiResponse[WalletAddress]]
-    = to[WalletAddress]({ strict =>
-      println(strict.getData().utf8String)
-      Unmarshal(strict).to[CardanoApiResponse[WalletAddress]]
-    })
+    = to[WalletAddress](Unmarshal(_).to[CardanoApiResponse[WalletAddress]])
 
     def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
     = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])

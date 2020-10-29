@@ -167,7 +167,6 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
 
   it should "update wallet 2 name" in new TestWalletFixture(1){
     val newName = s"${testWalletName}_updated"
-    println("testWalletId: "+testWalletId)
     sut.updateWalletName(testWalletId, newName) shouldBe newName
   }
 
