@@ -75,11 +75,15 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
 
+  private def decodeUnit(c: HCursor): Either[DecodingFailure, CardanoApiCodec.Units.Value] = for {
+    unitsStr <- c.downField("unit").as[String]
+    units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+  } yield units
+
   private[cardano] implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] = (c: HCursor) => {
     for {
       quantity <- c.downField("quantity").as[Long]
-      unitsStr <- c.downField("unit").as[String]
-      units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+      units <- decodeUnit(c)
     } yield {
       QuantityUnit(quantity, units)
     }
@@ -88,8 +92,7 @@ object CardanoApiCodec {
   private[cardano] implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] = (c: HCursor) => {
     for {
       quantity <- c.downField("quantity").as[Double]
-      unitsStr <- c.downField("unit").as[String]
-      units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+      units <- decodeUnit(c)
     } yield {
       QuantityUnit(quantity, units)
     }
