@@ -20,7 +20,7 @@ class CardanoApiSpec
     with JsonFiles
     with CustomPatienceConfiguration {
 
-  lazy val api = new CardanoApi(baseUrl)
+  lazy val api = CardanoApi(baseUrl)
 
   private val walletNotFoundError = ErrorMessage(s"Wallet not found", "404")
 

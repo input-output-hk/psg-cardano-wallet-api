@@ -1,38 +1,15 @@
 package iog.psg.cardano.jpi;
 
 import iog.psg.cardano.CardanoApiCodec;
-import scala.Enumeration;
-import scala.Some;
-import scala.jdk.javaapi.CollectionConverters;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-
-public class CardanoApi {
-
-    private final iog.psg.cardano.CardanoApi api;
-    private final HelpExecute helpExecute;
-
-    private CardanoApi() {
-        helpExecute = null;
-        api = null;
-    }
-
-    /**
-     * CardanoApi constructor
-     *
-     * @param api iog.psg.cardano.CardanoApi instance
-     * @param helpExecute og.psg.cardano.jpi.HelpExecute instance
-     */
-    public CardanoApi(iog.psg.cardano.CardanoApi api, HelpExecute helpExecute) {
-        this.helpExecute = helpExecute;
-        this.api = api;
-        Objects.requireNonNull(api, "Api cannot be null");
-        Objects.requireNonNull(helpExecute, "HelpExecute cannot be null");
-    }
+/**
+ * Defines the API which wraps the Cardano API, depends on CardanoApiCodec for it's implementation,
+ * so clients will import the Codec also.
+ */
+public interface CardanoApi {
 
     /**
      * Create and restore a wallet from a mnemonic sentence or account public key.
@@ -45,13 +22,11 @@ public class CardanoApi {
      * @return Created wallet
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.Wallet> createRestore(
+    CompletionStage<CardanoApiCodec.Wallet> createRestore(
             String name,
             String passphrase,
             List<String> mnemonicWordList,
-            int addressPoolGap) throws CardanoApiException {
-        return createRestore(name, passphrase, mnemonicWordList, null, addressPoolGap);
-    }
+            int addressPoolGap) throws CardanoApiException;
 
     /**
      * Create and restore a wallet from a mnemonic sentence or account public key.
@@ -66,24 +41,12 @@ public class CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      *
      */
-    public CompletionStage<CardanoApiCodec.Wallet> createRestore(
+    CompletionStage<CardanoApiCodec.Wallet> createRestore(
             String name,
             String passphrase,
             List<String> mnemonicWordList,
             List<String> mnemonicSecondFactor,
-            int addressPoolGap) throws CardanoApiException {
-        CardanoApiCodec.MnemonicSentence mnem = createMnemonic(mnemonicWordList);
-
-        Optional<CardanoApiCodec.MnemonicSentence> mnemonicSecondaryFactorOpt = Optional.empty();
-        if (mnemonicSecondFactor != null) {
-            CardanoApiCodec.MnemonicSentence mnemonicSentence = createMnemonicSecondary(mnemonicSecondFactor);
-            mnemonicSecondaryFactorOpt = Optional.of(mnemonicSentence);
-        }
-
-        return helpExecute.execute(
-                api.createRestoreWallet(name, passphrase, mnem, option(mnemonicSecondaryFactorOpt), option(addressPoolGap))
-        );
-    }
+            int addressPoolGap) throws CardanoApiException;
 
     /**
      * Create and send transaction from the wallet.
@@ -99,19 +62,13 @@ public class CardanoApi {
      * @return created transaction
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-   public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
+    CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
             List<CardanoApiCodec.Payment> payments,
             CardanoApiCodec.TxMetadataIn metadata,
             String withdrawal
-            ) throws CardanoApiException {
-
-        return helpExecute.execute(api.createTransaction(fromWalletId, passphrase,
-                new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                option(metadata),
-                option(withdrawal)));
-    }
+    ) throws CardanoApiException;
 
     /**
      * Create and send transaction from the wallet.
@@ -123,14 +80,11 @@ public class CardanoApi {
      * @return created transaction
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
+    CompletionStage<CardanoApiCodec.CreateTransactionResponse> createTransaction(
             String fromWalletId,
             String passphrase,
             List<CardanoApiCodec.Payment> payments
-            ) throws CardanoApiException {
-
-        return createTransaction(fromWalletId, passphrase, payments, null, "self");
-    }
+    ) throws CardanoApiException;
 
     /**
      * Get wallet details by id
@@ -140,12 +94,8 @@ public class CardanoApi {
      * @return wallet
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.Wallet> getWallet(
-            String fromWalletId) throws CardanoApiException {
-
-        return helpExecute.execute(
-                api.getWallet(fromWalletId));
-    }
+    CompletionStage<CardanoApiCodec.Wallet> getWallet(
+            String fromWalletId) throws CardanoApiException;
 
     /**
      * Delete wallet by id
@@ -155,12 +105,8 @@ public class CardanoApi {
      * @return void
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<Void> deleteWallet(
-            String fromWalletId) throws CardanoApiException {
-
-        return helpExecute.execute(
-                api.deleteWallet(fromWalletId)).thenApply(x -> null);
-    }
+    CompletionStage<Void> deleteWallet(
+            String fromWalletId) throws CardanoApiException;
 
     /**
      * Get transaction by id.
@@ -170,12 +116,8 @@ public class CardanoApi {
      * @param transactionId transaction's id
      * @return get transaction request
      */
-    public CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
-            String walletId, String transactionId) throws CardanoApiException {
-
-        return helpExecute.execute(
-                api.getTransaction(walletId, transactionId));
-    }
+    CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
+            String walletId, String transactionId) throws CardanoApiException;
 
     /**
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
@@ -187,10 +129,8 @@ public class CardanoApi {
      * @param payments A list of target outputs ( address, amount )
      * @return estimatedfee response
      */
-    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
-            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
-        return estimateFee(walletId, payments, "self", null);
-    }
+    CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
+            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException;
 
     /**
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
@@ -207,17 +147,11 @@ public class CardanoApi {
      * @return estimated fee response
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
+    CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId,
             List<CardanoApiCodec.Payment> payments,
             String withdrawal,
-            CardanoApiCodec.TxMetadataIn metadata) throws CardanoApiException {
-
-        return helpExecute.execute(
-                api.estimateFee(walletId,
-                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq()),
-                        option(withdrawal), option(metadata)));
-    }
+            CardanoApiCodec.TxMetadataIn metadata) throws CardanoApiException;
 
     /**
      * Select coins to cover the given set of payments.
@@ -228,12 +162,8 @@ public class CardanoApi {
      * @return fund payments
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
-            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
-        return helpExecute.execute(
-                api.fundPayments(walletId,
-                        new CardanoApiCodec.Payments(CollectionConverters.asScala(payments).toSeq())));
-    }
+    CompletionStage<CardanoApiCodec.FundPaymentsResponse> fundPayments(
+            String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException;
 
     /**
      * list of known addresses, ordered from newest to oldest
@@ -245,18 +175,8 @@ public class CardanoApi {
      * @return list of wallet's addresses
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
-            String walletId, AddressFilter addressFilter) throws CardanoApiException {
-
-        Optional<Enumeration.Value> addressFilterOpt = Optional.empty();
-        if (addressFilter != null) {
-            Enumeration.Value v = CardanoApiCodec.AddressFilter$.MODULE$.Value(addressFilter.name().toLowerCase());
-            addressFilterOpt = Optional.of(v);
-        }
-
-        return helpExecute.execute(
-                api.listAddresses(walletId, option(addressFilterOpt))).thenApply(CollectionConverters::asJava);
-    }
+    CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
+            String walletId, AddressFilter addressFilter) throws CardanoApiException;
 
     /**
      * list of known addresses, ordered from newest to oldest
@@ -266,10 +186,8 @@ public class CardanoApi {
      * @return list of wallet's addresses
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
-            String walletId) throws CardanoApiException {
-        return listAddresses(walletId, null);
-    }
+    CompletionStage<List<CardanoApiCodec.WalletAddressId>> listAddresses(
+            String walletId) throws CardanoApiException;
 
     /**
      * Lists all incoming and outgoing wallet's transactions.
@@ -279,17 +197,8 @@ public class CardanoApi {
      * @return list of wallet's transactions
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<List<CardanoApiCodec.CreateTransactionResponse>> listTransactions(
-            ListTransactionsParamBuilder builder) throws CardanoApiException {
-        return helpExecute.execute(
-                api.listTransactions(
-                        builder.getWalletId(),
-                        option(builder.getStartTime()),
-                        option(builder.getEndTime()),
-                        builder.getOrder(),
-                        option(builder.getMinwithdrawal())))
-                .thenApply(CollectionConverters::asJava);
-    }
+    CompletionStage<List<CardanoApiCodec.CreateTransactionResponse>> listTransactions(
+            ListTransactionsParamBuilder builder) throws CardanoApiException;
 
     /**
      * list of known wallets, ordered from oldest to newest.
@@ -298,11 +207,7 @@ public class CardanoApi {
      * @return wallets's list
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<List<CardanoApiCodec.Wallet>> listWallets() throws CardanoApiException {
-        return helpExecute.execute(
-                api.listWallets())
-                .thenApply(CollectionConverters::asJava);
-    }
+    CompletionStage<List<CardanoApiCodec.Wallet>> listWallets() throws CardanoApiException;
 
     /**
      * Update Passphrase
@@ -313,13 +218,10 @@ public class CardanoApi {
      * @return void
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<Void> updatePassphrase(
+    CompletionStage<Void> updatePassphrase(
             String walletId,
             String oldPassphrase,
-            String newPassphrase) throws CardanoApiException {
-
-        return helpExecute.execute(api.updatePassphrase(walletId, oldPassphrase, newPassphrase)).thenApply(x -> null);
-    }
+            String newPassphrase) throws CardanoApiException;
 
     /**
      * Gives network information
@@ -328,28 +230,5 @@ public class CardanoApi {
      * @return network info
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    public CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException {
-        return helpExecute.execute(api.networkInfo());
-    }
-
-    private static <T> scala.Option<T> option(final T value) {
-        return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
-    }
-
-    private static <T> scala.Option<T> option(final Optional<T> value) {
-        return value.map(CardanoApi::option).orElse(scala.Option.apply((T) null));
-    }
-
-    private static CardanoApiCodec.GenericMnemonicSentence createMnemonic(List<String> wordList) {
-        return new CardanoApiCodec.GenericMnemonicSentence(
-                CollectionConverters.asScala(wordList).toIndexedSeq()
-        );
-    }
-
-    private static CardanoApiCodec.GenericMnemonicSecondaryFactor createMnemonicSecondary(List<String> wordList) {
-        return new CardanoApiCodec.GenericMnemonicSecondaryFactor(
-                CollectionConverters.asScala(wordList).toIndexedSeq()
-        );
-    }
-
+    CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException;
 }
