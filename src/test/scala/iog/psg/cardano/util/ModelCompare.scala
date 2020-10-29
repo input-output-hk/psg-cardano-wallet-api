@@ -77,7 +77,7 @@ trait ModelCompare extends Matchers {
     compareQuantityUnitOpts(decoded.syncProgress.progress, expected.syncProgress.progress)
   }
 
-  final def compareQuantityUnitOpts(decoded: Option[QuantityUnit], expected: Option[QuantityUnit]): Assertion = {
+  final def compareQuantityUnitOpts[T](decoded: Option[QuantityUnit[T]], expected: Option[QuantityUnit[T]]): Assertion = {
     if (decoded.isEmpty && expected.isEmpty) assert(true)
     else (for {
       decodedQU <- decoded
@@ -85,7 +85,7 @@ trait ModelCompare extends Matchers {
     } yield compareQuantityUnit(decodedQU, expectedQU)).getOrElse(assert(false, "one of units is none"))
   }
 
-  final def compareQuantityUnit(decoded: QuantityUnit, expected: QuantityUnit): Assertion = {
+  final def compareQuantityUnit[T](decoded: QuantityUnit[T], expected: QuantityUnit[T]): Assertion = {
     decoded.unit.toString shouldBe expected.unit.toString
     decoded.quantity shouldBe expected.quantity
   }

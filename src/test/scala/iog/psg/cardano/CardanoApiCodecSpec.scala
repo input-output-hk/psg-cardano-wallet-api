@@ -77,8 +77,8 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
   }
 
   "Quantity" should "be decoded to Long" in {
-    val decodedQU = decode[QuantityUnit]("""{"quantity":123.45,"unit":"lovelace"}""")
-    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123
+    val decodedQU = decode[QuantityUnit[Double]]("""{"quantity":123.45,"unit":"lovelace"}""")
+    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123.45
   }
 
 }
