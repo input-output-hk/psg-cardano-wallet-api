@@ -272,6 +272,21 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     val foundTx = resultsListWalletTxs.exists(_.contains(txId))
     assert(foundTx, s"Couldn't find txId $txId in transactions ")
+
+    val resultDelete = runCmdLine(
+      CmdLine.deleteTx,
+      CmdLine.txId, txId,
+      CmdLine.walletId, testWalletId
+    )
+
+    val resultsListWalletTxsAfterDelete = runCmdLine(
+      CmdLine.listWalletTransactions,
+      CmdLine.start, preTxTime.toString,
+      CmdLine.`end`, postTxTime.toString,
+      CmdLine.walletId, testWalletId)
+
+    val notFoundTx = !resultsListWalletTxsAfterDelete.exists(_.contains(txId))
+    assert(notFoundTx, s"txId $txId not deleted")
   }
 
   "The Cmd Lines -inspectAddress" should "inspect address" in new TestWalletFixture(walletNum = 1){
