@@ -299,7 +299,7 @@ public interface CardanoApi {
 
     /**
      * Return the UTxOs distribution across the whole wallet, in the form of a histogram
-     * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics #getUTxOsStatistics]]
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics">#getUTxOsStatistics</a>
      *
      * @param walletId wallet's id
      * @return get UTxOs statistics request
