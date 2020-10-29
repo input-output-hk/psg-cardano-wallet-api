@@ -281,15 +281,11 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.walletId, testWalletId
     )
 
-    println("resultDelete: "+resultDelete)
-
     val resultsListWalletTxsAfterDelete = runCmdLine(
       CmdLine.listWalletTransactions,
       CmdLine.start, preTxTime.toString,
       CmdLine.`end`, postTxTime.toString,
       CmdLine.walletId, testWalletId)
-
-    println("resultsListWalletTxsAfterDelete: "+resultsListWalletTxsAfterDelete)
 
     val notFoundTx = !resultsListWalletTxsAfterDelete.exists(_.contains(txId))
     assert(notFoundTx, s"txId $txId not deleted")
