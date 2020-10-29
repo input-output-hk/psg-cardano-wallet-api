@@ -5,7 +5,6 @@ on:
     branches:
       - master
       - develop
-      - task/PSGS-57-missing-apis-proxy
   pull_request:
     branches:
       - master
