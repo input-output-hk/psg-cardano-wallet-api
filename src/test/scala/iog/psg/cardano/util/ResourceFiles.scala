@@ -16,13 +16,8 @@ trait ResourceFiles { self: Assertions =>
 
   final lazy val txRawContent = getFileContent("tx.raw")
 
-  final def getJsonFromFile(file: String): String = {
-    /*val source = Source.fromURL(getClass.getResource(s"/jsons/$file"))
-    val jsonStr = source.mkString
-    source.close()
-    jsonStr*/
+  final def getJsonFromFile(file: String): String =
     getFileContent(s"jsons/$file")
-  }
 
   final def decodeJsonFile[T](file: String)(implicit dec: Decoder[T]): T = {
     val jsonStr = getJsonFromFile(file)
