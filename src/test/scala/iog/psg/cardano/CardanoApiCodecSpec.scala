@@ -76,9 +76,24 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
     b.asJson.noSpaces shouldBe """{"slot_number":1,"epoch_number":2,"height":{"quantity":42000000,"unit":"lovelace"}}"""
   }
 
-  "Quantity" should "be decoded to Long" in {
+  "Quantity" should "be decoded to Double" in {
     val decodedQU = decode[QuantityUnit[Double]]("""{"quantity":123.45,"unit":"lovelace"}""")
     decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123.45
+  }
+
+  it should "be decoded to Long" in {
+    val decodedQU = decode[QuantityUnit[Long]]("""{"quantity":123,"unit":"lovelace"}""")
+    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123
+  }
+
+  it should "be encoded to Double" in {
+    val qu = QuantityUnit(123.45, Units.lovelace)
+    qu.asJson.noSpaces shouldBe """{"quantity":123.45,"unit":"lovelace"}"""
+  }
+
+  it should "be encoded to Long" in {
+    val qu = QuantityUnit(123, Units.lovelace)
+    qu.asJson.noSpaces shouldBe """{"quantity":123,"unit":"lovelace"}"""
   }
 
 }

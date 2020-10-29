@@ -279,10 +279,7 @@ object CardanoApiCodec {
     val inLedger = Value("in_ledger")
   }
 
-  final case class QuantityUnit[T] private(
-                           quantity: T,
-                           unit: Units
-                         )
+  @ConfiguredJsonCodec(encodeOnly = true) final case class QuantityUnit[T] private(quantity: T, unit: Units)
 
   object QuantityUnit {
     def apply(quantity: Long, unit: Units): QuantityUnit[Long] = new QuantityUnit(quantity, unit)

@@ -87,7 +87,7 @@ public class JpiResponseCheck {
 
     }
 
-    public CardanoApiCodec.CreateTransactionResponse paymentToSelf(String wallet1Id, String passphrase, int amountToTransfer, Map<String, String> metadata) throws Exception {
+    public CardanoApiCodec.CreateTransactionResponse paymentToSelf(String wallet1Id, String passphrase, long amountToTransfer, Map<String, String> metadata) throws Exception {
 
         Map<Long, String> metadataLongKey = new HashMap();
         metadata.forEach((k,v) -> {
