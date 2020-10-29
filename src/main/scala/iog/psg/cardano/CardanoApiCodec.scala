@@ -75,28 +75,19 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
 
-  private def decodeUnit(c: HCursor): Either[DecodingFailure, CardanoApiCodec.Units.Value] = for {
+  private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
+    quantity <- c.downField("quantity").as[T]
     unitsStr <- c.downField("unit").as[String]
     units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
-  } yield units
-
-  private[cardano] implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] = (c: HCursor) => {
-    for {
-      quantity <- c.downField("quantity").as[Long]
-      units <- decodeUnit(c)
-    } yield {
-      QuantityUnit(quantity, units)
-    }
+  } yield {
+    QuantityUnit(quantity, units)
   }
 
-  private[cardano] implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] = (c: HCursor) => {
-    for {
-      quantity <- c.downField("quantity").as[Double]
-      units <- decodeUnit(c)
-    } yield {
-      QuantityUnit(quantity, units)
-    }
-  }
+  private[cardano] implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] =
+    (c: HCursor) => decodeQuantityUnit[Long](c)
+
+  private[cardano] implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] =
+    (c: HCursor) => decodeQuantityUnit[Double](c)
 
   sealed trait MetadataValue
 
