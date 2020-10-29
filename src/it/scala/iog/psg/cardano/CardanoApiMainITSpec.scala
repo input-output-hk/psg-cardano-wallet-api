@@ -281,11 +281,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.walletId, testWalletId
     )
 
+    println("resultDelete: "+resultDelete)
+
     val resultsListWalletTxsAfterDelete = runCmdLine(
       CmdLine.listWalletTransactions,
       CmdLine.start, preTxTime.toString,
       CmdLine.`end`, postTxTime.toString,
       CmdLine.walletId, testWalletId)
+
+    println("resultsListWalletTxsAfterDelete: "+resultsListWalletTxsAfterDelete)
 
     val notFoundTx = !resultsListWalletTxsAfterDelete.exists(_.contains(txId))
     assert(notFoundTx, s"txId $txId not deleted")
@@ -308,16 +312,16 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
   }
 
-  "The Cmd Lines -postExternalTransaction" should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
+  //"The Cmd Lines -postExternalTransaction"
+  ignore should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
     val source = Source.fromURL(getClass.getResource("/tx.raw"))
     val binary = source.mkString
     source.close()
 
     val results = runCmdLine(
       CmdLine.postExternalTransaction,
-      CmdLine.binary, "binary"
+      CmdLine.binary, binary
     )
-    println("results: "+results)
     assert(results.exists(_.contains("id")), "UTxOs distribution across the whole wallet")
   }
 
@@ -358,7 +362,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
         | -getTx -walletId <walletId> -txId <txId>
         | -getUTxO -walletId <walletId>
-        | -postExternalTransaction -binary <binary_string>""".stripMargin
+        | -postExternalTransaction -binary <binary_string> ( experimental )""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -614,7 +618,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   it should "show postExternalTransaction help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.postExternalTransaction)
     results.mkString("\n").stripMargin.trim shouldBe
-      """ Submits a transaction that was created and signed outside of cardano-wallet
+      """ Submits a transaction that was created and signed outside of cardano-wallet ( experimental )
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction ]
         |
         | Arguments: -binary <binary>

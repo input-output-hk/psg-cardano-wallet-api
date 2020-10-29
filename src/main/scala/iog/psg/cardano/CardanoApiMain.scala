@@ -311,7 +311,7 @@ object CardanoApiMain {
       trace(" "+cmdLineFundTx)
       trace(" "+cmdLineGetTx)
       trace(" "+cmdLineGetUTxOsStatistics)
-      trace(" "+cmdLinePostExternalTransaction)
+      trace(" "+cmdLinePostExternalTransaction+" ( experimental )")
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -523,7 +523,7 @@ object CardanoApiMain {
         case CmdLine.postExternalTransaction =>
           beautifyTrace(
             arguments = s"${CmdLine.binary} <binary>",
-            description = "Submits a transaction that was created and signed outside of cardano-wallet",
+            description = "Submits a transaction that was created and signed outside of cardano-wallet ( experimental )",
             apiDocOperation = "postExternalTransaction",
             examples = List(
               s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
