@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
+import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
@@ -21,7 +22,7 @@ class CardanoJpiSpec
     with ScalaFutures
     with InMemoryCardanoApi
     with DummyModel
-    with JsonFiles {
+    with ResourceFiles {
 
   lazy val api = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
 
@@ -250,6 +251,14 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.getUTxOsStatistics("invalid_address_id")) shouldBe walletNotFoundError
   }
 
+  "POST /proxy/transactions" should "submit a transaction that was created and signed outside of cardano-wallet" in {
+    api.postExternalTransaction(txRawContent).toCompletableFuture.get() shouldBe jsonFileProxyTransactionResponse
+  }
+
+  it should "fail on invalid request body" in {
+    tryGetErrorMessage(api.postExternalTransaction("1234567890")) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid binary string, Code: 400"
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as
@@ -259,7 +268,7 @@ class CardanoJpiSpec
     with ScalaFutures
     with InMemoryCardanoApi
     with DummyModel
-    with JsonFiles {
+    with ResourceFiles {
     override implicit val as: ActorSystem = getCurrentSpecAS
     lazy val customApi: jpi.CardanoApi = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
   }

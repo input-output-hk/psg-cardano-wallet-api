@@ -291,4 +291,13 @@ trait CardanoApi {
    */
   def getUTxOsStatistics(walletId: String): CardanoApiRequest[UTxOStatistics]
 
+  /**
+   * Submits a transaction that was created and signed outside of cardano-wallet.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction #postExternalTransaction]]
+   *
+   * @param binary message binary blob string
+   * @return post external transaction request
+   */
+  def postExternalTransaction(binary: String): CardanoApiRequest[PostExternalTransactionResponse]
+
 }

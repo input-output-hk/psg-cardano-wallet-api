@@ -307,4 +307,13 @@ public interface CardanoApi {
      */
     CompletionStage<CardanoApiCodec.UTxOStatistics> getUTxOsStatistics(String walletId) throws CardanoApiException;
 
+    /**
+     * Submits a transaction that was created and signed outside of cardano-wallet.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction">#postExternalTransaction</a>
+     *
+     * @param binary message binary blob string
+     * @return post external transaction request
+     */
+    CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException;
+
 }

@@ -12,7 +12,7 @@ import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.generic.extras._
+import io.circe.generic.extras.{ConfiguredJsonCodec, _}
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
 import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
@@ -383,6 +383,9 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec
   final case class UTxOStatistics(total: QuantityUnit, scale: String, distribution: Map[String, Long])
 
+  @ConfiguredJsonCodec
+  final case class PostExternalTransactionResponse(id: String)
+
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
   }
@@ -467,6 +470,9 @@ object CardanoApiCodec {
 
     def toUTxOStatisticsResponse: Future[CardanoApiResponse[UTxOStatistics]] =
       to[UTxOStatistics](Unmarshal(_).to[CardanoApiResponse[UTxOStatistics]])
+
+    def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
+      to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

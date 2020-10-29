@@ -6,6 +6,7 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.util.ByteString
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe.{Json, parser}
@@ -20,7 +21,7 @@ import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait InMemoryCardanoApi {
-  this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
+  this: ScalaFutures with Assertions with ResourceFiles with DummyModel =>
 
   protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
   protected val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "metadata", "withdrawal")
@@ -43,9 +44,11 @@ trait InMemoryCardanoApi {
       }
 
     def executeExpectingErrorOrFail(): ErrorMessage =
-      inMemoryExecutor.execute(req).futureValue  match {
-        case Right(value)  => fail(s"Request should fail: $value")
-        case Left(value) => value
+      inMemoryExecutor.execute(req).futureValue match {
+        case Right(value) =>
+          fail(s"Request should fail: $value")
+        case Left(value) =>
+          value
       }
   }
 
@@ -111,6 +114,12 @@ trait InMemoryCardanoApi {
         val json: String = ErrorMessage(msg, "404").asJson.noSpaces
         val entity = HttpEntity(json)
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
+      }
+
+      def badRequest(msg: String): Future[CardanoApiResponse[T]] = {
+        val json: String = ErrorMessage(msg, "400").asJson.noSpaces
+        val entity = HttpEntity(json)
+        request.mapper(HttpResponse(status = StatusCodes.BadRequest, entity = entity))
       }
 
       def unmarshalJsonBody(): Future[Json] =
@@ -299,6 +308,12 @@ trait InMemoryCardanoApi {
         case (s"addresses/${addressToInspect.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("address_inspect.json"))
         case (r"addresses/.+", _)                             => notFound("Addresses not found")
+        case ("proxy/transactions", HttpMethods.POST) =>
+          for {
+            binaryStr <- request.request.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_.utf8String)
+            resp <- if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
+            else badRequest(s"Invalid binary string")
+          } yield resp
         case _                                                => notFound("Not found")
       }
 

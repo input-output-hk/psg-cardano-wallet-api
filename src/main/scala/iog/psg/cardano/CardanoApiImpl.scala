@@ -1,12 +1,15 @@
 package iog.psg.cardano
 
+import java.io.File
 import java.time.ZonedDateTime
+import java.util.Scanner
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
+import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
@@ -21,6 +24,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   import iog.psg.cardano.CardanoApi._
 
   private val addresses = s"${baseUriWithPort}addresses"
+  private val proxy = s"${baseUriWithPort}proxy"
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
 
@@ -353,6 +357,21 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         method = GET,
       ),
       _.toUTxOStatisticsResponse
+    )
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def postExternalTransaction(binary: String): CardanoApiRequest[PostExternalTransactionResponse] = {
+    val uri = Uri(s"$proxy/transactions")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = POST,
+        entity = HttpEntity(binary).withContentType(ContentTypes.`application/octet-stream`)
+      ),
+      _.toPostExternalTransactionResponse
     )
   }
 

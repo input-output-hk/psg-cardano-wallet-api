@@ -1,8 +1,10 @@
 package iog.psg.cardano
 
+import java.nio.file.Paths
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.CardanoApiCodec.AddressFilter
 import iog.psg.cardano.util._
@@ -16,7 +18,7 @@ class CardanoApiSpec
     with ModelCompare
     with ScalaFutures
     with InMemoryCardanoApi
-    with JsonFiles
+    with ResourceFiles
     with DummyModel
     with CustomPatienceConfiguration {
 
@@ -213,6 +215,14 @@ class CardanoApiSpec
 
   it should "return not found" in {
     api.getUTxOsStatistics("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
+  "POST /proxy/transactions" should "submit a transaction that was created and signed outside of cardano-wallet" in {
+    api.postExternalTransaction(txRawContent).executeOrFail() shouldBe jsonFileProxyTransactionResponse
+  }
+
+  it should "fail on invalid request body" in {
+    api.postExternalTransaction("1234567890").executeExpectingErrorOrFail() shouldBe ErrorMessage("Invalid binary string", "400")
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")

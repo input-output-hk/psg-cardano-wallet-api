@@ -15,6 +15,8 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.io.Source
+
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
@@ -306,6 +308,19 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
   }
 
+  "The Cmd Lines -postExternalTransaction" should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
+    val source = Source.fromURL(getClass.getResource("/tx.raw"))
+    val binary = source.mkString
+    source.close()
+
+    val results = runCmdLine(
+      CmdLine.postExternalTransaction,
+      CmdLine.binary, "binary"
+    )
+    println("results: "+results)
+    assert(results.exists(_.contains("id")), "UTxOs distribution across the whole wallet")
+  }
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
     results.mkString("\n") shouldBe
@@ -342,7 +357,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -deleteTx -walletId <walletId> -txId <txId>
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
         | -getTx -walletId <walletId> -txId <txId>
-        | -getUTxO -walletId <walletId>""".stripMargin
+        | -getUTxO -walletId <walletId>
+        | -postExternalTransaction -binary <binary_string>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -593,6 +609,18 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |
         | Examples:
         | $CMDLINE -getUTxO -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show postExternalTransaction help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.postExternalTransaction)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Submits a transaction that was created and signed outside of cardano-wallet
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction ]
+        |
+        | Arguments: -binary <binary>
+        |
+        | Examples:
+        | $CMDLINE -postExternalTransaction -binary 82839f8200d8185824825820d78b4cf8eb832c2207a9a2c787ec232d2fbf88ad432c05bfae9bff58d756d59800f""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

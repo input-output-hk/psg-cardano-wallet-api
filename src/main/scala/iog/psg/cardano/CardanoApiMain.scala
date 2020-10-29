@@ -56,6 +56,8 @@ object CardanoApiMain {
     val amount = "-amount"
     val address = "-address"
     val getUTxOsStatistics = "-getUTxO"
+    val postExternalTransaction = "-postExternalTransaction"
+    val binary = "-binary"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -216,6 +218,9 @@ object CardanoApiMain {
         } else if (hasArgument(CmdLine.getUTxOsStatistics)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[UTxOStatistics](api.getUTxOsStatistics(walletId).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.postExternalTransaction)) {
+          val binary = arguments.get(CmdLine.binary)
+          unwrap[PostExternalTransactionResponse](api.postExternalTransaction(binary).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -235,6 +240,7 @@ object CardanoApiMain {
   }
 
   private def showHelp(extraParams: List[String])(implicit trace: Trace): Unit = {
+    val exampleBinary = "82839f8200d8185824825820d78b4cf8eb832c2207a9a2c787ec232d2fbf88ad432c05bfae9bff58d756d59800f"
     val exampleWalletId = "1234567890123456789012345678901234567890"
     val exampleTxd = "ABCDEF1234567890"
     val exampleAddress = "addr12345678901234567890123456789012345678901234567890123456789012345678901234567890"
@@ -268,6 +274,7 @@ object CardanoApiMain {
     val cmdLineCreateWallet = s"${CmdLine.createWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineRestoreWallet = s"${CmdLine.restoreWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineGetUTxOsStatistics = s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} <walletId>"
+    val cmdLinePostExternalTransaction = s"${CmdLine.postExternalTransaction} ${CmdLine.binary} <binary_string>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -304,6 +311,7 @@ object CardanoApiMain {
       trace(" "+cmdLineFundTx)
       trace(" "+cmdLineGetTx)
       trace(" "+cmdLineGetUTxOsStatistics)
+      trace(" "+cmdLinePostExternalTransaction)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -510,6 +518,15 @@ object CardanoApiMain {
             apiDocOperation = "getUTxOsStatistics",
             examples = List(
               s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} $exampleWalletId"
+            )
+          )
+        case CmdLine.postExternalTransaction =>
+          beautifyTrace(
+            arguments = s"${CmdLine.binary} <binary>",
+            description = "Submits a transaction that was created and signed outside of cardano-wallet",
+            apiDocOperation = "postExternalTransaction",
+            examples = List(
+              s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
             )
           )
         case cmd => trace(s"$cmd help not supported")

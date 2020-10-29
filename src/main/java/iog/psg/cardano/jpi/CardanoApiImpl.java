@@ -300,6 +300,14 @@ public class CardanoApiImpl implements CardanoApi {
         return helpExecute.execute(api.getUTxOsStatistics(walletId));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException {
+        return helpExecute.execute(api.postExternalTransaction(binary));
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }
