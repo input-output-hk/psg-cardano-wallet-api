@@ -27,6 +27,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   private val proxy = s"${baseUriWithPort}proxy"
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
+  private def generateMigrationsUrl(walletId: String) = s"$wallets/$walletId/migrations"
 
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
@@ -379,12 +380,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
    * @inheritdoc
    */
   override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
-    val uri = Uri(s"$wallets/$walletId/migrations")
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(
         HttpRequest(
-          uri = uri,
+          uri = generateMigrationsUrl(walletId),
           method = POST,
           entity = marshalled
         ),
@@ -396,15 +396,13 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse] = {
-    val uri = Uri(s"$wallets/$walletId/migrations")
+  override def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse] =
     CardanoApiRequest(
       HttpRequest(
-        uri = uri,
+        uri = generateMigrationsUrl(walletId),
         method = GET
       ),
       _.toMigrationCostResponse
     )
-  }
 
 }

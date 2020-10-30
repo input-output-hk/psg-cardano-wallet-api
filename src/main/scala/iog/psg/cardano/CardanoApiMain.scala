@@ -16,15 +16,11 @@ import scala.util.{Failure, Success, Try}
 object CardanoApiMain {
 
   object CmdLine {
-    //TODO group by commands and arguments
+    //Commands
     val help = "-help"
-    val traceToFile = "-trace"
-    val noConsole = "-noConsole"
     val netInfo = "-netInfo"
     val netClockInfo = "-netClockInfo"
     val netParams = "-netParams"
-    val forceNtpCheck = "-forceNtpCheck"
-    val baseUrl = "-baseUrl"
     val listWallets = "-wallets"
     val updateName = "-updateName"
     val deleteWallet = "-deleteWallet"
@@ -32,34 +28,42 @@ object CardanoApiMain {
     val createWallet = "-createWallet"
     val restoreWallet = "-restoreWallet"
     val estimateFee = "-estimateFee"
-    val name = "-name"
     val updatePassphrase = "-updatePassphrase"
+    val listWalletAddresses = "-listAddresses"
+    val inspectWalletAddress = "-inspectAddress"
+    val listWalletTransactions = "-listTxs"
+    val createTx = "-createTx"
+    val fundTx = "-fundTx"
+    val getTx = "-getTx"
+    val deleteTx = "-deleteTx"
+    val getUTxOsStatistics = "-getUTxO"
+    val postExternalTransaction = "-postExternalTransaction"
+    val migrateShelleyWallet = "-migrateShelleyWallet"
+    val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
+
+    //Parameters
+    val baseUrl = "-baseUrl"
+
+    val traceToFile = "-trace"
+    val noConsole = "-noConsole"
+
+    val forceNtpCheck = "-forceNtpCheck"
+    val name = "-name"
     val oldPassphrase = "-oldPassphrase"
     val passphrase = "-passphrase"
     val metadata = "-metadata"
     val mnemonic = "-mnemonic"
     val mnemonicSecondary = "-mnemonicSecondary"
     val addressPoolGap = "-addressPoolGap"
-    val listWalletAddresses = "-listAddresses"
-    val inspectWalletAddress = "-inspectAddress"
-    val listWalletTransactions = "-listTxs"
     val state = "-state"
     val walletId = "-walletId"
     val start = "-start"
     val end = "-end"
     val order = "-order"
     val minWithdrawal = "-minWithdrawal"
-    val createTx = "-createTx"
-    val fundTx = "-fundTx"
-    val getTx = "-getTx"
-    val deleteTx = "-deleteTx"
     val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
-    val getUTxOsStatistics = "-getUTxO"
-    val postExternalTransaction = "-postExternalTransaction"
-    val migrateShelleyWallet = "-migrateShelleyWallet"
-    val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
     val binary = "-binary"
     val addresses = "-addresses"
   }
@@ -135,9 +139,7 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val oldPassphrase = arguments.get(CmdLine.oldPassphrase)
           val newPassphrase = arguments.get(CmdLine.passphrase)
-
           unwrap[Unit](api.updatePassphrase(walletId, oldPassphrase, newPassphrase).executeBlocking, _ => trace("Unit result from update passphrase"))
-
         } else if (hasArgument(CmdLine.updateName)) {
           val walletId = arguments.get(CmdLine.walletId)
           val name = arguments.get(CmdLine.name)
@@ -226,13 +228,11 @@ object CardanoApiMain {
           val binary = arguments.get(CmdLine.binary)
           unwrap[PostExternalTransactionResponse](api.postExternalTransaction(binary).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.migrateShelleyWallet)) {
-          println("----> IN migrateShelleyWallet")
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
-          val addresses = arguments.get(CmdLine.addresses).split(",")
+          val addresses = arguments.get(CmdLine.addresses).split(",").toSeq
           unwrap[Seq[SubmitMigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getShelleyWalletMigrationInfo)) {
-          println("!!!!!! getShelleyWalletMigrationInfo !!!!!")
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[MigrationCostResponse](api.getShelleyWalletMigrationInfo(walletId).executeBlocking, trace(_))
         } else {
