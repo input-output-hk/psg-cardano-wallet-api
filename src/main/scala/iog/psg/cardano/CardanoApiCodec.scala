@@ -75,6 +75,20 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
 
+  private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
+    quantity <- c.downField("quantity").as[T]
+    unitsStr <- c.downField("unit").as[String]
+    units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+  } yield {
+    QuantityUnit(quantity, units)
+  }
+
+  private[cardano] implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] =
+    (c: HCursor) => decodeQuantityUnit[Long](c)
+
+  private[cardano] implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] =
+    (c: HCursor) => decodeQuantityUnit[Double](c)
+
   sealed trait MetadataValue
 
   sealed trait MetadataKey extends MetadataValue
@@ -139,7 +153,7 @@ object CardanoApiCodec {
 
   }
 
-  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
+  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit[Double]])
 
   object SyncState extends Enumeration {
     type SyncState = Value
@@ -161,10 +175,10 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true) final case class NetworkTip(
                                               epochNumber: Long,
                                               slotNumber: Long,
-                                              height: Option[QuantityUnit],
+                                              height: Option[QuantityUnit[Long]],
                                               absoluteSlotNumber: Option[Long])
 
-  @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
+  @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit[Long], slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
@@ -178,7 +192,7 @@ object CardanoApiCodec {
 
   case class Payments(payments: Seq[Payment])
 
-  case class Payment(address: String, amount: QuantityUnit)
+  case class Payment(address: String, amount: QuantityUnit[Long])
 
   @ConfiguredJsonCodec private[cardano] case class UpdatePassphrase(oldPassphrase: String, newPassphrase: String)
 
@@ -259,32 +273,34 @@ object CardanoApiCodec {
     val inLedger = Value("in_ledger")
   }
 
-  case class QuantityUnit(
-                           quantity: Long,
-                           unit: Units
-                         )
+  @ConfiguredJsonCodec(encodeOnly = true) final case class QuantityUnit[T] private(quantity: T, unit: Units)
+
+  object QuantityUnit {
+    def apply(quantity: Long, unit: Units): QuantityUnit[Long] = new QuantityUnit(quantity, unit)
+    def apply(quantity: Double, unit: Units): QuantityUnit[Double] = new QuantityUnit(quantity, unit)
+  }
 
   case class Balance(
-                      available: QuantityUnit,
-                      reward: QuantityUnit,
-                      total: QuantityUnit
+                      available: QuantityUnit[Long],
+                      reward: QuantityUnit[Long],
+                      total: QuantityUnit[Long]
                     )
 
   case class InAddress(
                         address: Option[String],
-                        amount: Option[QuantityUnit],
+                        amount: Option[QuantityUnit[Long]],
                         id: String,
                         index: Int)
 
   case class OutAddress(
                          address: String,
-                         amount: QuantityUnit
+                         amount: QuantityUnit[Long]
                        )
 
   @ConfiguredJsonCodec
   case class StakeAddress(
                            stakeAddress: String,
-                           amount: QuantityUnit
+                           amount: QuantityUnit[Long]
                          )
 
   case class FundPaymentsResponse(
@@ -296,7 +312,7 @@ object CardanoApiCodec {
   case class Block(
                     slotNumber: Int,
                     epochNumber: Int,
-                    height: QuantityUnit,
+                    height: QuantityUnit[Long],
                     absoluteSlotNumber: Option[Long]
                   )
 
@@ -309,17 +325,17 @@ object CardanoApiCodec {
 
   @ConfiguredJsonCodec
   case class EstimateFeeResponse(
-                                  estimatedMin: QuantityUnit,
-                                  estimatedMax: QuantityUnit
+                                  estimatedMin: QuantityUnit[Long],
+                                  estimatedMax: QuantityUnit[Long]
                                 )
 
   @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateTransactionResponse(
                                         id: String,
-                                        amount: QuantityUnit,
+                                        amount: QuantityUnit[Long],
                                         insertedAt: Option[TimedBlock],
                                         pendingSince: Option[TimedBlock],
-                                        depth: Option[QuantityUnit],
+                                        depth: Option[QuantityUnit[Long]],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],
                                         outputs: Seq[OutAddress],
