@@ -259,6 +259,14 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.postExternalTransaction("1234567890")) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid binary string, Code: 400"
   }
 
+  "POST /wallets/{walletId}/migrations" should "submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses" in {
+    api.migrateShelleyWallet(wallet.id, walletPassphrase, unUsedAddresses.map(_.id).asJava).toCompletableFuture.get().asScala shouldBe jsonFileMigrationsResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.migrateShelleyWallet("invalid_address_id", walletPassphrase, unUsedAddresses.map(_.id).asJava)) shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

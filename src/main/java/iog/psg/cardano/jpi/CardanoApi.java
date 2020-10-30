@@ -313,7 +313,20 @@ public interface CardanoApi {
      *
      * @param binary message binary blob string
      * @return post external transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException;
+
+    /**
+     * Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Migrations">#Migrations</a>
+     *
+     * @param walletId wallet's id
+     * @param passphrase wallet's master passphrase
+     * @param addresses recipient addresses
+     * @return migrate shelley wallet request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
 
 }

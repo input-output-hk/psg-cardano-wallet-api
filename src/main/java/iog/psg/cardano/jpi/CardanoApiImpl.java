@@ -3,6 +3,8 @@ package iog.psg.cardano.jpi;
 import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Some;
+import scala.collection.immutable.IndexedSeq;
+import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
 
 import java.util.List;
@@ -306,6 +308,16 @@ public class CardanoApiImpl implements CardanoApi {
     @Override
     public CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException {
         return helpExecute.execute(api.postExternalTransaction(binary));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
+        IndexedSeq<String> addressesList = CollectionConverters.asScala(addresses).toIndexedSeq();
+        CompletionStage<Seq<CardanoApiCodec.SubmitMigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
+        return response.thenApply(CollectionConverters::asJava);
     }
 
     private static <T> scala.Option<T> option(final T value) {

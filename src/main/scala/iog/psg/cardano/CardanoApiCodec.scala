@@ -337,12 +337,20 @@ object CardanoApiCodec {
                     absoluteSlotNumber: Option[Long]
                   )
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class TimedBlock(
                          time: ZonedDateTime,
                          block: Block
                        )
 
+  @ConfiguredJsonCodec
+  final case class TimedFlattenBlock(
+                                      time: ZonedDateTime,
+                                      slotNumber: Int,
+                                      epochNumber: Int,
+                                      height: Option[QuantityUnit],
+                                      absoluteSlotNumber: Option[Long]
+                                    )
 
   @ConfiguredJsonCodec
   case class EstimateFeeResponse(
@@ -356,7 +364,22 @@ object CardanoApiCodec {
                                         amount: QuantityUnit,
                                         insertedAt: Option[TimedBlock],
                                         pendingSince: Option[TimedBlock],
-                                        expiresAt: Option[TimedBlock],
+                                        depth: Option[QuantityUnit],
+                                        direction: TxDirection,
+                                        inputs: Seq[InAddress],
+                                        outputs: Seq[OutAddress],
+                                        withdrawals: Seq[StakeAddress],
+                                        status: TxState,
+                                        metadata: Option[TxMetadataOut]
+                                      )
+
+  @ConfiguredJsonCodec(decodeOnly = true)
+  case class SubmitMigrationResponse(
+                                        id: String,
+                                        amount: QuantityUnit,
+                                        insertedAt: Option[TimedFlattenBlock],
+                                        pendingSince: Option[TimedFlattenBlock],
+                                        expiresAt: Option[TimedFlattenBlock],
                                         depth: Option[QuantityUnit],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],
@@ -386,6 +409,9 @@ object CardanoApiCodec {
 
   @ConfiguredJsonCodec
   final case class PostExternalTransactionResponse(id: String)
+
+  @ConfiguredJsonCodec(encodeOnly = true)
+  final case class SubmitMigration(passphrase: String, addresses: Seq[String])
 
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
@@ -474,6 +500,11 @@ object CardanoApiCodec {
 
     def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
       to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
+
+    def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] = {
+      println("toSubmitMigrationResponse")
+      to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
+    }
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {
