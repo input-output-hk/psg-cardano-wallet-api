@@ -13,7 +13,7 @@ jobs:
         uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
-      - run: sbt assembly
+      - run: sbt clean assembly
       - name: Upload Command Line Jar
         uses: actions/upload-artifact@v2
         with:
