@@ -30,52 +30,98 @@ import scala.util.{Failure, Success, Try}
 
 object CardanoApiCodec {
 
-  private implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
+  object ImplicitCodecs {
+    implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  private[cardano] def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
-    encoder.mapJson(_.dropNullValues)
+    implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+    implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
-  private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
+    implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
+      stringToZonedDate(s) match {
+        case Success(goodDateTime) => Right(goodDateTime)
+        case Failure(exception) => Left(exception.toString)
+      }
+    }
 
-  private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
-    stringToZonedDate(s) match {
-      case Success(goodDateTime) => Right(goodDateTime)
-      case Failure(exception) => Left(exception.toString)
+    implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
+    implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
+
+    implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
+    implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
+
+    implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
+    implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
+
+    implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
+    implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
+
+    implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
+    implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
+
+    implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
+    implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
+
+    implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut.apply)
+    implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
+
+    implicit val encodeDelegationNext: Encoder[DelegationNext] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
+
+    private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
+      quantity <- c.downField("quantity").as[T]
+      unitsStr <- c.downField("unit").as[String]
+      units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+    } yield {
+      QuantityUnit(quantity, units)
+    }
+
+    implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] =
+      (c: HCursor) => decodeQuantityUnit[Long](c)
+
+    implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] =
+      (c: HCursor) => decodeQuantityUnit[Double](c)
+
+
+    implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
+      case MetadataValueLong(l) => l.toString
+      case MetadataValueStr(s) => s
+    }
+
+
+    implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
+      case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
+      case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
+      case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
+      case MetadataValueArray(s) => Json.obj(("list", s.asJson))
+      case MetadataValueMap(s) =>
+        Json.obj(("map", s.map {
+          case (key, value) => Map("k" -> key, "v" -> value)
+        }.asJson))
+    }
+
+    implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
+      case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
+      case TxMetadataMapIn(s) => s.asJson
     }
   }
 
-  private[cardano] implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
-  private[cardano] implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
+  import ImplicitCodecs._
 
-  private[cardano] implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
-  private[cardano] implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
+  def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
+    encoder.mapJson(_.dropNullValues)
 
-  private[cardano] implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
-  private[cardano] implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
-  private[cardano] implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
-  private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
-  private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut.apply)
-  private[cardano] implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
-
-  private[cardano] implicit val encodeDelegationNext: Encoder[DelegationNext] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
+  def toMetadataHex(bs: ByteString): Json = {
+    val asHex = Hex.encodeHex(bs.toArray[Byte])
+    asHex.asJson
+  }
 
   sealed trait MetadataValue
 
@@ -106,32 +152,6 @@ object CardanoApiCodec {
 
   final case class MetadataValueMap(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
 
-  implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
-    case MetadataValueLong(l) => l.toString
-    case MetadataValueStr(s) => s
-  }
-
-  def toMetadataHex(bs: ByteString): Json = {
-    val asHex = Hex.encodeHex(bs.toArray[Byte])
-    asHex.asJson
-  }
-
-  implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
-    case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
-    case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
-    case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
-    case MetadataValueArray(s) => Json.obj(("list", s.asJson))
-    case MetadataValueMap(s) =>
-      Json.obj(("map", s.map {
-        case (key, value) => Map("k" -> key, "v" -> value)
-      }.asJson))
-  }
-
-  implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
-    case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
-    case TxMetadataMapIn(s) => s.asJson
-  }
-
 
   object AddressFilter extends Enumeration {
     type AddressFilter = Value
@@ -141,7 +161,7 @@ object CardanoApiCodec {
 
   }
 
-  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit])
+  final case class SyncStatus(status: SyncState, progress: Option[QuantityUnit[Double]])
 
   object SyncState extends Enumeration {
     type SyncState = Value
@@ -163,10 +183,10 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true) final case class NetworkTip(
                                               epochNumber: Long,
                                               slotNumber: Long,
-                                              height: Option[QuantityUnit],
+                                              height: Option[QuantityUnit[Long]],
                                               absoluteSlotNumber: Option[Long])
 
-  @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit, slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
+  @ConfiguredJsonCodec(decodeOnly = true) final case class NodeTip(height: QuantityUnit[Long], slotNumber: Long, epochNumber: Long, absoluteSlotNumber: Option[Long])
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
@@ -193,7 +213,7 @@ object CardanoApiCodec {
 
   case class Payments(payments: Seq[Payment])
 
-  case class Payment(address: String, amount: QuantityUnit)
+  case class Payment(address: String, amount: QuantityUnit[Long])
 
   @ConfiguredJsonCodec private[cardano] case class UpdatePassphrase(oldPassphrase: String, newPassphrase: String)
 
@@ -238,20 +258,20 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec
   final case class NetworkClock(
                                  status: String,
-                                 offset: QuantityUnit
+                                 offset: QuantityUnit[Long]
                                )
 
   @ConfiguredJsonCodec
   final case class NetworkParameters(
                                       genesisBlockHash: String,
                                       blockchain_start_time: ZonedDateTime,
-                                      slotLength: QuantityUnit,
-                                      epochLength: QuantityUnit,
-                                      epochStability: QuantityUnit,
-                                      activeSlotCoefficient: QuantityUnit,
-                                      decentralizationLevel: QuantityUnit,
+                                      slotLength: QuantityUnit[Long],
+                                      epochLength: QuantityUnit[Long],
+                                      epochStability: QuantityUnit[Long],
+                                      activeSlotCoefficient: QuantityUnit[Long],
+                                      decentralizationLevel: QuantityUnit[Long],
                                       desiredPoolNumber: Long,
-                                      minimumUtxoValue: QuantityUnit,
+                                      minimumUtxoValue: QuantityUnit[Long],
                                       hardforkAt: NextEpoch
                                     )
 
@@ -297,32 +317,34 @@ object CardanoApiCodec {
     val inLedger = Value("in_ledger")
   }
 
-  case class QuantityUnit(
-                           quantity: Long,
-                           unit: Units
-                         )
+  @ConfiguredJsonCodec(encodeOnly = true) final case class QuantityUnit[T] private(quantity: T, unit: Units)
+
+  object QuantityUnit {
+    def apply(quantity: Long, unit: Units): QuantityUnit[Long] = new QuantityUnit(quantity, unit)
+    def apply(quantity: Double, unit: Units): QuantityUnit[Double] = new QuantityUnit(quantity, unit)
+  }
 
   case class Balance(
-                      available: QuantityUnit,
-                      reward: QuantityUnit,
-                      total: QuantityUnit
+                      available: QuantityUnit[Long],
+                      reward: QuantityUnit[Long],
+                      total: QuantityUnit[Long]
                     )
 
   case class InAddress(
                         address: Option[String],
-                        amount: Option[QuantityUnit],
+                        amount: Option[QuantityUnit[Long]],
                         id: String,
                         index: Int)
 
   case class OutAddress(
                          address: String,
-                         amount: QuantityUnit
+                         amount: QuantityUnit[Long]
                        )
 
   @ConfiguredJsonCodec
   case class StakeAddress(
                            stakeAddress: String,
-                           amount: QuantityUnit
+                           amount: QuantityUnit[Long]
                          )
 
   case class FundPaymentsResponse(
@@ -334,7 +356,7 @@ object CardanoApiCodec {
   case class Block(
                     slotNumber: Int,
                     epochNumber: Int,
-                    height: QuantityUnit,
+                    height: QuantityUnit[Long],
                     absoluteSlotNumber: Option[Long]
                   )
 
@@ -349,23 +371,23 @@ object CardanoApiCodec {
                                       time: ZonedDateTime,
                                       slotNumber: Int,
                                       epochNumber: Int,
-                                      height: Option[QuantityUnit],
+                                      height: Option[QuantityUnit[Long]],
                                       absoluteSlotNumber: Option[Long]
                                     )
 
   @ConfiguredJsonCodec
   case class EstimateFeeResponse(
-                                  estimatedMin: QuantityUnit,
-                                  estimatedMax: QuantityUnit
+                                  estimatedMin: QuantityUnit[Long],
+                                  estimatedMax: QuantityUnit[Long]
                                 )
 
   @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateTransactionResponse(
                                         id: String,
-                                        amount: QuantityUnit,
+                                        amount: QuantityUnit[Long],
                                         insertedAt: Option[TimedBlock],
                                         pendingSince: Option[TimedBlock],
-                                        depth: Option[QuantityUnit],
+                                        depth: Option[QuantityUnit[Long]],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],
                                         outputs: Seq[OutAddress],
@@ -377,11 +399,11 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true)
   final case class SubmitMigrationResponse(
                                         id: String,
-                                        amount: QuantityUnit,
+                                        amount: QuantityUnit[Long],
                                         insertedAt: Option[TimedBlock],
                                         pendingSince: Option[TimedBlock],
                                         expiresAt: Option[TimedBlock],
-                                        depth: Option[QuantityUnit],
+                                        depth: Option[QuantityUnit[Long]],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],
                                         outputs: Seq[OutAddress],
@@ -391,7 +413,7 @@ object CardanoApiCodec {
                                       )
 
   @ConfiguredJsonCodec
-  final case class MigrationCostResponse(migrationCost: QuantityUnit, leftovers: QuantityUnit)
+  final case class MigrationCostResponse(migrationCost: QuantityUnit[Long], leftovers: QuantityUnit[Long])
 
   @ConfiguredJsonCodec
   final case class Passphrase(lastUpdatedAt: ZonedDateTime)
@@ -409,7 +431,7 @@ object CardanoApiCodec {
                    )
 
   @ConfiguredJsonCodec
-  final case class UTxOStatistics(total: QuantityUnit, scale: String, distribution: Map[String, Long])
+  final case class UTxOStatistics(total: QuantityUnit[Long], scale: String, distribution: Map[String, Long])
 
   @ConfiguredJsonCodec
   final case class PostExternalTransactionResponse(id: String)

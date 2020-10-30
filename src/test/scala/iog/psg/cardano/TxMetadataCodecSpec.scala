@@ -1,9 +1,9 @@
 package iog.psg.cardano
 
 import akka.util.ByteString
-import io.circe.parser.parse
 import io.circe.syntax.EncoderOps
 import io.circe.{ParsingFailure, parser}
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.DummyModel
 import org.scalatest.flatspec.AnyFlatSpec

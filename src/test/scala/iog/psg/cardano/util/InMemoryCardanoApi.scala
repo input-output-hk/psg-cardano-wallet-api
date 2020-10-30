@@ -17,6 +17,7 @@ import iog.psg.cardano.jpi.CardanoApiException
 import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 

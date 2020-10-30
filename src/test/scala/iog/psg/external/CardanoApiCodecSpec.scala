@@ -1,11 +1,19 @@
-package iog.psg.cardano
+package iog.psg.external
 
-import io.circe.syntax.EncoderOps
+import io.circe.jawn.decode
+import io.circe.syntax._
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.util.DummyModel
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+/**
+ * NB It's import that this class is in a package that is 'external' to the
+ * cardano package in order to test that these encoders and decoders are
+ * available to clients and are not privately scoped to the implementation package
+ * (using private[cardano])
+ */
 class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
 
   "Encode class with Nones" should "drop nulls in Delegation" in {
@@ -73,6 +81,26 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
     )
 
     b.asJson.noSpaces shouldBe """{"slot_number":1,"epoch_number":2,"height":{"quantity":42000000,"unit":"lovelace"}}"""
+  }
+
+  "Quantity" should "be decoded to Double" in {
+    val decodedQU = decode[QuantityUnit[Double]]("""{"quantity":123.45,"unit":"lovelace"}""")
+    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123.45
+  }
+
+  it should "be decoded to Long" in {
+    val decodedQU = decode[QuantityUnit[Long]]("""{"quantity":123,"unit":"lovelace"}""")
+    decodedQU.getOrElse(fail("Not decoded")).quantity shouldBe 123
+  }
+
+  it should "be encoded to Double" in {
+    val qu = QuantityUnit(123.45, Units.lovelace)
+    qu.asJson.noSpaces shouldBe """{"quantity":123.45,"unit":"lovelace"}"""
+  }
+
+  it should "be encoded to Long" in {
+    val qu = QuantityUnit(123, Units.lovelace)
+    qu.asJson.noSpaces shouldBe """{"quantity":123,"unit":"lovelace"}"""
   }
 
 }
