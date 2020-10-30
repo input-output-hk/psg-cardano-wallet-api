@@ -16,6 +16,7 @@ import scala.util.{Failure, Success, Try}
 object CardanoApiMain {
 
   object CmdLine {
+    //TODO group by commands and arguments
     val help = "-help"
     val traceToFile = "-trace"
     val noConsole = "-noConsole"
@@ -57,7 +58,9 @@ object CardanoApiMain {
     val address = "-address"
     val getUTxOsStatistics = "-getUTxO"
     val postExternalTransaction = "-postExternalTransaction"
+    val migrateShelleyWallet = "-migrateShelleyWallet"
     val binary = "-binary"
+    val addresses = "-addresses"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -221,6 +224,11 @@ object CardanoApiMain {
         } else if (hasArgument(CmdLine.postExternalTransaction)) {
           val binary = arguments.get(CmdLine.binary)
           unwrap[PostExternalTransactionResponse](api.postExternalTransaction(binary).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.migrateShelleyWallet)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val passphrase = arguments.get(CmdLine.passphrase)
+          val addresses = arguments.get(CmdLine.addresses).split(",")
+          unwrap[Seq[SubmitMigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -248,8 +256,8 @@ object CardanoApiMain {
     val exampleMnemonic = "ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad"
     val exampleMnemonicSecondary = "ability make always any pulse swallow marriage media dismiss"
 
-    def beautifyTrace(arguments: String, description: String, examples: List[String], apiDocOperation: String = ""): Unit = {
-      val docsUrl = if (apiDocOperation.nonEmpty) s" [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/$apiDocOperation ]\n" else ""
+    def beautifyTrace(arguments: String, description: String, examples: List[String], apiDocOperation: String = "", edge: String = "operation"): Unit = {
+      val docsUrl = if (apiDocOperation.nonEmpty) s" [ https://input-output-hk.github.io/cardano-wallet/api/edge/#$edge/$apiDocOperation ]\n" else ""
       val examplesStr = s" Examples:\n ${examples.map("$CMDLINE "+_).mkString("\n ")}"
       val argumentsLine = if (arguments.nonEmpty) s" Arguments: $arguments\n\n" else ""
       trace(s"\n $description\n$docsUrl\n$argumentsLine$examplesStr\n")
@@ -275,6 +283,7 @@ object CardanoApiMain {
     val cmdLineRestoreWallet = s"${CmdLine.restoreWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineGetUTxOsStatistics = s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} <walletId>"
     val cmdLinePostExternalTransaction = s"${CmdLine.postExternalTransaction} ${CmdLine.binary} <binary_string>"
+    val cmdLineMigrateShelleyWallet = s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -312,6 +321,7 @@ object CardanoApiMain {
       trace(" "+cmdLineGetTx)
       trace(" "+cmdLineGetUTxOsStatistics)
       trace(" "+cmdLinePostExternalTransaction+" ( experimental )")
+      trace(" "+cmdLineMigrateShelleyWallet)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -526,6 +536,17 @@ object CardanoApiMain {
             description = "Submits a transaction that was created and signed outside of cardano-wallet ( experimental )",
             apiDocOperation = "postExternalTransaction",
             examples = List(
+              s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
+            )
+          )
+        case CmdLine.migrateShelleyWallet =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>",
+            description = "Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses",
+            apiDocOperation = "Migrations",
+            edge = "tag",
+            examples = List(
+              s"${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password12345! ${CmdLine.addresses} <addresses>",
               s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
             )
           )

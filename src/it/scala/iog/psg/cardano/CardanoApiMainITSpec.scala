@@ -275,7 +275,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     val foundTx = resultsListWalletTxs.exists(_.contains(txId))
     assert(foundTx, s"Couldn't find txId $txId in transactions ")
 
-    val resultDelete = runCmdLine(
+    runCmdLine(
       CmdLine.deleteTx,
       CmdLine.txId, txId,
       CmdLine.walletId, testWalletId
@@ -308,7 +308,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
   }
 
-  //"The Cmd Lines -postExternalTransaction"
+  //"The Cmd Line -postExternalTransaction"
   ignore should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
     val source = Source.fromURL(getClass.getResource("/tx.raw"))
     val binary = source.mkString
@@ -319,6 +319,29 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.binary, binary
     )
     assert(results.exists(_.contains("id")), "UTxOs distribution across the whole wallet")
+  }
+
+  // keeping ignored, as it transfers all lovelace from 1 to another
+  //"The Cmd Line -migrateShelleyWallet"
+  ignore should "submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses" in {
+    val wallet1 = TestWalletsConfig.walletsMap(2)
+    val wallet2 = TestWalletsConfig.walletsMap(3)
+
+    val cmdResults: Seq[String] = runCmdLine(
+      CmdLine.listWalletAddresses,
+      CmdLine.state, "unused",
+      CmdLine.walletId, wallet2.id)
+
+    val addresses = decode[Seq[WalletAddressId]](cmdResults.last).toOption.getOrElse(Nil).take(3).map(_.id).mkString(",")
+
+    val results = runCmdLine(
+      CmdLine.migrateShelleyWallet,
+      CmdLine.walletId, wallet1.id,
+      CmdLine.passphrase, wallet1.passphrase,
+      CmdLine.addresses, addresses
+    )
+
+    assert(results.exists(_.contains("id")), "Migration id")
   }
 
   "The Cmd Line --help" should "show possible commands" in {
@@ -358,7 +381,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
         | -getTx -walletId <walletId> -txId <txId>
         | -getUTxO -walletId <walletId>
-        | -postExternalTransaction -binary <binary_string> ( experimental )""".stripMargin
+        | -postExternalTransaction -binary <binary_string> ( experimental )
+        | -migrateShelleyWallet -walletId <walletId> -passphrase <passphrase> -addresses <addresses>""".stripMargin
   }
 
   it should "show -baseUrl help" in {

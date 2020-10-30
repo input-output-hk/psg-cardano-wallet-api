@@ -6,29 +6,39 @@
       "unit": "lovelace"
     },
     "inserted_at": {
-      "absolute_slot_number": 8086,
-      "slot_number": 1337,
-      "epoch_number": 14,
       "time": "2019-02-27T14:46:45.000Z",
-      "height": {
-        "quantity": 1337,
-        "unit": "block"
+      "block": {
+        "height": {
+          "quantity": 1983779,
+          "unit": "block"
+        },
+        "epoch_number": 92,
+        "absolute_slot_number": 9689869,
+        "slot_number": 315469
       }
     },
     "expires_at": {
-      "absolute_slot_number": 8086,
-      "epoch_number": 14,
-      "slot_number": 1337,
+      "block": {
+        "height": {
+          "quantity": 1983779,
+          "unit": "block"
+        },
+        "epoch_number": 92,
+        "absolute_slot_number": 9689869,
+        "slot_number": 315469
+      },
       "time": "2019-02-27T14:46:45.000Z"
     },
     "pending_since": {
-      "absolute_slot_number": 8086,
-      "slot_number": 1337,
-      "epoch_number": 14,
-      "time": "2019-02-27T14:46:45.000Z",
-      "height": {
-        "quantity": 1337,
-        "unit": "block"
+      "time": "2020-10-30T11:58:05Z",
+      "block": {
+        "height": {
+          "quantity": 1983779,
+          "unit": "block"
+        },
+        "epoch_number": 92,
+        "absolute_slot_number": 9689869,
+        "slot_number": 315469
       }
     },
     "depth": {

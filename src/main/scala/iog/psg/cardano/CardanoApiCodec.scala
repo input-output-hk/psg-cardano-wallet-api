@@ -75,6 +75,7 @@ object CardanoApiCodec {
   private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
   private[cardano] implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
+  private[cardano] implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
 
   sealed trait MetadataValue
 
@@ -377,9 +378,9 @@ object CardanoApiCodec {
   case class SubmitMigrationResponse(
                                         id: String,
                                         amount: QuantityUnit,
-                                        insertedAt: Option[TimedFlattenBlock],
-                                        pendingSince: Option[TimedFlattenBlock],
-                                        expiresAt: Option[TimedFlattenBlock],
+                                        insertedAt: Option[TimedBlock],
+                                        pendingSince: Option[TimedBlock],
+                                        expiresAt: Option[TimedBlock],
                                         depth: Option[QuantityUnit],
                                         direction: TxDirection,
                                         inputs: Seq[InAddress],
@@ -501,10 +502,11 @@ object CardanoApiCodec {
     def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
       to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
 
-    def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] = {
-      println("toSubmitMigrationResponse")
-      to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
-    }
+    def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
+      to[Seq[SubmitMigrationResponse]]({ strict =>
+        println(strict.getData().utf8String)
+        Unmarshal(strict).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]]
+      })
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {
