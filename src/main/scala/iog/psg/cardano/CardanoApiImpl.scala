@@ -393,4 +393,18 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
     }}
   }
 
+  /**
+   * @inheritdoc
+   */
+  override def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse] = {
+    val uri = Uri(s"$wallets/$walletId/migrations")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = GET
+      ),
+      _.toMigrationCostResponse
+    )
+  }
+
 }

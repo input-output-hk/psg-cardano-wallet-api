@@ -344,6 +344,16 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("id")), "Migration id")
   }
 
+
+  "The Cmd Line -getShelleyWalletMigrationInfo" should "calculate the cost" in new TestWalletFixture(walletNum = 1){
+    val results = runCmdLine(
+      CmdLine.getShelleyWalletMigrationInfo,
+      CmdLine.walletId, wallet.id
+    )
+
+    assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
+  }
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
     results.mkString("\n") shouldBe

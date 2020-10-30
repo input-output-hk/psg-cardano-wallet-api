@@ -301,8 +301,8 @@ trait CardanoApi {
   def postExternalTransaction(binary: String): CardanoApiRequest[PostExternalTransactionResponse]
 
   /**
-   * Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses.
-   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Migrations #Migrations]]
+   * Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/migrateShelleyWallet #migrateShelleyWallet]]
    *
    * @param walletId wallet's id
    * @param passphrase wallet's master passphrase
@@ -310,4 +310,12 @@ trait CardanoApi {
    * @return migrate shelley wallet request
    */
   def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
+
+  /**
+   * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getShelleyWalletMigrationInfo #getShelleyWalletMigrationInfo]]
+   * @param walletId wallet's id
+   * @return migration cost request
+   */
+  def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse]
 }

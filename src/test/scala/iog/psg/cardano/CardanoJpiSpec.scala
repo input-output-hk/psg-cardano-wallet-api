@@ -267,6 +267,14 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.migrateShelleyWallet("invalid_address_id", walletPassphrase, unUsedAddresses.map(_.id).asJava)) shouldBe walletNotFoundError
   }
 
+  "GET /wallets/{walletId}/migrations" should "calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses" in {
+    api.getShelleyWalletMigrationInfo(wallet.id).toCompletableFuture.get() shouldBe jsonFileMigrationCostsResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.getShelleyWalletMigrationInfo("invalid_address_id")) shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

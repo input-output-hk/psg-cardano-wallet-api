@@ -375,7 +375,7 @@ object CardanoApiCodec {
                                       )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class SubmitMigrationResponse(
+  final case class SubmitMigrationResponse(
                                         id: String,
                                         amount: QuantityUnit,
                                         insertedAt: Option[TimedBlock],
@@ -389,6 +389,9 @@ object CardanoApiCodec {
                                         status: TxState,
                                         metadata: Option[TxMetadataOut]
                                       )
+
+  @ConfiguredJsonCodec
+  final case class MigrationCostResponse(migrationCost: QuantityUnit, leftovers: QuantityUnit)
 
   @ConfiguredJsonCodec
   final case class Passphrase(lastUpdatedAt: ZonedDateTime)
@@ -503,10 +506,10 @@ object CardanoApiCodec {
       to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
 
     def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
-      to[Seq[SubmitMigrationResponse]]({ strict =>
-        println(strict.getData().utf8String)
-        Unmarshal(strict).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]]
-      })
+      to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
+
+    def toMigrationCostResponse: Future[CardanoApiResponse[MigrationCostResponse]] =
+      to[MigrationCostResponse](Unmarshal(_).to[CardanoApiResponse[MigrationCostResponse]])
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

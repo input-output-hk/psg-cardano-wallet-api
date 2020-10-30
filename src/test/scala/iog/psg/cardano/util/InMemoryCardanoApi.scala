@@ -294,6 +294,9 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.DELETE) =>
           noContentResponse()
 
+        case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("migration_costs.json"))
+
         case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.POST) =>
           for {
             jsonBody <- unmarshalJsonBody()

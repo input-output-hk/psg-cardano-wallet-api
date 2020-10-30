@@ -233,6 +233,14 @@ class CardanoApiSpec
     api.migrateShelleyWallet("invalid_address_id", walletPassphrase, unUsedAddresses.map(_.id)).executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "GET /wallets/{walletId}/migrations" should "calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses" in {
+    api.getShelleyWalletMigrationInfo(wallet.id).executeOrFail() shouldBe jsonFileMigrationCostsResponse
+  }
+
+  it should "return not found" in {
+    api.getShelleyWalletMigrationInfo("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

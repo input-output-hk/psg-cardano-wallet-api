@@ -14,6 +14,7 @@ trait ResourceFiles { self: Assertions =>
   final lazy val jsonFileCreatedTransactionsResponse = decodeJsonFile[Seq[CreateTransactionResponse]]("transactions.json")
   final lazy val jsonFileProxyTransactionResponse = decodeJsonFile[PostExternalTransactionResponse]("proxy_trans_resp.json")
   final lazy val jsonFileMigrationsResponse = decodeJsonFile[Seq[SubmitMigrationResponse]]("migrations.json")
+  final lazy val jsonFileMigrationCostsResponse = decodeJsonFile[MigrationCostResponse]("migration_costs.json")
 
   final lazy val txRawContent = getFileContent("tx.raw")
 
