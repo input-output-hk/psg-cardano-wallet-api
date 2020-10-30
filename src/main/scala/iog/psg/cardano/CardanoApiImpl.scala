@@ -17,6 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) extends CardanoApi {
 
   import CardanoApiCodec._
+  import CardanoApiCodec.ImplicitCodecs._
   import AddressFilter.AddressFilter
   import iog.psg.cardano.CardanoApi._
 
