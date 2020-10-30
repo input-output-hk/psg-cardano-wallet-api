@@ -256,8 +256,8 @@ object CardanoApiMain {
     val exampleMnemonic = "ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad"
     val exampleMnemonicSecondary = "ability make always any pulse swallow marriage media dismiss"
 
-    def beautifyTrace(arguments: String, description: String, examples: List[String], apiDocOperation: String = "", edge: String = "operation"): Unit = {
-      val docsUrl = if (apiDocOperation.nonEmpty) s" [ https://input-output-hk.github.io/cardano-wallet/api/edge/#$edge/$apiDocOperation ]\n" else ""
+    def beautifyTrace(arguments: String, description: String, examples: List[String], apiDocOperation: String = ""): Unit = {
+      val docsUrl = if (apiDocOperation.nonEmpty) s" [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/$apiDocOperation ]\n" else ""
       val examplesStr = s" Examples:\n ${examples.map("$CMDLINE "+_).mkString("\n ")}"
       val argumentsLine = if (arguments.nonEmpty) s" Arguments: $arguments\n\n" else ""
       trace(s"\n $description\n$docsUrl\n$argumentsLine$examplesStr\n")
@@ -543,8 +543,7 @@ object CardanoApiMain {
           beautifyTrace(
             arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>",
             description = "Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses",
-            apiDocOperation = "Migrations",
-            edge = "tag",
+            apiDocOperation = "migrateShelleyWallet",
             examples = List(
               s"${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password12345! ${CmdLine.addresses} <addresses>",
               s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
