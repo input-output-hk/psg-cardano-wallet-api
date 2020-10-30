@@ -7,10 +7,9 @@ import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
 import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
-import io.circe.Encoder
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
-
+import CardanoApiCodec.ImplicitCodecs._
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 

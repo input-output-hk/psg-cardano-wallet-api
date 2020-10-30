@@ -30,64 +30,96 @@ import scala.util.{Failure, Success, Try}
 
 object CardanoApiCodec {
 
-  private implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
+  object ImplicitCodecs {
+    implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  private[cardano] def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
-    encoder.mapJson(_.dropNullValues)
+    implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+    implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
-  private[cardano] implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
+    implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
+      stringToZonedDate(s) match {
+        case Success(goodDateTime) => Right(goodDateTime)
+        case Failure(exception) => Left(exception.toString)
+      }
+    }
 
-  private[cardano] implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
-    stringToZonedDate(s) match {
-      case Success(goodDateTime) => Right(goodDateTime)
-      case Failure(exception) => Left(exception.toString)
+    implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
+    implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
+
+    implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
+    implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
+
+    implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
+    implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
+
+    implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
+    implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
+
+    implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
+    implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
+
+    implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
+    implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
+
+    implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut.apply)
+    implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
+
+    implicit val encodeDelegationNext: Encoder[DelegationNext] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
+
+    private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
+      quantity <- c.downField("quantity").as[T]
+      unitsStr <- c.downField("unit").as[String]
+      units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
+    } yield {
+      QuantityUnit(quantity, units)
+    }
+
+    implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] =
+      (c: HCursor) => decodeQuantityUnit[Long](c)
+
+    implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] =
+      (c: HCursor) => decodeQuantityUnit[Double](c)
+
+
+    implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
+      case MetadataValueLong(l) => l.toString
+      case MetadataValueStr(s) => s
+    }
+
+
+    implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
+      case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
+      case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
+      case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
+      case MetadataValueArray(s) => Json.obj(("list", s.asJson))
+      case MetadataValueMap(s) =>
+        Json.obj(("map", s.map {
+          case (key, value) => Map("k" -> key, "v" -> value)
+        }.asJson))
+    }
+
+    implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
+      case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
+      case TxMetadataMapIn(s) => s.asJson
     }
   }
 
-  private[cardano] implicit val decodeUnits: Decoder[Units] = Decoder.decodeString.map(Units.withName)
-  private[cardano] implicit val encodeUnits: Encoder[Units] = (a: Units) => Json.fromString(a.toString)
+  import ImplicitCodecs._
 
-  private[cardano] implicit val decodeSyncState: Decoder[SyncState] = Decoder.decodeString.map(SyncState.withName)
-  private[cardano] implicit val encodeSyncState: Encoder[SyncState] = (a: SyncState) => Json.fromString(a.toString)
+  def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
+    encoder.mapJson(_.dropNullValues)
 
-  private[cardano] implicit val decodeAddressFilter: Decoder[AddressFilter] = Decoder.decodeString.map(AddressFilter.withName)
-  private[cardano] implicit val encodeAddressFilter: Encoder[AddressFilter] = (a: AddressFilter) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxState: Decoder[TxState] = Decoder.decodeString.map(TxState.withName)
-  private[cardano] implicit val encodeTxState: Encoder[TxState] = (a: TxState) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxDirection: Decoder[TxDirection] = Decoder.decodeString.map(TxDirection.withName)
-  private[cardano] implicit val encodeTxDirection: Encoder[TxDirection] = (a: TxDirection) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeDelegationStatus: Decoder[DelegationStatus] = Decoder.decodeString.map(DelegationStatus.withName)
-  private[cardano] implicit val encodeDelegationStatus: Encoder[DelegationStatus] = (a: DelegationStatus) => Json.fromString(a.toString)
-
-  private[cardano] implicit val decodeTxMetadataOut: Decoder[TxMetadataOut] = Decoder.decodeJson.map(TxMetadataOut.apply)
-  private[cardano] implicit val decodeKeyMetadata: KeyDecoder[MetadataKey] = (key: String) => Some(MetadataValueStr(key))
-
-  private[cardano] implicit val encodeDelegationNext: Encoder[DelegationNext] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeDelegationActive: Encoder[DelegationActive] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeNetworkTip: Encoder[NetworkTip] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeNodeTip: Encoder[NodeTip] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeSyncStatus: Encoder[SyncStatus] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
-  private[cardano] implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
-
-  private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
-    quantity <- c.downField("quantity").as[T]
-    unitsStr <- c.downField("unit").as[String]
-    units <- Try(Units.withName(unitsStr)).toEither.left.map(_ => DecodingFailure("unit", c.history))
-  } yield {
-    QuantityUnit(quantity, units)
+  def toMetadataHex(bs: ByteString): Json = {
+    val asHex = Hex.encodeHex(bs.toArray[Byte])
+    asHex.asJson
   }
-
-  private[cardano] implicit val decodeQuantityUnitL: Decoder[QuantityUnit[Long]] =
-    (c: HCursor) => decodeQuantityUnit[Long](c)
-
-  private[cardano] implicit val decodeQuantityUnitD: Decoder[QuantityUnit[Double]] =
-    (c: HCursor) => decodeQuantityUnit[Double](c)
 
   sealed trait MetadataValue
 
@@ -117,32 +149,6 @@ object CardanoApiCodec {
   final case class MetadataValueByteString(bs: ByteString) extends MetadataValue
 
   final case class MetadataValueMap(s: Map[MetadataKey, MetadataValue]) extends MetadataValue
-
-  implicit val metadataKeyDecoder: KeyEncoder[MetadataKey] = {
-    case MetadataValueLong(l) => l.toString
-    case MetadataValueStr(s) => s
-  }
-
-  def toMetadataHex(bs: ByteString): Json = {
-    val asHex = Hex.encodeHex(bs.toArray[Byte])
-    asHex.asJson
-  }
-
-  implicit val encodeTxMeta: Encoder[MetadataValue] = Encoder.instance {
-    case MetadataValueLong(s) => Json.obj(("int", Json.fromLong(s)))
-    case MetadataValueStr(s) => Json.obj(("string", Json.fromString(s)))
-    case MetadataValueByteString(bs: ByteString) => Json.obj(("bytes", Json.fromString(bs.utf8String)))
-    case MetadataValueArray(s) => Json.obj(("list", s.asJson))
-    case MetadataValueMap(s) =>
-      Json.obj(("map", s.map {
-        case (key, value) => Map("k" -> key, "v" -> value)
-      }.asJson))
-  }
-
-  implicit val encodeTxMetadata: Encoder[TxMetadataIn] = Encoder.instance {
-    case JsonMetadata(metadataCompliantJson) => metadataCompliantJson
-    case TxMetadataMapIn(s) => s.asJson
-  }
 
 
   object AddressFilter extends Enumeration {
