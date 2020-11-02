@@ -42,6 +42,7 @@ object CardanoApiMain {
     val migrateShelleyWallet = "-migrateShelleyWallet"
     val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
     val listStakePools = "-listStakePools"
+    val estimateFeeStakePool = "-estimateFeeStakePool"
 
     //Parameters
     val baseUrl = "-baseUrl"
@@ -135,6 +136,9 @@ object CardanoApiMain {
           val singlePayment = Payment(addr, QuantityUnit(amount, Units.lovelace))
           val payments = Payments(Seq(singlePayment))
           unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFee(walletId, payments, None).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.estimateFeeStakePool)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          unwrap[CardanoApiCodec.EstimateFeeResponse](api.estimateFeeStakePool(walletId).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[CardanoApiCodec.Wallet](api.getWallet(walletId).executeBlocking, trace(_))
@@ -280,6 +284,7 @@ object CardanoApiMain {
     val cmdLineNetParams = s"${CmdLine.netParams}"
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
+    val cmdLineEstimateFeeStakePool = s"${CmdLine.estimateFeeStakePool} ${CmdLine.walletId} <walletId>"
     val cmdLineGetWallet = s"${CmdLine.getWallet} ${CmdLine.walletId} <walletId>"
     val cmdLineUpdateName = s"${CmdLine.updateName} ${CmdLine.walletId} <walletId> ${CmdLine.name} <name>"
     val cmdLineUpdatePassphrase = s"${CmdLine.updatePassphrase} ${CmdLine.walletId} <walletId> ${CmdLine.oldPassphrase} <oldPassphrase> ${CmdLine.passphrase} <newPassphrase>"
@@ -325,6 +330,7 @@ object CardanoApiMain {
       trace(" "+cmdLineCreateWallet)
       trace(" "+cmdLineRestoreWallet)
       trace(" "+cmdLineEstimateFee)
+      trace(" "+cmdLineEstimateFeeStakePool)
       trace(" "+cmdLineUpdatePassphrase)
       trace(" "+cmdLineListWalletAddresses)
       trace(" "+cmdLineInspectWalletAddress)
@@ -457,6 +463,15 @@ object CardanoApiMain {
             apiDocOperation = "postTransactionFee",
             examples = List(
               s"${CmdLine.estimateFee} ${CmdLine.walletId} $exampleWalletId ${CmdLine.amount} 20000 ${CmdLine.address} $exampleAddress"
+            )
+          )
+        case CmdLine.estimateFeeStakePool =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId>",
+            description = "Estimate fee for joining or leaving a stake pool",
+            apiDocOperation = "getDelegationFee",
+            examples = List(
+              s"${CmdLine.estimateFeeStakePool} ${CmdLine.walletId} $exampleWalletId"
             )
           )
         case CmdLine.updatePassphrase =>

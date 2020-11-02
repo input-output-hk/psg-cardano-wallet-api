@@ -283,6 +283,14 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.listStakePools(-1)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid stake parameter, Code: 400"
   }
 
+  "GET /wallets/{walletId}/delegation-fees" should "Estimate fee for joining or leaving a stake pool" in {
+    api.estimateFeeStakePool(wallet.id).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.estimateFeeStakePool("invalid_wallet_id")) shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

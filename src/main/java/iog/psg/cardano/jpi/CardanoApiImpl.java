@@ -337,6 +337,14 @@ public class CardanoApiImpl implements CardanoApi {
         return stakePools.thenApply(CollectionConverters::asJava);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFeeStakePool(String walletId) throws CardanoApiException {
+        return helpExecute.execute(api.estimateFeeStakePool(walletId));
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }

@@ -420,4 +420,18 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toStakePoolsResponse
     )
   }
+
+  /**
+   * @inheritdoc
+   */
+  override def estimateFeeStakePool(walletId: String): CardanoApiRequest[EstimateFeeResponse] = {
+    val url = Uri(s"$wallets/$walletId/delegation-fees")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toEstimateFeeResponse
+    )
+  }
 }

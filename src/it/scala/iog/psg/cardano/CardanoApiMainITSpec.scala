@@ -105,6 +105,13 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
   }
 
+  "The Cmd Line -estimateFeeStakePool" should "estimate transaction costs" in new TestWalletFixture(walletNum = 1){
+    val cmdLineResults = runCmdLine(
+      CmdLine.estimateFeeStakePool,
+      CmdLine.walletId, testWalletId)
+    assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
+  }
+
   it should "estimate transaction costs with metadata" in new TestWalletFixture(walletNum = 1){
     val unusedAddr = getUnusedAddressWallet1
 
@@ -365,6 +372,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
+
     results.mkString("\n") shouldBe
       """This super simple tool allows developers to access a cardano wallet backend from the command line
         |
@@ -391,6 +399,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -estimateFee -walletId <walletId> -amount <amount> -address <address>
+        | -estimateFeeStakePool -walletId <walletId>
         | -updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
         | -listAddresses -walletId <walletId> -state <state>
         | -inspectAddress -address <address>
@@ -403,8 +412,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -postExternalTransaction -binary <binary_string> ( experimental )
         | -migrateShelleyWallet -walletId <walletId> -passphrase <passphrase> -addresses <addresses>
         | -getShelleyWalletMigrationInfo -walletId <walletId>
-        | -listStakePools -stake <stake>
-        | """.stripMargin
+        | -listStakePools -stake <stake>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -549,6 +557,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |""".stripMargin.trim
   }
 
+  it should "show estimateFeeStakePool help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.estimateFeeStakePool)
+    results.mkString("\n").stripMargin.trim shouldBe """ Estimate fee for joining or leaving a stake pool
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getDelegationFee ]
+                                                       |
+                                                       | Arguments: -walletId <walletId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -estimateFeeStakePool -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
   it should "show updatePassphrase help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.updatePassphrase)
     results.mkString("\n").stripMargin.trim shouldBe """ Update passphrase
@@ -672,13 +691,13 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   it should "show listStakePools help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.listStakePools)
     results.mkString("\n").stripMargin.trim shouldBe
-      """ List all known stake pools ordered by descending non_myopic_member_rewards.
+      """ List all known stake pools ordered by descending non_myopic_member_rewards
         | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listStakePools ]
         |
-        | Arguments: -listStakePools <stake>
+        | Arguments: -stake <stake>
         |
         | Examples:
-        | $CMDLINE -listStakePools -stake 1000""".stripMargin.trim
+        | $CMDLINE -listStakePools -stake 10000""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

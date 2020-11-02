@@ -249,6 +249,14 @@ class CardanoApiSpec
     api.listStakePools(stake = -1).executeExpectingErrorOrFail() shouldBe ErrorMessage("Invalid stake parameter", "400")
   }
 
+  "GET /wallets/{walletId}/delegation-fees" should "Estimate fee for joining or leaving a stake pool" in {
+    api.estimateFeeStakePool(wallet.id).executeOrFail() shouldBe estimateFeeResponse
+  }
+
+  it should "return not found" in {
+    api.estimateFeeStakePool("invalid_wallet_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

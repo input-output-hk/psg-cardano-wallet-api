@@ -344,6 +344,17 @@ public interface CardanoApi {
      *
      * @param stake The stake the user intends to delegate in Lovelace. Required.
      * @return list stake pools request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<List<CardanoApiCodec.StakePool>> listStakePools(Integer stake) throws CardanoApiException;
+
+    /**
+     * Estimate fee for joining or leaving a stake pool
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getDelegationFee">#getDelegationFee</a>
+     *
+     * @param walletId wallet's id
+     * @return estimate fee request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFeeStakePool(String walletId) throws CardanoApiException;
 }

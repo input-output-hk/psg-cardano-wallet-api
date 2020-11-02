@@ -327,4 +327,13 @@ trait CardanoApi {
    * @return list stake pools request
    */
   def listStakePools(stake: Int): CardanoApiRequest[Seq[StakePool]]
+
+  /**
+   * Estimate fee for joining or leaving a stake pool
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getDelegationFee #getDelegationFee]]
+   *
+   * @param walletId wallet's id
+   * @return estimate fee request
+   */
+  def estimateFeeStakePool(walletId: String): CardanoApiRequest[EstimateFeeResponse]
 }

@@ -317,6 +317,9 @@ trait InMemoryCardanoApi {
             response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
           } yield response
 
+        case (s"wallets/${jsonFileWallet.id}/delegation-fees", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("estimate_fees.json"))
+
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
 
