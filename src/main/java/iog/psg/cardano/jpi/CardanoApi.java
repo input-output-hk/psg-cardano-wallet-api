@@ -313,6 +313,7 @@ public interface CardanoApi {
      *
      * @param binary message binary blob string
      * @return post external transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException;
 
