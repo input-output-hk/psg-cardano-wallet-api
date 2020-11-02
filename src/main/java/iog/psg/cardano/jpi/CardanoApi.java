@@ -337,4 +337,13 @@ public interface CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.MigrationCostResponse> getShelleyWalletMigrationInfo(String walletId) throws CardanoApiException;
+
+    /**
+     * List all known stake pools ordered by descending non_myopic_member_rewards.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listStakePools">#listStakePools</a>
+     *
+     * @param stake The stake the user intends to delegate in Lovelace. Required.
+     * @return list stake pools request
+     */
+    CompletionStage<List<CardanoApiCodec.StakePool>> listStakePools(Integer stake) throws CardanoApiException;
 }

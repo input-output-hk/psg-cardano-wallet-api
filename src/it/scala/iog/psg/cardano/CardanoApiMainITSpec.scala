@@ -354,6 +354,15 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
   }
 
+  "The Cmd Line -listStakePools" should "List all known stake pools" in {
+    val results = runCmdLine(
+      CmdLine.listStakePools,
+      CmdLine.stake, "10000"
+    )
+
+    assert(results.exists(_.contains("id")), "")
+  }
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
     results.mkString("\n") shouldBe
@@ -393,7 +402,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -getUTxO -walletId <walletId>
         | -postExternalTransaction -binary <binary_string> ( experimental )
         | -migrateShelleyWallet -walletId <walletId> -passphrase <passphrase> -addresses <addresses>
-        | -getShelleyWalletMigrationInfo -walletId <walletId>""".stripMargin
+        | -getShelleyWalletMigrationInfo -walletId <walletId>
+        | -listStakePools -stake <stake>
+        | """.stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -656,6 +667,18 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |
         | Examples:
         | $CMDLINE -postExternalTransaction -binary 82839f8200d8185824825820d78b4cf8eb832c2207a9a2c787ec232d2fbf88ad432c05bfae9bff58d756d59800f""".stripMargin.trim
+  }
+
+  it should "show listStakePools help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.listStakePools)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ List all known stake pools ordered by descending non_myopic_member_rewards.
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listStakePools ]
+        |
+        | Arguments: -listStakePools <stake>
+        |
+        | Examples:
+        | $CMDLINE -listStakePools -stake 1000""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

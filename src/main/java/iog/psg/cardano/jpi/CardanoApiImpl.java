@@ -328,6 +328,15 @@ public class CardanoApiImpl implements CardanoApi {
         return helpExecute.execute(api.getShelleyWalletMigrationInfo(walletId));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<List<CardanoApiCodec.StakePool>> listStakePools(Integer stake) throws CardanoApiException {
+        CompletionStage<Seq<CardanoApiCodec.StakePool>> stakePools = helpExecute.execute(api.listStakePools(stake));
+        return stakePools.thenApply(CollectionConverters::asJava);
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }

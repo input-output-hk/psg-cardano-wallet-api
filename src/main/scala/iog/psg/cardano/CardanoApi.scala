@@ -318,4 +318,13 @@ trait CardanoApi {
    * @return migration cost request
    */
   def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse]
+
+  /**
+   * List all known stake pools ordered by descending non_myopic_member_rewards.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listStakePools #listStakePools]]
+   *
+   * @param stake The stake the user intends to delegate in Lovelace. Required.
+   * @return list stake pools request
+   */
+  def listStakePools(stake: Int): CardanoApiRequest[Seq[StakePool]]
 }

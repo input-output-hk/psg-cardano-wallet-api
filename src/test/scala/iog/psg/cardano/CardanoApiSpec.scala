@@ -241,6 +241,14 @@ class CardanoApiSpec
     api.getShelleyWalletMigrationInfo("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "GET /stake-pools" should "List all known stake pools ordered by descending non_myopic_member_rewards." in {
+    api.listStakePools(stake = 12345).executeOrFail() shouldBe jsonFileStakePoolsResponse
+  }
+
+  it should "return error" in {
+    api.listStakePools(stake = -1).executeExpectingErrorOrFail() shouldBe ErrorMessage("Invalid stake parameter", "400")
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

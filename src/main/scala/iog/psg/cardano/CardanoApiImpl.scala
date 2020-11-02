@@ -28,6 +28,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   private val proxy = s"${baseUriWithPort}proxy"
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
+  private val stakePools = s"${baseUriWithPort}stake-pools"
   private def generateMigrationsUrl(walletId: String) = s"$wallets/$walletId/migrations"
 
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
@@ -406,4 +407,17 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toMigrationCostResponse
     )
 
+  /**
+   * @inheritdoc
+   */
+  override def listStakePools(stake: Int): CardanoApiRequest[Seq[StakePool]] = {
+    val url = Uri(s"$stakePools?stake=$stake")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toStakePoolsResponse
+    )
+  }
 }

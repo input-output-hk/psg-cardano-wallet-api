@@ -334,6 +334,10 @@ trait InMemoryCardanoApi {
             resp <- if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
             else badRequest(s"Invalid binary string")
           } yield resp
+        case ("stake-pools?stake=12345", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("stake_pools.json"))
+        case (r"stake-pools.+", HttpMethods.GET) =>
+          badRequest("Invalid stake parameter")
         case _                                                => notFound("Not found")
       }
 

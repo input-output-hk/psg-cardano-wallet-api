@@ -41,6 +41,7 @@ object CardanoApiMain {
     val postExternalTransaction = "-postExternalTransaction"
     val migrateShelleyWallet = "-migrateShelleyWallet"
     val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
+    val listStakePools = "-listStakePools"
 
     //Parameters
     val baseUrl = "-baseUrl"
@@ -67,6 +68,7 @@ object CardanoApiMain {
     val address = "-address"
     val binary = "-binary"
     val addresses = "-addresses"
+    val stake = "-stake"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -236,6 +238,9 @@ object CardanoApiMain {
         } else if (hasArgument(CmdLine.getShelleyWalletMigrationInfo)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[MigrationCostResponse](api.getShelleyWalletMigrationInfo(walletId).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.listStakePools)) {
+          val stake = arguments.get(CmdLine.stake).toInt
+          unwrap[Seq[StakePool]](api.listStakePools(stake).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -292,6 +297,7 @@ object CardanoApiMain {
     val cmdLinePostExternalTransaction = s"${CmdLine.postExternalTransaction} ${CmdLine.binary} <binary_string>"
     val cmdLineMigrateShelleyWallet = s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>"
     val cmdLineGetShelleyWalletMigrationInfo = s"${CmdLine.getShelleyWalletMigrationInfo} ${CmdLine.walletId} <walletId>"
+    val cmdLineListStakePools = s"${CmdLine.listStakePools} ${CmdLine.stake} <stake>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -331,6 +337,7 @@ object CardanoApiMain {
       trace(" "+cmdLinePostExternalTransaction+" ( experimental )")
       trace(" "+cmdLineMigrateShelleyWallet)
       trace(" "+cmdLineGetShelleyWalletMigrationInfo)
+      trace(" "+cmdLineListStakePools)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -564,6 +571,15 @@ object CardanoApiMain {
             apiDocOperation = "getShelleyWalletMigrationInfo",
             examples = List(
               s"${CmdLine.getShelleyWalletMigrationInfo} ${CmdLine.walletId} $exampleWalletId",
+            )
+          )
+        case CmdLine.listStakePools =>
+          beautifyTrace(
+            arguments = s"${CmdLine.stake} <stake>",
+            description = "List all known stake pools ordered by descending non_myopic_member_rewards",
+            apiDocOperation = "listStakePools",
+            examples = List(
+              s"${CmdLine.listStakePools} ${CmdLine.stake} 10000"
             )
           )
         case cmd => trace(s"$cmd help not supported")

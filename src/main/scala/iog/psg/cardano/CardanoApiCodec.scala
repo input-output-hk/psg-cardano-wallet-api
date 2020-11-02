@@ -74,6 +74,7 @@ object CardanoApiCodec {
     implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeStakePool: Encoder[StakePool] = dropNulls(deriveConfiguredEncoder)
 
     private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
       quantity <- c.downField("quantity").as[T]
@@ -439,6 +440,33 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(encodeOnly = true)
   final case class SubmitMigration(passphrase: String, addresses: Seq[String])
 
+  @ConfiguredJsonCodec
+  final case class StakePoolMetric(
+                                    nonMyopicMemberRewards: QuantityUnit[Long],
+                                    relativeStake: QuantityUnit[Double],
+                                    saturation: Double,
+                                    producedBlocks: QuantityUnit[Long]
+                                  )
+
+  @ConfiguredJsonCodec
+  final case class StakePoolMetadata(
+                                      ticker: String,
+                                      name: String,
+                                      description: String,
+                                      homepage: String
+                                    )
+
+  @ConfiguredJsonCodec(decodeOnly = true)
+  final case class StakePool(
+                              id: String,
+                              metrics: StakePoolMetric,
+                              cost: QuantityUnit[Long],
+                              margin: QuantityUnit[Double],
+                              pledge: QuantityUnit[Long],
+                              metadata: Option[StakePoolMetadata],
+                              retirement: Option[NextEpoch]
+                            )
+
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
   }
@@ -532,6 +560,12 @@ object CardanoApiCodec {
 
     def toMigrationCostResponse: Future[CardanoApiResponse[MigrationCostResponse]] =
       to[MigrationCostResponse](Unmarshal(_).to[CardanoApiResponse[MigrationCostResponse]])
+
+    def toStakePoolsResponse: Future[CardanoApiResponse[Seq[StakePool]]] =
+      to[Seq[StakePool]]({ strict =>
+        println(strict.getData().utf8String)
+        Unmarshal(strict).to[CardanoApiResponse[Seq[StakePool]]]
+      })
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

@@ -275,6 +275,14 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.getShelleyWalletMigrationInfo("invalid_address_id")) shouldBe walletNotFoundError
   }
 
+  "GET /stake-pools" should "List all known stake pools ordered by descending non_myopic_member_rewards." in {
+    api.listStakePools(12345).toCompletableFuture.get().asScala shouldBe jsonFileStakePoolsResponse
+  }
+
+  it should "return error" in {
+    tryGetErrorMessage(api.listStakePools(-1)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid stake parameter, Code: 400"
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as
