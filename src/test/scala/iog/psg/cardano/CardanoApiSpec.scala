@@ -257,6 +257,22 @@ class CardanoApiSpec
     api.estimateFeeStakePool("invalid_wallet_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "PUT /stake-pools/{stakePoolId}/wallets/{walletId}" should "Delegate all (current and future) addresses from the given wallet to the given stake pool" in {
+    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).executeOrFail() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    api.joinStakePool("invalid_wallet_id", stakePoolId, walletPassphrase).executeExpectingErrorOrFail() shouldBe ErrorMessage("Not found", "404")
+  }
+
+  "DELETE /stake-pools/*/wallets/{walletId}" should "Stop delegating completely" in {
+    api.quitStakePool(wallet.id, walletPassphrase).executeOrFail() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    api.quitStakePool("invalid_wallet_id", walletPassphrase).executeExpectingErrorOrFail() shouldBe ErrorMessage("Not found", "404")
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

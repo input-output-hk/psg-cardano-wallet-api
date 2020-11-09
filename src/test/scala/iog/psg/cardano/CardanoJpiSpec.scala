@@ -291,6 +291,22 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.estimateFeeStakePool("invalid_wallet_id")) shouldBe walletNotFoundError
   }
 
+  "PUT /stake-pools/{stakePoolId}/wallets/{walletId}" should "Delegate all (current and future) addresses from the given wallet to the given stake pool" in {
+    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+   tryGetErrorMessage(api.joinStakePool("invalid_wallet_id", stakePoolId, walletPassphrase)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Not found, Code: 404"
+  }
+
+  "DELETE /stake-pools/*/wallets/{walletId}" should "Stop delegating completely" in {
+    api.quitStakePool(wallet.id, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.quitStakePool("invalid_wallet_id", walletPassphrase)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Not found, Code: 404"
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

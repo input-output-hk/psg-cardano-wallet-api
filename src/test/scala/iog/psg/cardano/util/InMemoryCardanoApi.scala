@@ -341,6 +341,18 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("stake_pools.json"))
         case (r"stake-pools.+", HttpMethods.GET) =>
           badRequest("Invalid stake parameter")
+        case (s"stake-pools/$stakePoolId/wallets/${jsonFileWallet.id}", HttpMethods.PUT) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkPassphraseField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migration.json"))
+          } yield response
+        case (s"stake-pools/*/wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkPassphraseField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migration.json"))
+          } yield response
         case _                                                => notFound("Not found")
       }
 

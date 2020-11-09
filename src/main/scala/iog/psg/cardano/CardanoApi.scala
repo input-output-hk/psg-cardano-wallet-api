@@ -309,7 +309,7 @@ trait CardanoApi {
    * @param addresses recipient addresses
    * @return migrate shelley wallet request
    */
-  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
+  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[MigrationResponse]]]
 
   /**
    * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
@@ -336,4 +336,25 @@ trait CardanoApi {
    * @return estimate fee request
    */
   def estimateFeeStakePool(walletId: String): CardanoApiRequest[EstimateFeeResponse]
+
+  /**
+   * Delegate all (current and future) addresses from the given wallet to the given stake pool.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/joinStakePool #joinStakePool]]
+   *
+   * @param walletId wallet's id
+   * @param stakePoolId stakePool's id
+   * @param passphrase wallet's passphrase
+   * @return quit stake pool request
+   */
+  def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]]
+
+  /**
+   * Stop delegating completely. The wallet's stake will become inactive.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/quitStakePool #quitStakePool]]
+   *
+   * @param walletId wallet's id
+   * @param passphrase wallet's passphrase
+   * @return quit stake pool request
+   */
+  def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]]
 }

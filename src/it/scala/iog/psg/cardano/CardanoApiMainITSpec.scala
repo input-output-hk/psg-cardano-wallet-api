@@ -12,16 +12,17 @@ import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
 import iog.psg.cardano.util.{ArgumentParser, Configure, Trace}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{Millis, Minute, Minutes, Seconds, Span}
 
 import scala.io.Source
 
-class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
+class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll with Eventually {
 
   override def afterAll(): Unit = {
-    Seq(2, 3).map { num =>
+    Seq(/*2,*/ 3).map { num =>
       val walletId = TestWalletsConfig.walletsMap(num).id
       runCmdLine(
         CmdLine.deleteWallet,
@@ -263,7 +264,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     assert(resultsCreateTx.last.contains("pending"), "Transaction should be pending")
 
-    val txId = extractTxId(resultsCreateTx.last)
+    val txId = extractId(resultsCreateTx.last)
 
     val resultsGetTx = runCmdLine(
       CmdLine.getTx,
@@ -361,13 +362,37 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
   }
 
-  "The Cmd Line -listStakePools" should "List all known stake pools" in {
-    val results = runCmdLine(
+  "The Cmd Line -listStakePools -joinStakePool -quitStakePool" should "List all known stake pools, join and quit" in new TestWalletFixture(walletNum = 1){
+    val stakePoolsListCmdLineResult = runCmdLine(
       CmdLine.listStakePools,
       CmdLine.stake, "10000"
     )
+    
+    assert(stakePoolsListCmdLineResult.exists(_.contains("id")), "Stake Pool id")
 
-    assert(results.exists(_.contains("id")), "")
+    val stakePoolId: String = extractId(stakePoolsListCmdLineResult.last)
+    val joinStakePoolCmdLineResult = runCmdLine(
+      CmdLine.joinStakePool,
+      CmdLine.walletId, wallet.id,
+      CmdLine.stakePoolId, stakePoolId,
+      CmdLine.passphrase, wallet.passphrase
+    )
+
+    assert(!joinStakePoolCmdLineResult.exists(_.contains("Error")))
+
+    implicit val patienceConfig =
+      PatienceConfig(timeout = scaled(Span(3, Minutes)), interval = scaled(Span(1, Seconds)))
+
+    //not_delegating_to
+    eventually {
+      val quitStakePoolCmdLineResult = runCmdLine(
+        CmdLine.quitStakePool,
+        CmdLine.walletId, wallet.id,
+        CmdLine.passphrase, wallet.passphrase
+      )
+
+      assert(!quitStakePoolCmdLineResult.exists(_.contains("Error")))
+    }
   }
 
   "The Cmd Line --help" should "show possible commands" in {
@@ -412,7 +437,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -postExternalTransaction -binary <binary_string> ( experimental )
         | -migrateShelleyWallet -walletId <walletId> -passphrase <passphrase> -addresses <addresses>
         | -getShelleyWalletMigrationInfo -walletId <walletId>
-        | -listStakePools -stake <stake>""".stripMargin
+        | -listStakePools -stake <stake>
+        | -joinStakePool -walletId <walletId> -stakePoolId <stakePoolId> -passphrase <passphrase>
+        | -quitStakePool -walletId <walletId> -passphrase <passphrase>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -700,6 +727,30 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | $CMDLINE -listStakePools -stake 10000""".stripMargin.trim
   }
 
+  it should "show joinStakePool help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.joinStakePool)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Delegate all (current and future) addresses from the given wallet to the given stake pool
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/joinStakePool ]
+        |
+        | Arguments: -walletId <walletId> -stakePoolId <stakePoolId> -passphrase <passphrase>
+        |
+        | Examples:
+        | $CMDLINE -walletId 1234567890123456789012345678901234567890 -passphrase Password123!""".stripMargin.trim
+  }
+
+  it should "show quitStakePool help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.quitStakePool)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Stop delegating completely, the wallet's stake will become inactive
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/quitStakePool ]
+        |
+        | Arguments: -walletId <walletId> -passphrase <passphrase>
+        |
+        | Examples:
+        | $CMDLINE -walletId 1234567890123456789012345678901234567890 -passphrase Password123!""".stripMargin.trim
+  }
+
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)
 
   private def getUnusedAddressWallet1 = getUnusedAddress(TestWalletsConfig.walletsMap(1).id)
@@ -713,9 +764,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     decode[Seq[WalletAddressId]](cmdResults.last).toOption.getOrElse(Nil).last.id
   }
 
-  private def extractTxId(toStringCreateTransactionResult: String): String = {
-    val json = parse(toStringCreateTransactionResult).getOrElse(fail("Invalid json"))
-    json.\\("id").headOption.flatMap(_.asString).getOrElse(fail(s"Could not parse id from json: ${toStringCreateTransactionResult}"))
+  private def extractId(jsonResult: String): String = {
+    val json = parse(jsonResult).getOrElse(fail("Invalid json"))
+    json.\\("id").headOption.flatMap(_.asString).getOrElse(fail(s"Could not parse id from json: $jsonResult"))
   }
 
 }

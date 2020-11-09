@@ -43,6 +43,8 @@ object CardanoApiMain {
     val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
     val listStakePools = "-listStakePools"
     val estimateFeeStakePool = "-estimateFeeStakePool"
+    val joinStakePool = "-joinStakePool"
+    val quitStakePool = "-quitStakePool"
 
     //Parameters
     val baseUrl = "-baseUrl"
@@ -70,6 +72,7 @@ object CardanoApiMain {
     val binary = "-binary"
     val addresses = "-addresses"
     val stake = "-stake"
+    val stakePoolId = "-stakePoolId"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -238,13 +241,22 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
           val addresses = arguments.get(CmdLine.addresses).split(",").toSeq
-          unwrap[Seq[SubmitMigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
+          unwrap[Seq[MigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getShelleyWalletMigrationInfo)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[MigrationCostResponse](api.getShelleyWalletMigrationInfo(walletId).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listStakePools)) {
           val stake = arguments.get(CmdLine.stake).toInt
           unwrap[Seq[StakePool]](api.listStakePools(stake).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.joinStakePool)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val stakePoolId = arguments.get(CmdLine.stakePoolId)
+          val passphrase = arguments.get(CmdLine.passphrase)
+          unwrap[MigrationResponse](api.joinStakePool(walletId, stakePoolId, passphrase).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.quitStakePool)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val passphrase = arguments.get(CmdLine.passphrase)
+          unwrap[MigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -303,6 +315,8 @@ object CardanoApiMain {
     val cmdLineMigrateShelleyWallet = s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>"
     val cmdLineGetShelleyWalletMigrationInfo = s"${CmdLine.getShelleyWalletMigrationInfo} ${CmdLine.walletId} <walletId>"
     val cmdLineListStakePools = s"${CmdLine.listStakePools} ${CmdLine.stake} <stake>"
+    val cmdLineJoinStakePool = s"${CmdLine.joinStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.stakePoolId} <stakePoolId> ${CmdLine.passphrase} <passphrase>"
+    val cmdLineQuitStakePool = s"${CmdLine.quitStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -344,6 +358,8 @@ object CardanoApiMain {
       trace(" "+cmdLineMigrateShelleyWallet)
       trace(" "+cmdLineGetShelleyWalletMigrationInfo)
       trace(" "+cmdLineListStakePools)
+      trace(" "+cmdLineJoinStakePool)
+      trace(" "+cmdLineQuitStakePool)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -595,6 +611,24 @@ object CardanoApiMain {
             apiDocOperation = "listStakePools",
             examples = List(
               s"${CmdLine.listStakePools} ${CmdLine.stake} 10000"
+            )
+          )
+        case CmdLine.joinStakePool =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.stakePoolId} <stakePoolId> ${CmdLine.passphrase} <passphrase>",
+            description = "Delegate all (current and future) addresses from the given wallet to the given stake pool",
+            apiDocOperation = "joinStakePool",
+            examples = List(
+              s"${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password123!"
+            )
+          )
+        case CmdLine.quitStakePool =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase>",
+            description = "Stop delegating completely, the wallet's stake will become inactive",
+            apiDocOperation = "quitStakePool",
+            examples = List(
+              s"${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password123!"
             )
           )
         case cmd => trace(s"$cmd help not supported")

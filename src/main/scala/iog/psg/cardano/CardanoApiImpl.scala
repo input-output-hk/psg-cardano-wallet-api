@@ -381,7 +381,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
+  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[MigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(
@@ -390,7 +390,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
           method = POST,
           entity = marshalled
         ),
-        _.toSubmitMigrationResponse
+        _.toMigrationsResponse
       )
     }}
   }
@@ -434,4 +434,39 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toEstimateFeeResponse
     )
   }
+
+  /**
+   * @inheritdoc
+   */
+  override def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]] = {
+    val updater = PassphraseRequest(passphrase = passphrase)
+    Marshal(updater).to[RequestEntity] map { marshalled => {
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/$stakePoolId/wallets/$walletId",
+          method = PUT,
+          entity = marshalled
+        ),
+        _.toMigrationResponse
+      )
+    }}
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]] = {
+    val updater = PassphraseRequest(passphrase = passphrase)
+    Marshal(updater).to[RequestEntity] map { marshalled => {
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/*/wallets/$walletId",
+          method = DELETE,
+          entity = marshalled
+        ),
+        _.toMigrationResponse
+      )
+    }}
+  }
+
 }
