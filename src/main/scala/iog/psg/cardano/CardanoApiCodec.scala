@@ -424,7 +424,6 @@ object CardanoApiCodec {
     def toWallets: Future[CardanoApiResponse[Seq[Wallet]]]
     = to[Seq[Wallet]](Unmarshal(_).to[CardanoApiResponse[Seq[Wallet]]])
 
-
     def toWalletAddressIds: Future[CardanoApiResponse[Seq[WalletAddressId]]]
     = to[Seq[WalletAddressId]](Unmarshal(_).to[CardanoApiResponse[Seq[WalletAddressId]]])
 

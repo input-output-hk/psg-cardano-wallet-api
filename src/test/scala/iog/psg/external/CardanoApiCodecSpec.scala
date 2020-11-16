@@ -4,7 +4,8 @@ import io.circe.jawn.decode
 import io.circe.syntax._
 import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec._
-import iog.psg.cardano.util.DummyModel
+import iog.psg.cardano.util.{CustomPatienceConfiguration, DummyModel, JsonFiles}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -14,7 +15,7 @@ import org.scalatest.matchers.should.Matchers
  * available to clients and are not privately scoped to the implementation package
  * (using private[cardano])
  */
-class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
+class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel with JsonFiles with ScalaFutures with CustomPatienceConfiguration {
 
   "Encode class with Nones" should "drop nulls in Delegation" in {
     val delAct = DelegationActive(status = DelegationStatus.delegating, target = None)
@@ -101,6 +102,11 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
   it should "be encoded to Long" in {
     val qu = QuantityUnit(123, Units.lovelace)
     qu.asJson.noSpaces shouldBe """{"quantity":123,"unit":"lovelace"}"""
+  }
+
+  "Decode transactions" should "decode huge file" in {
+    println(jsonFileCreatedTransactionsHugeResponse.take(10))
+    jsonFileCreatedTransactionsHugeResponse.size shouldBe 701
   }
 
 }

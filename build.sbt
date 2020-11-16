@@ -1,6 +1,7 @@
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
 val akkaHttpCirce = "1.31.0"
+val akkaJsonStreaming = "2.0.2"
 val circeVersion = "0.13.0"
 val scalaTestVersion = "3.1.2"
 val commonsCodecVersion = "1.15"
@@ -47,6 +48,7 @@ lazy val rootProject = (project in file("."))
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.lightbend.akka" %% "akka-stream-alpakka-json-streaming" % akkaJsonStreaming,
       "io.circe" %% "circe-generic-extras" % circeVersion,
       "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirce,
       "commons-codec" % "commons-codec" % commonsCodecVersion,
