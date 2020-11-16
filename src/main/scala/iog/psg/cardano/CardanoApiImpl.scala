@@ -30,29 +30,45 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def listWallets: CardanoApiRequest[Seq[Wallet]] =
-    CardanoApiRequest(HttpRequest(uri = wallets, method = GET), _.toWallets)
+  override def listWallets: CardanoApiRequest[Seq[Wallet]] = CardanoApiRequest(
+    HttpRequest(
+      uri = wallets,
+      method = GET
+    ),
+    _.toWallets
+  )
 
   /**
    * @inheritdoc
    */
-  override def getWallet(walletId: String): CardanoApiRequest[Wallet] =
-    CardanoApiRequest(HttpRequest(uri = s"$wallets/$walletId", method = GET), _.toWallet)
+  override def getWallet(walletId: String): CardanoApiRequest[Wallet] = CardanoApiRequest(
+    HttpRequest(
+      uri = s"$wallets/$walletId",
+      method = GET
+    ),
+    _.toWallet
+  )
 
   /**
    * @inheritdoc
    */
-  override def networkInfo: CardanoApiRequest[NetworkInfo] =
-    CardanoApiRequest(HttpRequest(uri = s"${network}/information", method = GET), _.toNetworkInfoResponse)
+  override def networkInfo: CardanoApiRequest[NetworkInfo] = CardanoApiRequest(
+    HttpRequest(
+      uri = s"${network}/information",
+      method = GET
+    ),
+    _.toNetworkInfoResponse
+  )
 
   /**
    * @inheritdoc
    */
-  override def createRestoreWallet(name: String,
-                                   passphrase: String,
-                                   mnemonicSentence: MnemonicSentence,
-                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
-                                   addressPoolGap: Option[Int] = None
+  override def createRestoreWallet(
+    name: String,
+    passphrase: String,
+    mnemonicSentence: MnemonicSentence,
+    mnemonicSecondFactor: Option[MnemonicSentence] = None,
+    addressPoolGap: Option[Int] = None
   ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =
@@ -65,7 +81,14 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       )
 
     Marshal(createRestore).to[RequestEntity].map { marshalled =>
-      CardanoApiRequest(HttpRequest(uri = s"$wallets", method = POST, entity = marshalled), _.toWallet)
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toWallet
+      )
     }
 
   }
@@ -83,7 +106,13 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       baseUri.withQuery(Query("state" -> s.toString))
     }.getOrElse(baseUri)
 
-    CardanoApiRequest(HttpRequest(uri = url, method = GET), _.toWalletAddressIds)
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toWalletAddressIds
+    )
 
   }
 
@@ -107,7 +136,13 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
 
     val uriWithQueries = baseUri.withQuery(Query(queries: _*))
 
-    CardanoApiRequest(HttpRequest(uri = uriWithQueries, method = GET), _.toCreateTransactionResponses)
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uriWithQueries,
+        method = GET
+      ),
+      _.toCreateTransactionResponses
+    )
   }
 
   /**
@@ -124,7 +159,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
 
     Marshal(createTx).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
-        HttpRequest(uri = s"$wallets/$fromWalletId/transactions", method = POST, entity = marshalled),
+        HttpRequest(
+          uri = s"$wallets/$fromWalletId/transactions",
+          method = POST,
+          entity = marshalled
+        ),
         _.toCreateTransactionResponse
       )
     }
@@ -143,7 +182,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
 
     Marshal(estimateFees).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
-        HttpRequest(uri = s"$wallets/$fromWalletId/payment-fees", method = POST, entity = marshalled),
+        HttpRequest(
+          uri = s"$wallets/$fromWalletId/payment-fees",
+          method = POST,
+          entity = marshalled
+        ),
         _.toEstimateFeeResponse
       )
     }
@@ -155,7 +198,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   override def fundPayments(walletId: String, payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]] =
     Marshal(payments).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
-        HttpRequest(uri = s"$wallets/${walletId}/coin-selections/random", method = POST, entity = marshalled),
+        HttpRequest(
+          uri = s"$wallets/${walletId}/coin-selections/random",
+          method = POST,
+          entity = marshalled
+        ),
         _.toFundPaymentsResponse
       )
     }
@@ -169,7 +216,13 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
 
     val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
 
-    CardanoApiRequest(HttpRequest(uri = uri, method = GET), _.toCreateTransactionResponse)
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = GET
+      ),
+      _.toCreateTransactionResponse
+    )
   }
 
   /**
@@ -184,18 +237,33 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
     val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
 
     Marshal(updater).to[RequestEntity] map { marshalled =>
-      CardanoApiRequest(HttpRequest(uri = uri, method = PUT, entity = marshalled), _.toUnit)
+      CardanoApiRequest(
+        HttpRequest(
+          uri = uri,
+          method = PUT,
+          entity = marshalled
+        ),
+        _.toUnit
+      )
     }
   }
 
   /**
    * @inheritdoc
    */
-  override def deleteWallet(walletId: String): CardanoApiRequest[Unit] = {
+  override def deleteWallet(
+    walletId: String
+  ): CardanoApiRequest[Unit] = {
 
     val uri = Uri(s"$wallets/${walletId}")
 
-    CardanoApiRequest(HttpRequest(uri = uri, method = DELETE), _.toUnit)
+    CardanoApiRequest(
+      HttpRequest(
+        uri = uri,
+        method = DELETE
+      ),
+      _.toUnit
+    )
   }
 
 }
