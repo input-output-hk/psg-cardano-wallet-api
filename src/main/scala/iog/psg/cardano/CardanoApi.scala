@@ -23,7 +23,9 @@ object CardanoApi {
   type CardanoApiResponse[T] = Either[ErrorMessage, T]
 
   final case class ErrorMessage(message: String, code: String)
-  final case class CardanoApiRequest[T](request: HttpRequest, mapper: HttpResponse => Future[CardanoApiResponse[T]])
+  final case class CardanoApiRequest[T](request: HttpRequest,
+                                        mapper: HttpResponse => Future[CardanoApiResponse[T]]
+  )
 
   object Order extends Enumeration {
     type Order = Value
@@ -33,7 +35,8 @@ object CardanoApi {
 
   object CardanoApiOps {
 
-    implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
+    implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]])
+        extends AnyVal {
 
       def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] =
         knot.flatMap {
@@ -228,7 +231,10 @@ trait CardanoApi {
    * @param newPassphrase new passphrase
    * @return update passphrase request
    */
-  def updatePassphrase(walletId: String, oldPassphrase: String, newPassphrase: String): Future[CardanoApiRequest[Unit]]
+  def updatePassphrase(walletId: String,
+                       oldPassphrase: String,
+                       newPassphrase: String
+  ): Future[CardanoApiRequest[Unit]]
 
   /**
    * Delete wallet by id

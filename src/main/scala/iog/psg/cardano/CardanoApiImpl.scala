@@ -195,7 +195,9 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def fundPayments(walletId: String, payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]] =
+  override def fundPayments(walletId: String,
+                            payments: Payments
+  ): Future[CardanoApiRequest[FundPaymentsResponse]] =
     Marshal(payments).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
