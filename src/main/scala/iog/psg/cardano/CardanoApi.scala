@@ -118,12 +118,11 @@ trait CardanoApi {
    * @param addressPoolGap An optional number of consecutive unused addresses allowed
    * @return create/restore wallet request
    */
-  def createRestoreWallet(
-    name: String,
-    passphrase: String,
-    mnemonicSentence: MnemonicSentence,
-    mnemonicSecondFactor: Option[MnemonicSentence] = None,
-    addressPoolGap: Option[Int] = None
+  def createRestoreWallet(name: String,
+                          passphrase: String,
+                          mnemonicSentence: MnemonicSentence,
+                          mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                          addressPoolGap: Option[Int] = None
   ): Future[CardanoApiRequest[Wallet]]
 
   /**
@@ -152,12 +151,11 @@ trait CardanoApi {
    *                      This is particularly useful when set to 1 in order to list the withdrawal history of a wallet.
    * @return list wallet's transactions request
    */
-  def listTransactions(
-    walletId: String,
-    start: Option[ZonedDateTime] = None,
-    end: Option[ZonedDateTime] = None,
-    order: Order = Order.descendingOrder,
-    minWithdrawal: Option[Int] = None
+  def listTransactions(walletId: String,
+                       start: Option[ZonedDateTime] = None,
+                       end: Option[ZonedDateTime] = None,
+                       order: Order = Order.descendingOrder,
+                       minWithdrawal: Option[Int] = None
   ): CardanoApiRequest[Seq[CreateTransactionResponse]]
 
   /**
@@ -173,12 +171,11 @@ trait CardanoApi {
    * @param metadata   Extra application data attached to the transaction.
    * @return create transaction request
    */
-  def createTransaction(
-    fromWalletId: String,
-    passphrase: String,
-    payments: Payments,
-    metadata: Option[TxMetadataIn],
-    withdrawal: Option[String]
+  def createTransaction(fromWalletId: String,
+                        passphrase: String,
+                        payments: Payments,
+                        metadata: Option[TxMetadataIn],
+                        withdrawal: Option[String]
   ): Future[CardanoApiRequest[CreateTransactionResponse]]
 
   /**
@@ -195,11 +192,10 @@ trait CardanoApi {
    * @param metadataIn Extra application data attached to the transaction.
    * @return estimate fee request
    */
-  def estimateFee(
-    fromWalletId: String,
-    payments: Payments,
-    withdrawal: Option[String],
-    metadataIn: Option[TxMetadataIn] = None
+  def estimateFee(fromWalletId: String,
+                  payments: Payments,
+                  withdrawal: Option[String],
+                  metadataIn: Option[TxMetadataIn] = None
   ): Future[CardanoApiRequest[EstimateFeeResponse]]
 
   /**
@@ -220,9 +216,8 @@ trait CardanoApi {
    * @param transactionId transaction's id
    * @return get transaction request
    */
-  def getTransaction[T <: TxMetadataIn](
-    walletId: String,
-    transactionId: String
+  def getTransaction[T <: TxMetadataIn](walletId: String,
+                                        transactionId: String
   ): CardanoApiRequest[CreateTransactionResponse]
 
   /**

@@ -48,12 +48,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def createRestoreWallet(
-    name: String,
-    passphrase: String,
-    mnemonicSentence: MnemonicSentence,
-    mnemonicSecondFactor: Option[MnemonicSentence] = None,
-    addressPoolGap: Option[Int] = None
+  override def createRestoreWallet(name: String,
+                                   passphrase: String,
+                                   mnemonicSentence: MnemonicSentence,
+                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                                   addressPoolGap: Option[Int] = None
   ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =
@@ -74,9 +73,8 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def listAddresses(
-    walletId: String,
-    state: Option[AddressFilter]
+  override def listAddresses(walletId: String,
+                             state: Option[AddressFilter]
   ): CardanoApiRequest[Seq[WalletAddressId]] = {
 
     val baseUri = Uri(s"$wallets/${walletId}/addresses")
@@ -92,12 +90,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def listTransactions(
-    walletId: String,
-    start: Option[ZonedDateTime] = None,
-    end: Option[ZonedDateTime] = None,
-    order: Order = Order.descendingOrder,
-    minWithdrawal: Option[Int] = None
+  override def listTransactions(walletId: String,
+                                start: Option[ZonedDateTime] = None,
+                                end: Option[ZonedDateTime] = None,
+                                order: Order = Order.descendingOrder,
+                                minWithdrawal: Option[Int] = None
   ): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
     val baseUri = Uri(s"$wallets/${walletId}/transactions")
 
@@ -116,12 +113,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def createTransaction(
-    fromWalletId: String,
-    passphrase: String,
-    payments: Payments,
-    metadata: Option[TxMetadataIn],
-    withdrawal: Option[String]
+  override def createTransaction(fromWalletId: String,
+                                 passphrase: String,
+                                 payments: Payments,
+                                 metadata: Option[TxMetadataIn],
+                                 withdrawal: Option[String]
   ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
 
     val createTx = CreateTransaction(passphrase, payments.payments, metadata, withdrawal)
@@ -137,11 +133,10 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def estimateFee(
-    fromWalletId: String,
-    payments: Payments,
-    withdrawal: Option[String],
-    metadataIn: Option[TxMetadataIn] = None
+  override def estimateFee(fromWalletId: String,
+                           payments: Payments,
+                           withdrawal: Option[String],
+                           metadataIn: Option[TxMetadataIn] = None
   ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 
     val estimateFees = EstimateFee(payments.payments, withdrawal, metadataIn)
@@ -168,9 +163,8 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def getTransaction[T <: TxMetadataIn](
-    walletId: String,
-    transactionId: String
+  override def getTransaction[T <: TxMetadataIn](walletId: String,
+                                                 transactionId: String
   ): CardanoApiRequest[CreateTransactionResponse] = {
 
     val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
@@ -181,10 +175,9 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def updatePassphrase(
-    walletId: String,
-    oldPassphrase: String,
-    newPassphrase: String
+  override def updatePassphrase(walletId: String,
+                                oldPassphrase: String,
+                                newPassphrase: String
   ): Future[CardanoApiRequest[Unit]] = {
 
     val uri = Uri(s"$wallets/${walletId}/passphrase")
