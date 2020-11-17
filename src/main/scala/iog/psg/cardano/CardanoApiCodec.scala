@@ -433,18 +433,32 @@ object CardanoApiCodec {
     def toCreateTransactionsResponse: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
     = decodeInStream[CreateTransactionResponse](response, "$[*]")
 
-    private def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]) =
-      response.entity.dataBytes
-        .via(JsonReader.select(jsonPath))
-        .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
-        .runWith(Sink.seq).map(flattenCardanoApiResponses)
+    private def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[Seq[T]]] = {
+      response.entity.contentType match {
+        case WithFixedCharset(MediaTypes.`application/json`) =>
+          response.entity.dataBytes
+            .via(JsonReader.select(jsonPath))
+            .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
+            .runWith(Sink.seq).map(flattenCardanoApiResponses)
 
-    private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]) =
+          //TODO DRY
+        case c: ContentType
+          if c.mediaType == MediaTypes.`text/plain` ||
+            c.mediaType == MediaTypes.`application/octet-stream` =>
+
+          extractErrorResponse[Seq[T]](strictEntityF)
+        case c: ContentType =>
+          Future.failed(new RuntimeException(s"Unexpected type ${c.mediaType}, ${c.charsetOption}"))
+
+      }
+    }
+
+    private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[T]] =
       Unmarshal(utf8String).to[T].map(Right(_)).recover {
         case e: Exception => errorUnparseableResult(e)
       }
 
-    private def flattenCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]) =
+    private def flattenCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
       resp.flatMap(_.swap.toOption).headOption match {
         case Some(error) => Left(error)
         case None =>
