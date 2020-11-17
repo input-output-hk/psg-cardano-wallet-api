@@ -437,7 +437,7 @@ object CardanoApiCodec {
         response.entity.dataBytes
           .via(JsonReader.select(jsonPath))
           .mapAsync(parallelism = 4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
-          .runWith(Sink.seq).map(flattenCardanoApiResponses)
+          .runWith(Sink.seq).map(sequenceCardanoApiResponses)
       )
 
     private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[T]] =
@@ -445,11 +445,10 @@ object CardanoApiCodec {
         case e: Exception => errorUnparseableResult(e)
       }
 
-    private def flattenCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
-      resp.flatMap(_.swap.toOption).headOption match {
-        case Some(error) => Left(error)
-        case None =>
-          Right(resp.flatMap(_.toOption))
+    private def sequenceCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
+      resp.find(_.isLeft) match {
+        case Some(Left(error)) => Left(error)
+        case None => Right(resp.flatMap(_.toOption))
       }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
