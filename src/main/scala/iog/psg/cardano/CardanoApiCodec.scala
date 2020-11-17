@@ -436,7 +436,7 @@ object CardanoApiCodec {
       decodeResponseEntityOrHandleError(response, () =>
         response.entity.dataBytes
           .via(JsonReader.select(jsonPath))
-          .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
+          .mapAsync(parallelism = 4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
           .runWith(Sink.seq).map(flattenCardanoApiResponses)
       )
 
