@@ -5,9 +5,11 @@ import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.model.ContentType.WithFixedCharset
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
 import akka.stream.Materializer
+import akka.stream.alpakka.json.scaladsl.JsonReader
+import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe._
@@ -385,18 +387,16 @@ object CardanoApiCodec {
 
     private def strictEntityF: Future[HttpEntity.Strict] = response.entity.toStrict(timeout)
 
+    private def errorUnparseableResult[T](err: Throwable): CardanoApiResponse[T] = Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
 
-    private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] = {
+    private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] =
       strictEntity.map(e => toErrorMessage(e.data) match {
-        case Left(err) => Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
+        case Left(err) => errorUnparseableResult(err)
         case Right(v) => Left(v)
       })
 
-    }
-
     def toNetworkInfoResponse: Future[CardanoApiResponse[NetworkInfo]]
     = to[NetworkInfo](Unmarshal(_).to[CardanoApiResponse[NetworkInfo]])
-
 
     def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] = {
 
@@ -430,8 +430,28 @@ object CardanoApiCodec {
     def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
     = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])
 
-    def toCreateTransactionResponses: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
-    = to[Seq[CreateTransactionResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[CreateTransactionResponse]]])
+    def toCreateTransactionsResponse: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
+    = {
+      response.entity.dataBytes
+        .via(JsonReader.select("$[*]"))
+        .mapAsync(4)({ bs =>
+          Unmarshal(bs.utf8String).to[CreateTransactionResponse].map(Right(_)).recover {
+            case e: Exception => errorUnparseableResult(e)
+          }
+        })
+        .runWith(Sink.seq).map { resp =>
+        resp.flatMap(_.swap.toOption).headOption match {
+          case Some(error) => Left(error)
+          case None =>
+            Right(resp.flatMap(_.toOption))
+        }
+      }
+    }
+
+    private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]) =
+      Unmarshal(utf8String).to[T].map(Right(_)).recover {
+        case e: Exception => errorUnparseableResult(e)
+      }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])

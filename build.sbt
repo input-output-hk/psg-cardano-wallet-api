@@ -53,5 +53,11 @@ lazy val rootProject = (project in file("."))
       "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirce,
       "commons-codec" % "commons-codec" % commonsCodecVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "it, test",
-    )
+    ),
+    assemblyMergeStrategy in assembly := {
+      case "module-info.class" => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
 )

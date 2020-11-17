@@ -1,10 +1,11 @@
 package iog.psg.external
 
+import akka.actor.ActorSystem
 import io.circe.jawn.decode
 import io.circe.syntax._
 import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec._
-import iog.psg.cardano.util.{CustomPatienceConfiguration, DummyModel, JsonFiles}
+import iog.psg.cardano.util.{ CustomPatienceConfiguration, DummyModel, JsonFiles }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +16,15 @@ import org.scalatest.matchers.should.Matchers
  * available to clients and are not privately scoped to the implementation package
  * (using private[cardano])
  */
-class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel with JsonFiles with ScalaFutures with CustomPatienceConfiguration {
+class CardanoApiCodecSpec
+    extends AnyFlatSpec
+    with Matchers
+    with DummyModel
+    with JsonFiles
+    with ScalaFutures
+    with CustomPatienceConfiguration {
+
+  implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
   "Encode class with Nones" should "drop nulls in Delegation" in {
     val delAct = DelegationActive(status = DelegationStatus.delegating, target = None)
@@ -78,7 +87,10 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel with
 
   it should "drop nulls Block" in {
     val b = Block(
-      slotNumber = 1, epochNumber = 2, height = QuantityUnit(42000000, Units.lovelace), absoluteSlotNumber = None
+      slotNumber = 1,
+      epochNumber = 2,
+      height = QuantityUnit(42000000, Units.lovelace),
+      absoluteSlotNumber = None
     )
 
     b.asJson.noSpaces shouldBe """{"slot_number":1,"epoch_number":2,"height":{"quantity":42000000,"unit":"lovelace"}}"""
@@ -105,8 +117,16 @@ class CardanoApiCodecSpec extends AnyFlatSpec with Matchers with DummyModel with
   }
 
   "Decode transactions" should "decode huge file" in {
-    println(jsonFileCreatedTransactionsHugeResponse.take(10))
-    jsonFileCreatedTransactionsHugeResponse.size shouldBe 701
+    val jsonFileTxs =
+      decodeViaStream(file = "transactions_huge.json", jsonPath = "$[*]").futureValue
+        .map(_.utf8String)
+        .map(jsonStr =>
+          decode[CreateTransactionResponse](jsonStr).getOrElse(fail(s"Could not decode $jsonStr"))
+        )
+
+    jsonFileTxs.size shouldBe 701
+    jsonFileTxs.head.id shouldBe "1b38b632d8fd9575bb669900046c089807f2437307b37e0cec0f7d83a6d02869"
+    jsonFileTxs.last.id shouldBe "d7b3efda1d44daf481937de314d2a25fe301c509c95acfbb215b413856b9730b"
   }
 
 }
