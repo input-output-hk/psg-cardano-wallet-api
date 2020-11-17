@@ -447,13 +447,10 @@ object CardanoApiCodec {
       }
 
     private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
-      responses.foldLeft[CardanoApiResponse[Seq[T]]](Right(Seq.empty))((acc, el) => {
-        el match {
-          case Right(elem) if acc.isRight => acc.map(_ :+ elem)
-          case Left(error) => Left(error)
-          case _ => acc
-        }
-      })
+      responses.foldLeft[CardanoApiResponse[Seq[T]]](Right(Seq.empty)) {
+        case (_, Left(error)) => Left(error)
+        case (acc, Right(elem)) => acc.map(_ :+ elem)
+      }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])
