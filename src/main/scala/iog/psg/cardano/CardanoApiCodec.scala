@@ -114,6 +114,8 @@ object CardanoApiCodec {
     }
   }
 
+  import ImplicitCodecs._
+
   def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
     encoder.mapJson(_.dropNullValues)
 
@@ -444,9 +446,9 @@ object CardanoApiCodec {
         case e: Exception => errorUnparseableResult(e)
       }
 
-    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] = {
+    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[List[T]] = {
       @tailrec
-      def process(responses: List[CardanoApiResponse[T]], acc: CardanoApiResponse[Seq[T]]): CardanoApiResponse[Seq[T]] = responses match {
+      def process(responses: List[CardanoApiResponse[T]], acc: CardanoApiResponse[List[T]]): CardanoApiResponse[List[T]] = responses match {
         case Left(resp) :: _ => Left(resp)
         case Right(resp) :: tail => process(tail, acc.map(_ :+ resp))
         case Nil => acc
