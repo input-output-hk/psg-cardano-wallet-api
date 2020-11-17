@@ -5,8 +5,8 @@ import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.model.ContentType.WithFixedCharset
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.Materializer
 import akka.stream.alpakka.json.scaladsl.JsonReader
 import akka.stream.scaladsl.Sink
@@ -26,6 +26,7 @@ import iog.psg.cardano.CardanoApiCodec.TxState.TxState
 import iog.psg.cardano.CardanoApiCodec.Units.Units
 import org.apache.commons.codec.binary.Hex
 
+import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -112,8 +113,6 @@ object CardanoApiCodec {
       case TxMetadataMapIn(s) => s.asJson
     }
   }
-
-  import ImplicitCodecs._
 
   def dropNulls[A](encoder: Encoder[A]): Encoder[A] =
     encoder.mapJson(_.dropNullValues)
@@ -445,11 +444,16 @@ object CardanoApiCodec {
         case e: Exception => errorUnparseableResult(e)
       }
 
-    private def sequenceCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
-      resp.find(_.isLeft) match {
-        case Some(Left(error)) => Left(error)
-        case None => Right(resp.flatMap(_.toOption))
+    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] = {
+      @tailrec
+      def process(responses: List[CardanoApiResponse[T]], acc: CardanoApiResponse[Seq[T]]): CardanoApiResponse[Seq[T]] = responses match {
+        case Left(resp) :: _ => Left(resp)
+        case Right(resp) :: tail => process(tail, acc.map(_ :+ resp))
+        case Nil => acc
       }
+
+      process(responses.toList, Right(Nil))
+    }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])
