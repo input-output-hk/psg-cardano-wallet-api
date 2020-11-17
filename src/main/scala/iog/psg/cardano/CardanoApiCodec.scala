@@ -434,23 +434,20 @@ object CardanoApiCodec {
     = {
       response.entity.dataBytes
         .via(JsonReader.select("$[*]"))
-        .mapAsync(4)({ bs =>
-          Unmarshal(bs.utf8String).to[CreateTransactionResponse].map(Right(_)).recover {
-            case e: Exception => errorUnparseableResult(e)
-          }
-        })
-        .runWith(Sink.seq).map { resp =>
-        resp.flatMap(_.swap.toOption).headOption match {
-          case Some(error) => Left(error)
-          case None =>
-            Right(resp.flatMap(_.toOption))
-        }
-      }
+        .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[CreateTransactionResponse](bs.utf8String))
+        .runWith(Sink.seq).map(flattenCardanoApiResponses)
     }
 
     private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]) =
       Unmarshal(utf8String).to[T].map(Right(_)).recover {
         case e: Exception => errorUnparseableResult(e)
+      }
+
+    private def flattenCardanoApiResponses[T](resp: Seq[CardanoApiResponse[T]]) =
+      resp.flatMap(_.swap.toOption).headOption match {
+        case Some(error) => Left(error)
+        case None =>
+          Right(resp.flatMap(_.toOption))
       }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
