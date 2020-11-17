@@ -398,25 +398,8 @@ object CardanoApiCodec {
     def toNetworkInfoResponse: Future[CardanoApiResponse[NetworkInfo]]
     = to[NetworkInfo](Unmarshal(_).to[CardanoApiResponse[NetworkInfo]])
 
-    def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] = {
-
-      response.entity.contentType match {
-        case WithFixedCharset(MediaTypes.`application/json`) =>
-          // Load into memory using toStrict
-          // a. no responses utilise streaming and
-          // b. the Either unmarshaller requires it
-          strictEntityF.flatMap(f)
-
-        case c: ContentType
-          if c.mediaType == MediaTypes.`text/plain` ||
-            c.mediaType == MediaTypes.`application/octet-stream` =>
-
-          extractErrorResponse[T](strictEntityF)
-
-        case c: ContentType =>
-          Future.failed(new RuntimeException(s"Unexpected type ${c.mediaType}, ${c.charsetOption}"))
-      }
-    }
+    def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] =
+      decodeResponseEntityOrHandleError(response, () => strictEntityF.flatMap(f))
 
     def toWallet: Future[CardanoApiResponse[Wallet]]
     = to[Wallet](Unmarshal(_).to[CardanoApiResponse[Wallet]])
@@ -433,25 +416,29 @@ object CardanoApiCodec {
     def toCreateTransactionsResponse: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
     = decodeInStream[CreateTransactionResponse](response, "$[*]")
 
-    private def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[Seq[T]]] = {
+    private def decodeResponseEntityOrHandleError[T](response: HttpResponse, decodeF: () => Future[CardanoApiResponse[T]]) = {
       response.entity.contentType match {
         case WithFixedCharset(MediaTypes.`application/json`) =>
-          response.entity.dataBytes
-            .via(JsonReader.select(jsonPath))
-            .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
-            .runWith(Sink.seq).map(flattenCardanoApiResponses)
+          decodeF()
 
-          //TODO DRY
         case c: ContentType
           if c.mediaType == MediaTypes.`text/plain` ||
             c.mediaType == MediaTypes.`application/octet-stream` =>
 
-          extractErrorResponse[Seq[T]](strictEntityF)
+          extractErrorResponse[T](strictEntityF)
+
         case c: ContentType =>
           Future.failed(new RuntimeException(s"Unexpected type ${c.mediaType}, ${c.charsetOption}"))
-
       }
     }
+
+    final def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[Seq[T]]] =
+      decodeResponseEntityOrHandleError(response, () =>
+        response.entity.dataBytes
+          .via(JsonReader.select(jsonPath))
+          .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
+          .runWith(Sink.seq).map(flattenCardanoApiResponses)
+      )
 
     private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[T]] =
       Unmarshal(utf8String).to[T].map(Right(_)).recover {
