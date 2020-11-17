@@ -446,16 +446,14 @@ object CardanoApiCodec {
         case e: Exception => errorUnparseableResult(e)
       }
 
-    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[List[T]] = {
-      @tailrec
-      def process(responses: List[CardanoApiResponse[T]], acc: CardanoApiResponse[List[T]]): CardanoApiResponse[List[T]] = responses match {
-        case Left(resp) :: _ => Left(resp)
-        case Right(resp) :: tail => process(tail, acc.map(_ :+ resp))
-        case Nil => acc
-      }
-
-      process(responses.toList, Right(Nil))
-    }
+    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
+      responses.foldLeft[CardanoApiResponse[Seq[T]]](Right(Seq.empty))((acc, el) => {
+        el match {
+          case Right(elem) if acc.isRight => acc.map(_ :+ elem)
+          case Left(error) => Left(error)
+          case _ => acc
+        }
+      })
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])
