@@ -431,12 +431,13 @@ object CardanoApiCodec {
     = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])
 
     def toCreateTransactionsResponse: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
-    = {
+    = decodeInStream[CreateTransactionResponse](response, "$[*]")
+
+    private def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]) =
       response.entity.dataBytes
-        .via(JsonReader.select("$[*]"))
-        .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[CreateTransactionResponse](bs.utf8String))
+        .via(JsonReader.select(jsonPath))
+        .mapAsync(4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
         .runWith(Sink.seq).map(flattenCardanoApiResponses)
-    }
 
     private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]) =
       Unmarshal(utf8String).to[T].map(Right(_)).recover {
