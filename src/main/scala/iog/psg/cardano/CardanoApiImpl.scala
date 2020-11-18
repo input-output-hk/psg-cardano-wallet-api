@@ -205,7 +205,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         uri = uriWithQueries,
         method = GET
       ),
-      _.toCreateTransactionResponses
+      _.toCreateTransactionsResponse
     )
   }
 
