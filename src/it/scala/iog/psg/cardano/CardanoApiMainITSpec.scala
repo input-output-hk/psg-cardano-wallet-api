@@ -309,7 +309,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
   }
 
-  //"The Cmd Lines -postExternalTransaction"
+  //Ignoring as its in experimental state
+  //"The Cmd Line -postExternalTransaction"
   ignore should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
     val source = Source.fromURL(getClass.getResource("/tx.raw"))
     val binary = source.mkString
