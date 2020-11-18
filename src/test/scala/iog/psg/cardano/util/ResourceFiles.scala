@@ -17,6 +17,8 @@ trait ResourceFiles { self: Assertions =>
   final lazy val jsonFileCreatedTransactionResponse = decodeJsonFile[CreateTransactionResponse]("transaction.json")
   final lazy val jsonFileCreatedTransactionsResponse = decodeJsonFile[Seq[CreateTransactionResponse]]("transactions.json")
   final lazy val jsonFileProxyTransactionResponse = decodeJsonFile[PostExternalTransactionResponse]("proxy_trans_resp.json")
+  final lazy val jsonFileMigrationsResponse = decodeJsonFile[Seq[SubmitMigrationResponse]]("migrations.json")
+  final lazy val jsonFileMigrationCostsResponse = decodeJsonFile[MigrationCostResponse]("migration_costs.json")
 
   final lazy val txRawContent = getFileContent("tx.raw")
 
@@ -34,7 +36,10 @@ trait ResourceFiles { self: Assertions =>
 
   final def decodeJsonFile[T](file: String)(implicit dec: Decoder[T]): T = {
     val jsonStr = getJsonFromFile(file)
-    decode[T](jsonStr).getOrElse(fail(s"Could not decode $file"))
+    decode[T](jsonStr) match {
+      case Left(error) => fail(s"Could not decode $file error: $error")
+      case Right(value) => value
+    }
   }
 
   final def getFileContent(file: String): String = {

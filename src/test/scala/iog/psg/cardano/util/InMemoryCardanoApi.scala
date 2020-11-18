@@ -27,6 +27,7 @@ trait InMemoryCardanoApi {
   protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
   protected val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "metadata", "withdrawal")
   protected val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal", "metadata")
+  protected val submitMigrationsFieldsToCheck: List[String] = List("passphrase", "addresses")
 
   implicit val as: ActorSystem
   implicit lazy val ec: ExecutionContextExecutor = as.dispatcher
@@ -171,6 +172,12 @@ trait InMemoryCardanoApi {
       def checkWithdrawalField(json: Json): Future[Unit] =
         checkStringField(json, "withdrawal", withdrawal)
 
+      def checkAddressesField(json: Json): Future[Unit] =  {
+        val jsonAddresses = json.\\("addresses").head.asArray.getOrElse(Vector.empty).flatMap(_.asString)
+        if (jsonAddresses.nonEmpty) Future.successful(())
+        else Future.failed(new CardanoApiException(s"Invalid address", "400"))
+      }
+
       def checkMetadataField(json: Json, fieldsToCheck: List[String]): Future[Unit] = if (fieldsToCheck.contains("metadata")) {
         for {
           metadata <- {
@@ -287,6 +294,18 @@ trait InMemoryCardanoApi {
 
         case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.DELETE) =>
           noContentResponse()
+
+        case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("migration_costs.json"))
+
+        case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.POST) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkIfContainsProperJsonKeys(jsonBody, submitMigrationsFieldsToCheck)
+            _        <- checkPassphraseField(jsonBody)
+            _        <- checkAddressesField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migrations.json"))
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           for {

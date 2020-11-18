@@ -1,0 +1,10 @@
+{
+  "migration_cost": {
+    "quantity": 42000000,
+    "unit": "lovelace"
+  },
+  "leftovers": {
+    "quantity": 42000000,
+    "unit": "lovelace"
+  }
+}
