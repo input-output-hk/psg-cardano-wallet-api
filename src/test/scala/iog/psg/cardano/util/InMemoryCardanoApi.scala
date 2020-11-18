@@ -6,6 +6,7 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.util.ByteString
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe.{Json, parser}
@@ -21,11 +22,12 @@ import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait InMemoryCardanoApi {
-  this: ScalaFutures with Assertions with JsonFiles with DummyModel =>
+  this: ScalaFutures with Assertions with ResourceFiles with DummyModel =>
 
   protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
   protected val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "metadata", "withdrawal")
   protected val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal", "metadata")
+  protected val submitMigrationsFieldsToCheck: List[String] = List("passphrase", "addresses")
 
   implicit val as: ActorSystem
   implicit lazy val ec: ExecutionContextExecutor = as.dispatcher
@@ -44,7 +46,12 @@ trait InMemoryCardanoApi {
       }
 
     def executeExpectingErrorOrFail(): ErrorMessage =
-      inMemoryExecutor.execute(req).futureValue.swap.getOrElse(fail("Request should failed."))
+      inMemoryExecutor.execute(req).futureValue match {
+        case Right(value) =>
+          fail(s"Request should fail: $value")
+        case Left(value) =>
+          value
+      }
   }
 
   implicit final class InMemoryFExecutor[T](req: Future[CardanoApiRequest[T]]) {
@@ -101,10 +108,20 @@ trait InMemoryCardanoApi {
       val method = request.request.method
       lazy val query = request.request.uri.query().toMap
 
+      def noContentResponse(): Future[CardanoApiResponse[T]] = {
+        request.mapper(HttpResponse(status = StatusCodes.NoContent))
+      }
+
       def notFound(msg: String): Future[CardanoApiResponse[T]] = {
         val json: String = ErrorMessage(msg, "404").asJson.noSpaces
         val entity = HttpEntity(json)
         request.mapper(HttpResponse(status = StatusCodes.NotFound, entity = entity))
+      }
+
+      def badRequest(msg: String): Future[CardanoApiResponse[T]] = {
+        val json: String = ErrorMessage(msg, "400").asJson.noSpaces
+        val entity = HttpEntity(json)
+        request.mapper(HttpResponse(status = StatusCodes.BadRequest, entity = entity))
       }
 
       def unmarshalJsonBody(): Future[Json] =
@@ -155,6 +172,12 @@ trait InMemoryCardanoApi {
       def checkWithdrawalField(json: Json): Future[Unit] =
         checkStringField(json, "withdrawal", withdrawal)
 
+      def checkAddressesField(json: Json): Future[Unit] =  {
+        val jsonAddresses = json.\\("addresses").head.asArray.getOrElse(Vector.empty).flatMap(_.asString)
+        if (jsonAddresses.nonEmpty) Future.successful(())
+        else Future.failed(new CardanoApiException(s"Invalid address", "400"))
+      }
+
       def checkMetadataField(json: Json, fieldsToCheck: List[String]): Future[Unit] = if (fieldsToCheck.contains("metadata")) {
         for {
           metadata <- {
@@ -174,9 +197,20 @@ trait InMemoryCardanoApi {
         } yield ()
       } else Future.successful(())
 
+      val networkClockR = "network/clock(.+)?".r
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
+
+        case ("network/parameters", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netparams.json"))
+
+        case ("network/clock?forceNtpCheck=true", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netclockforced.json"))
+
+        case (networkClockR(_), HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("netclock.json"))
 
         case ("wallets", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallets.json"))
@@ -204,6 +238,13 @@ trait InMemoryCardanoApi {
 
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("wallet.json"))
+
+        case (s"wallets/${jsonFileWallet.id}", HttpMethods.PUT) =>
+          for {
+            json <- unmarshalJsonBody()
+            newName = json.\\("name").headOption.flatMap(_.asString).getOrElse("Error - missing name")
+            response <- jsonFileWallet.copy(name = newName).toJsonResponse()
+          } yield response
 
         case (s"wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
           request.mapper(HttpResponse(status = StatusCodes.NoContent))
@@ -251,6 +292,21 @@ trait InMemoryCardanoApi {
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
 
+        case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.DELETE) =>
+          noContentResponse()
+
+        case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("migration_costs.json"))
+
+        case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.POST) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkIfContainsProperJsonKeys(jsonBody, submitMigrationsFieldsToCheck)
+            _        <- checkPassphraseField(jsonBody)
+            _        <- checkAddressesField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migrations.json"))
+          } yield response
+
         case (s"wallets/${jsonFileWallet.id}/payment-fees", HttpMethods.POST) =>
           for {
             jsonBody <- unmarshalJsonBody()
@@ -264,8 +320,20 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
 
+        case (s"wallets/${jsonFileWallet.id}/statistics/utxos", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("utxos.json"))
+
         case (r"wallets/.+/transactions/.+", HttpMethods.GET) => notFound("Transaction not found")
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
+        case (s"addresses/${addressToInspect.id}", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("address_inspect.json"))
+        case (r"addresses/.+", _)                             => notFound("Addresses not found")
+        case ("proxy/transactions", HttpMethods.POST) =>
+          for {
+            binaryStr <- request.request.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_.utf8String)
+            resp <- if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
+            else badRequest(s"Invalid binary string")
+          } yield resp
         case _                                                => notFound("Not found")
       }
 

@@ -5,14 +5,16 @@ import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.model.ContentType.WithFixedCharset
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.eitherUnmarshaller
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.Materializer
+import akka.stream.alpakka.json.scaladsl.JsonReader
+import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.generic.extras._
+import io.circe.generic.extras.{ConfiguredJsonCodec, _}
 import io.circe.generic.extras.semiauto.deriveConfiguredEncoder
 import io.circe.syntax.EncoderOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
@@ -24,6 +26,7 @@ import iog.psg.cardano.CardanoApiCodec.TxState.TxState
 import iog.psg.cardano.CardanoApiCodec.Units.Units
 import org.apache.commons.codec.binary.Hex
 
+import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -72,6 +75,8 @@ object CardanoApiCodec {
     implicit val encodeCreateTransactionResponse: Encoder[CreateTransactionResponse] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeWallet: Encoder[Wallet] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
 
     private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
       quantity <- c.downField("quantity").as[T]
@@ -188,6 +193,19 @@ object CardanoApiCodec {
 
   case class WalletAddressId(id: String, state: Option[AddressFilter])
 
+  @ConfiguredJsonCodec(decodeOnly = true) final case class Pointer(slotNum: Long, transactionIndex: Long, outputIndex: Long)
+
+  @ConfiguredJsonCodec(decodeOnly = true) final case class WalletAddress(
+                                                                          addressStyle: String,
+                                                                          stakeReference: String,
+                                                                          networkTag: Long,
+                                                                          spendingKeyHash: String,
+                                                                          stakeKeyHash: String,
+                                                                          scriptHash: Option[String],
+                                                                          pointer: Option[Pointer],
+                                                                          addressRoot: Option[String],
+                                                                          derivationPath: Option[String])
+
   private[cardano] case class CreateTransaction(
                                                  passphrase: String,
                                                  payments: Seq[Payment],
@@ -240,6 +258,26 @@ object CardanoApiCodec {
                           nextEpoch: NextEpoch
                         )
 
+  @ConfiguredJsonCodec
+  final case class NetworkClock(
+                                 status: String,
+                                 offset: QuantityUnit[Long]
+                               )
+
+  @ConfiguredJsonCodec
+  final case class NetworkParameters(
+                                      genesisBlockHash: String,
+                                      blockchain_start_time: ZonedDateTime,
+                                      slotLength: QuantityUnit[Long],
+                                      epochLength: QuantityUnit[Long],
+                                      epochStability: QuantityUnit[Long],
+                                      activeSlotCoefficient: QuantityUnit[Long],
+                                      decentralizationLevel: QuantityUnit[Long],
+                                      desiredPoolNumber: Long,
+                                      minimumUtxoValue: QuantityUnit[Long],
+                                      hardforkAt: NextEpoch
+                                    )
+
   @ConfiguredJsonCodec(decodeOnly = true)
   case class CreateRestore(
                             name: String,
@@ -264,6 +302,9 @@ object CardanoApiCodec {
     val percent = Value("percent")
     val lovelace = Value("lovelace")
     val block = Value("block")
+    val slot = Value("slot")
+    val microsecond = Value("microsecond")
+    val second = Value("second")
   }
 
 
@@ -322,12 +363,20 @@ object CardanoApiCodec {
                     absoluteSlotNumber: Option[Long]
                   )
 
-  @ConfiguredJsonCodec
+  @ConfiguredJsonCodec(decodeOnly = true)
   case class TimedBlock(
                          time: ZonedDateTime,
                          block: Block
                        )
 
+  @ConfiguredJsonCodec
+  final case class TimedFlattenBlock(
+                                      time: ZonedDateTime,
+                                      slotNumber: Int,
+                                      epochNumber: Int,
+                                      height: Option[QuantityUnit[Long]],
+                                      absoluteSlotNumber: Option[Long]
+                                    )
 
   @ConfiguredJsonCodec
   case class EstimateFeeResponse(
@@ -350,6 +399,25 @@ object CardanoApiCodec {
                                         metadata: Option[TxMetadataOut]
                                       )
 
+  @ConfiguredJsonCodec(decodeOnly = true)
+  final case class SubmitMigrationResponse(
+                                        id: String,
+                                        amount: QuantityUnit[Long],
+                                        insertedAt: Option[TimedBlock],
+                                        pendingSince: Option[TimedBlock],
+                                        expiresAt: Option[TimedBlock],
+                                        depth: Option[QuantityUnit[Long]],
+                                        direction: TxDirection,
+                                        inputs: Seq[InAddress],
+                                        outputs: Seq[OutAddress],
+                                        withdrawals: Seq[StakeAddress],
+                                        status: TxState,
+                                        metadata: Option[TxMetadataOut]
+                                      )
+
+  @ConfiguredJsonCodec
+  final case class MigrationCostResponse(migrationCost: QuantityUnit[Long], leftovers: QuantityUnit[Long])
+
   @ConfiguredJsonCodec
   final case class Passphrase(lastUpdatedAt: ZonedDateTime)
 
@@ -364,6 +432,15 @@ object CardanoApiCodec {
                      state: SyncStatus,
                      tip: NetworkTip
                    )
+
+  @ConfiguredJsonCodec
+  final case class UTxOStatistics(total: QuantityUnit[Long], scale: String, distribution: Map[String, Long])
+
+  @ConfiguredJsonCodec
+  final case class PostExternalTransactionResponse(id: String)
+
+  @ConfiguredJsonCodec(encodeOnly = true)
+  final case class SubmitMigration(passphrase: String, addresses: Seq[String])
 
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
@@ -385,27 +462,48 @@ object CardanoApiCodec {
 
     private def strictEntityF: Future[HttpEntity.Strict] = response.entity.toStrict(timeout)
 
+    private def errorUnparseableResult[T](err: Throwable): CardanoApiResponse[T] = Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
 
-    private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] = {
+    private def extractErrorResponse[T](strictEntity: Future[HttpEntity.Strict]): Future[CardanoApiResponse[T]] =
       strictEntity.map(e => toErrorMessage(e.data) match {
-        case Left(err) => Left(ErrorMessage(err.getMessage, "UNPARSEABLE RESULT"))
+        case Left(err) => errorUnparseableResult(err)
         case Right(v) => Left(v)
       })
-
-    }
 
     def toNetworkInfoResponse: Future[CardanoApiResponse[NetworkInfo]]
     = to[NetworkInfo](Unmarshal(_).to[CardanoApiResponse[NetworkInfo]])
 
+    def toNetworkClockResponse: Future[CardanoApiResponse[NetworkClock]]
+    = to[NetworkClock](Unmarshal(_).to[CardanoApiResponse[NetworkClock]])
 
-    def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] = {
+    def toNetworkParametersResponse: Future[CardanoApiResponse[NetworkParameters]]
+    = to[NetworkParameters](Unmarshal(_).to[CardanoApiResponse[NetworkParameters]])
 
+    def to[T](f: HttpEntity.Strict => Future[CardanoApiResponse[T]]): Future[CardanoApiResponse[T]] =
+      decodeResponseEntityOrHandleError(response, () => strictEntityF.flatMap(f))
+
+    def toWallet: Future[CardanoApiResponse[Wallet]]
+    = to[Wallet](Unmarshal(_).to[CardanoApiResponse[Wallet]])
+
+    def toWallets: Future[CardanoApiResponse[Seq[Wallet]]]
+    = to[Seq[Wallet]](Unmarshal(_).to[CardanoApiResponse[Seq[Wallet]]])
+
+    def toWalletAddressIds: Future[CardanoApiResponse[Seq[WalletAddressId]]]
+    = to[Seq[WalletAddressId]](Unmarshal(_).to[CardanoApiResponse[Seq[WalletAddressId]]])
+
+    def toWalletAddress: Future[CardanoApiResponse[WalletAddress]]
+    = to[WalletAddress](Unmarshal(_).to[CardanoApiResponse[WalletAddress]])
+
+    def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
+    = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])
+
+    def toCreateTransactionsResponse: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
+    = decodeInStream[CreateTransactionResponse](response, "$[*]")
+
+    private def decodeResponseEntityOrHandleError[T](response: HttpResponse, decodeF: () => Future[CardanoApiResponse[T]]) = {
       response.entity.contentType match {
         case WithFixedCharset(MediaTypes.`application/json`) =>
-          // Load into memory using toStrict
-          // a. no responses utilise streaming and
-          // b. the Either unmarshaller requires it
-          strictEntityF.flatMap(f)
+          decodeF()
 
         case c: ContentType
           if c.mediaType == MediaTypes.`text/plain` ||
@@ -418,27 +516,42 @@ object CardanoApiCodec {
       }
     }
 
-    def toWallet: Future[CardanoApiResponse[Wallet]]
-    = to[Wallet](Unmarshal(_).to[CardanoApiResponse[Wallet]])
+    final def decodeInStream[T](response: HttpResponse, jsonPath: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[Seq[T]]] =
+      decodeResponseEntityOrHandleError(response, () =>
+        response.entity.dataBytes
+          .via(JsonReader.select(jsonPath))
+          .mapAsync(parallelism = 4)(bs => unmarshalOrRecoverToUnparseable[T](bs.utf8String))
+          .runWith(Sink.seq).map(sequenceCardanoApiResponses)
+      )
 
-    def toWallets: Future[CardanoApiResponse[Seq[Wallet]]]
-    = to[Seq[Wallet]](Unmarshal(_).to[CardanoApiResponse[Seq[Wallet]]])
+    private def unmarshalOrRecoverToUnparseable[T](utf8String: String)(implicit um: Unmarshaller[String, T]): Future[CardanoApiResponse[T]] =
+      Unmarshal(utf8String).to[T].map(Right(_)).recover {
+        case e: Exception => errorUnparseableResult(e)
+      }
 
-
-    def toWalletAddressIds: Future[CardanoApiResponse[Seq[WalletAddressId]]]
-    = to[Seq[WalletAddressId]](Unmarshal(_).to[CardanoApiResponse[Seq[WalletAddressId]]])
-
-    def toFundPaymentsResponse: Future[CardanoApiResponse[FundPaymentsResponse]]
-    = to[FundPaymentsResponse](Unmarshal(_).to[CardanoApiResponse[FundPaymentsResponse]])
-
-    def toCreateTransactionResponses: Future[CardanoApiResponse[Seq[CreateTransactionResponse]]]
-    = to[Seq[CreateTransactionResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[CreateTransactionResponse]]])
+    private def sequenceCardanoApiResponses[T](responses: Seq[CardanoApiResponse[T]]): CardanoApiResponse[Seq[T]] =
+      responses.foldLeft[CardanoApiResponse[Seq[T]]](Right(Seq.empty)) {
+        case (_, Left(error)) => Left(error)
+        case (acc, Right(elem)) => acc.map(_ :+ elem)
+      }
 
     def toCreateTransactionResponse: Future[CardanoApiResponse[CreateTransactionResponse]]
     = to[CreateTransactionResponse](Unmarshal(_).to[CardanoApiResponse[CreateTransactionResponse]])
 
     def toEstimateFeeResponse: Future[CardanoApiResponse[EstimateFeeResponse]] =
       to[EstimateFeeResponse](Unmarshal(_).to[CardanoApiResponse[EstimateFeeResponse]])
+
+    def toUTxOStatisticsResponse: Future[CardanoApiResponse[UTxOStatistics]] =
+      to[UTxOStatistics](Unmarshal(_).to[CardanoApiResponse[UTxOStatistics]])
+
+    def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
+      to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
+
+    def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
+      to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
+
+    def toMigrationCostResponse: Future[CardanoApiResponse[MigrationCostResponse]] =
+      to[MigrationCostResponse](Unmarshal(_).to[CardanoApiResponse[MigrationCostResponse]])
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

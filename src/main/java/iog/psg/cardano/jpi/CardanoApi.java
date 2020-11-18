@@ -115,9 +115,21 @@ public interface CardanoApi {
      * @param walletId wallet's id
      * @param transactionId transaction's id
      * @return get transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.CreateTransactionResponse> getTransaction(
             String walletId, String transactionId) throws CardanoApiException;
+
+    /**
+     * Forget pending transaction
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction">#deleteTransaction</a>
+     *
+     * @param walletId wallet's id
+     * @param transactionId transaction's id
+     * @return forget pending transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<Void> deleteTransaction(String walletId, String transactionId) throws CardanoApiException;
 
     /**
      * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
@@ -128,6 +140,7 @@ public interface CardanoApi {
      * @param walletId wallet's id
      * @param payments A list of target outputs ( address, amount )
      * @return estimatedfee response
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException;
@@ -190,6 +203,17 @@ public interface CardanoApi {
             String walletId) throws CardanoApiException;
 
     /**
+     * Give useful information about the structure of a given address.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/inspectAddress">#inspectAddress</a>
+     *
+     * @param addressId id of the address
+     * @return address inspect request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.WalletAddress> inspectAddress(
+            String addressId) throws CardanoApiException;
+
+    /**
      * Lists all incoming and outgoing wallet's transactions.
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listTransactions">#listTransactions</a>
      *
@@ -224,6 +248,19 @@ public interface CardanoApi {
             String newPassphrase) throws CardanoApiException;
 
     /**
+     * Update wallet's name
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet">#putWallet</a>
+     *
+     * @param walletId wallet's id
+     * @param name new wallet's name
+     * @return update wallet request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.Wallet> updateName(
+            String walletId,
+            String name) throws CardanoApiException;
+
+    /**
      * Gives network information
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation">#getNetworkInformation</a>
      *
@@ -231,4 +268,73 @@ public interface CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException;
+
+    /**
+     * Gives network clock information
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock">#getNetworkClock</a>
+     *
+     * @return network clock info request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.NetworkClock> networkClock() throws CardanoApiException;
+
+    /**
+     * Gives network clock information
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock">#getNetworkClock</a>
+     *
+     * @param forceNtpCheck When this flag is set, the request will block until NTP server responds or will timeout after a while without any answer from the NTP server.
+     * @return network clock info request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.NetworkClock> networkClock(Boolean forceNtpCheck) throws CardanoApiException;
+
+    /**
+     * Gives network parameters
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters">#getNetworkParameters</a>
+     *
+     * @return network parameters request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.NetworkParameters> networkParameters() throws CardanoApiException;
+
+    /**
+     * Return the UTxOs distribution across the whole wallet, in the form of a histogram
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics">#getUTxOsStatistics</a>
+     *
+     * @param walletId wallet's id
+     * @return get UTxOs statistics request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.UTxOStatistics> getUTxOsStatistics(String walletId) throws CardanoApiException;
+
+    /**
+     * Submits a transaction that was created and signed outside of cardano-wallet.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction">#postExternalTransaction</a>
+     *
+     * @param binary message binary blob string
+     * @return post external transaction request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException;
+
+    /**
+     * Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/migrateShelleyWallet">#migrateShelleyWallet</a>
+     *
+     * @param walletId wallet's id
+     * @param passphrase wallet's master passphrase
+     * @param addresses recipient addresses
+     * @return migrate shelley wallet request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
+
+    /**
+     * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getShelleyWalletMigrationInfo">#getShelleyWalletMigrationInfo</a>
+     * @param walletId wallet's id
+     * @return migration cost request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.MigrationCostResponse> getShelleyWalletMigrationInfo(String walletId) throws CardanoApiException;
 }

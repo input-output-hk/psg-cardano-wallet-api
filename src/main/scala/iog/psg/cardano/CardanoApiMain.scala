@@ -6,49 +6,67 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import iog.psg.cardano.CardanoApi.CardanoApiOps.{CardanoApiRequestFOps, CardanoApiRequestOps}
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage, Order, defaultMaxWaitTime}
-import CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units}
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, GenericMnemonicSecondaryFactor, GenericMnemonicSentence, Payment, Payments, QuantityUnit, Units, _}
 import iog.psg.cardano.util.StringToMetaMapParser.toMetaMap
 import iog.psg.cardano.util._
-import CardanoApiCodec.ImplicitCodecs._
+
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 object CardanoApiMain {
 
   object CmdLine {
+    //Commands
     val help = "-help"
-    val traceToFile = "-trace"
-    val noConsole = "-noConsole"
     val netInfo = "-netInfo"
-    val baseUrl = "-baseUrl"
+    val netClockInfo = "-netClockInfo"
+    val netParams = "-netParams"
     val listWallets = "-wallets"
+    val updateName = "-updateName"
     val deleteWallet = "-deleteWallet"
     val getWallet = "-wallet"
     val createWallet = "-createWallet"
     val restoreWallet = "-restoreWallet"
     val estimateFee = "-estimateFee"
-    val name = "-name"
     val updatePassphrase = "-updatePassphrase"
+    val listWalletAddresses = "-listAddresses"
+    val inspectWalletAddress = "-inspectAddress"
+    val listWalletTransactions = "-listTxs"
+    val createTx = "-createTx"
+    val fundTx = "-fundTx"
+    val getTx = "-getTx"
+    val deleteTx = "-deleteTx"
+    val getUTxOsStatistics = "-getUTxO"
+    val postExternalTransaction = "-postExternalTransaction"
+    val migrateShelleyWallet = "-migrateShelleyWallet"
+    val getShelleyWalletMigrationInfo = "-getShelleyWalletMigrationInfo"
+
+    //Parameters
+    val baseUrl = "-baseUrl"
+
+    val traceToFile = "-trace"
+    val noConsole = "-noConsole"
+
+    val forceNtpCheck = "-forceNtpCheck"
+    val name = "-name"
     val oldPassphrase = "-oldPassphrase"
     val passphrase = "-passphrase"
     val metadata = "-metadata"
     val mnemonic = "-mnemonic"
     val mnemonicSecondary = "-mnemonicSecondary"
     val addressPoolGap = "-addressPoolGap"
-    val listWalletAddresses = "-listAddresses"
-    val listWalletTransactions = "-listTxs"
     val state = "-state"
     val walletId = "-walletId"
     val start = "-start"
     val end = "-end"
     val order = "-order"
     val minWithdrawal = "-minWithdrawal"
-    val createTx = "-createTx"
-    val fundTx = "-fundTx"
-    val getTx = "-getTx"
     val txId = "-txId"
     val amount = "-amount"
     val address = "-address"
+    val binary = "-binary"
+    val addresses = "-addresses"
   }
 
   val defaultBaseUrl = "http://127.0.0.1:8090/v2/"
@@ -101,6 +119,11 @@ object CardanoApiMain {
 
         if (hasArgument(CmdLine.netInfo)) {
           unwrap[CardanoApiCodec.NetworkInfo](api.networkInfo.executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.netClockInfo)) {
+          val forceNtpCheck = arguments(CmdLine.forceNtpCheck).map(_.toBoolean)
+          unwrap[CardanoApiCodec.NetworkClock](api.networkClock(forceNtpCheck).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.netParams)) {
+          unwrap[CardanoApiCodec.NetworkParameters](api.networkParameters().executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.listWallets)) {
           unwrap[Seq[CardanoApiCodec.Wallet]](api.listWallets.executeBlocking, r => r.foreach(trace(_)))
         } else if (hasArgument(CmdLine.estimateFee)) {
@@ -117,9 +140,11 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val oldPassphrase = arguments.get(CmdLine.oldPassphrase)
           val newPassphrase = arguments.get(CmdLine.passphrase)
-
           unwrap[Unit](api.updatePassphrase(walletId, oldPassphrase, newPassphrase).executeBlocking, _ => trace("Unit result from update passphrase"))
-
+        } else if (hasArgument(CmdLine.updateName)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val name = arguments.get(CmdLine.name)
+          unwrap[CardanoApiCodec.Wallet](api.updateName(walletId, name).executeBlocking,trace(_))
         } else if (hasArgument(CmdLine.deleteWallet)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[Unit](api.deleteWallet(walletId).executeBlocking, _ => trace("Unit result from delete wallet"))
@@ -127,10 +152,17 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val addressesState = Some(AddressFilter.withName(arguments.get(CmdLine.state)))
           unwrap[Seq[CardanoApiCodec.WalletAddressId]](api.listAddresses(walletId, addressesState).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.inspectWalletAddress)) {
+          val address = arguments.get(CmdLine.address)
+          unwrap[WalletAddress](api.inspectAddress(address).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val txId = arguments.get(CmdLine.txId)
           unwrap[CardanoApiCodec.CreateTransactionResponse](api.getTransaction(walletId, txId).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.deleteTx)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val txId = arguments.get(CmdLine.txId)
+          unwrap[Unit](api.deleteTransaction(walletId, txId).executeBlocking, _ => trace("Unit result from delete transaction"))
         } else if (hasArgument(CmdLine.createTx)) {
           val walletId = arguments.get(CmdLine.walletId)
           val amount = arguments.get(CmdLine.amount).toLong
@@ -190,6 +222,20 @@ object CardanoApiMain {
             addressPoolGap
           ).executeBlocking, trace(_))
 
+        } else if (hasArgument(CmdLine.getUTxOsStatistics)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          unwrap[UTxOStatistics](api.getUTxOsStatistics(walletId).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.postExternalTransaction)) {
+          val binary = arguments.get(CmdLine.binary)
+          unwrap[PostExternalTransactionResponse](api.postExternalTransaction(binary).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.migrateShelleyWallet)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          val passphrase = arguments.get(CmdLine.passphrase)
+          val addresses = arguments.get(CmdLine.addresses).split(",").toSeq
+          unwrap[Seq[SubmitMigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.getShelleyWalletMigrationInfo)) {
+          val walletId = arguments.get(CmdLine.walletId)
+          unwrap[MigrationCostResponse](api.getShelleyWalletMigrationInfo(walletId).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -209,6 +255,7 @@ object CardanoApiMain {
   }
 
   private def showHelp(extraParams: List[String])(implicit trace: Trace): Unit = {
+    val exampleBinary = "82839f8200d8185824825820d78b4cf8eb832c2207a9a2c787ec232d2fbf88ad432c05bfae9bff58d756d59800f"
     val exampleWalletId = "1234567890123456789012345678901234567890"
     val exampleTxd = "ABCDEF1234567890"
     val exampleAddress = "addr12345678901234567890123456789012345678901234567890123456789012345678901234567890"
@@ -224,18 +271,27 @@ object CardanoApiMain {
     }
 
     val cmdLineNetInfo = s"${CmdLine.netInfo}"
+    val cmdLineNetClockInfo = s"${CmdLine.netClockInfo}"
+    val cmdLineNetParams = s"${CmdLine.netParams}"
     val cmdLineListWallets = s"${CmdLine.listWallets}"
     val cmdLineEstimateFee = s"${CmdLine.estimateFee} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineGetWallet = s"${CmdLine.getWallet} ${CmdLine.walletId} <walletId>"
+    val cmdLineUpdateName = s"${CmdLine.updateName} ${CmdLine.walletId} <walletId> ${CmdLine.name} <name>"
     val cmdLineUpdatePassphrase = s"${CmdLine.updatePassphrase} ${CmdLine.walletId} <walletId> ${CmdLine.oldPassphrase} <oldPassphrase> ${CmdLine.passphrase} <newPassphrase>"
     val cmdLineDeleteWallet = s"${CmdLine.deleteWallet} ${CmdLine.walletId} <walletId>"
     val cmdLineListWalletAddresses = s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} <walletId> ${CmdLine.state} <state>"
+    val cmdLineInspectWalletAddress = s"${CmdLine.inspectWalletAddress} ${CmdLine.address} <address>"
     val cmdLineGetTx = s"${CmdLine.getTx} ${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>"
     val cmdLineCreateTx = s"${CmdLine.createTx} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address> ${CmdLine.passphrase} <passphrase> [${CmdLine.metadata} <metadata>]"
+    val cmdLineDeleteTx = s"${CmdLine.deleteTx} ${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>"
     val cmdLineFundTx = s"${CmdLine.fundTx} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineListWalletTransactions = s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]"
     val cmdLineCreateWallet = s"${CmdLine.createWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineRestoreWallet = s"${CmdLine.restoreWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
+    val cmdLineGetUTxOsStatistics = s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} <walletId>"
+    val cmdLinePostExternalTransaction = s"${CmdLine.postExternalTransaction} ${CmdLine.binary} <binary_string>"
+    val cmdLineMigrateShelleyWallet = s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>"
+    val cmdLineGetShelleyWalletMigrationInfo = s"${CmdLine.getShelleyWalletMigrationInfo} ${CmdLine.walletId} <walletId>"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -254,18 +310,27 @@ object CardanoApiMain {
 
       trace("\nCommands:\n")
       trace(" "+cmdLineNetInfo)
+      trace(" "+cmdLineNetClockInfo)
+      trace(" "+cmdLineNetParams)
       trace(" "+cmdLineListWallets)
       trace(" "+cmdLineDeleteWallet)
       trace(" "+cmdLineGetWallet)
+      trace(" "+cmdLineUpdateName)
       trace(" "+cmdLineCreateWallet)
       trace(" "+cmdLineRestoreWallet)
       trace(" "+cmdLineEstimateFee)
       trace(" "+cmdLineUpdatePassphrase)
       trace(" "+cmdLineListWalletAddresses)
+      trace(" "+cmdLineInspectWalletAddress)
       trace(" "+cmdLineListWalletTransactions)
       trace(" "+cmdLineCreateTx)
+      trace(" "+cmdLineDeleteTx)
       trace(" "+cmdLineFundTx)
       trace(" "+cmdLineGetTx)
+      trace(" "+cmdLineGetUTxOsStatistics)
+      trace(" "+cmdLinePostExternalTransaction+" ( experimental )")
+      trace(" "+cmdLineMigrateShelleyWallet)
+      trace(" "+cmdLineGetShelleyWalletMigrationInfo)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -301,6 +366,25 @@ object CardanoApiMain {
               s"${CmdLine.netInfo}"
             )
           )
+        case CmdLine.netClockInfo =>
+          beautifyTrace(
+            arguments = s"[${CmdLine.forceNtpCheck} <forceNtpCheck>]",
+            description = "Show network clock information",
+            apiDocOperation = "getNetworkClock",
+            examples = List(
+              s"${CmdLine.netClockInfo}",
+              s"${CmdLine.netClockInfo} ${CmdLine.forceNtpCheck} true",
+            )
+          )
+        case CmdLine.netParams =>
+          beautifyTrace(
+            arguments = "",
+            description = "Returns the set of network parameters for the current epoch.",
+            apiDocOperation = "getNetworkParameters",
+            examples = List(
+              s"${CmdLine.netParams}"
+            )
+          )
         case CmdLine.listWallets =>
           beautifyTrace(
             arguments = "",
@@ -326,6 +410,15 @@ object CardanoApiMain {
             apiDocOperation = "getWallet",
             examples = List(
               s"${CmdLine.getWallet} ${CmdLine.walletId} $exampleWalletId"
+            )
+          )
+        case CmdLine.updateName =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.name} <name>",
+            description = "Update wallet's name",
+            apiDocOperation = "putWallet",
+            examples = List(
+              s"${CmdLine.updateName} ${CmdLine.walletId} $exampleWalletId ${CmdLine.name} new_name"
             )
           )
         case CmdLine.createWallet =>
@@ -378,6 +471,15 @@ object CardanoApiMain {
               s"${CmdLine.listWalletAddresses} ${CmdLine.walletId} $exampleWalletId ${CmdLine.state} ${AddressFilter.unUsed}"
             )
           )
+        case CmdLine.inspectWalletAddress =>
+          beautifyTrace(
+            arguments = s"${CmdLine.address} <address>",
+            description = "Give useful information about the structure of a given address.",
+            apiDocOperation = "inspectAddress",
+            examples = List(
+              s"${CmdLine.inspectWalletAddress} ${CmdLine.address} $exampleAddress"
+            )
+          )
         case CmdLine.listWalletTransactions =>
           beautifyTrace(
             arguments = s"${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]",
@@ -417,6 +519,51 @@ object CardanoApiMain {
             apiDocOperation = "getTransaction",
             examples = List(
               s"${CmdLine.getTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
+            )
+          )
+        case CmdLine.deleteTx =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.txId} <txId>",
+            description = "Delete pending transaction by id",
+            apiDocOperation = "deleteTransaction",
+            examples = List(
+              s"${CmdLine.deleteTx} ${CmdLine.walletId} $exampleWalletId ${CmdLine.txId} $exampleTxd"
+            )
+          )
+        case CmdLine.getUTxOsStatistics =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId>",
+            description = "Return the UTxOs distribution across the whole wallet, in the form of a histogram",
+            apiDocOperation = "getUTxOsStatistics",
+            examples = List(
+              s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} $exampleWalletId"
+            )
+          )
+        case CmdLine.postExternalTransaction =>
+          beautifyTrace(
+            arguments = s"${CmdLine.binary} <binary>",
+            description = "Submits a transaction that was created and signed outside of cardano-wallet ( experimental )",
+            apiDocOperation = "postExternalTransaction",
+            examples = List(
+              s"${CmdLine.postExternalTransaction} ${CmdLine.binary} $exampleBinary"
+            )
+          )
+        case CmdLine.migrateShelleyWallet =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>",
+            description = "Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses",
+            apiDocOperation = "migrateShelleyWallet",
+            examples = List(
+              s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password12345! ${CmdLine.addresses} <addresses>"
+            )
+          )
+        case CmdLine.getShelleyWalletMigrationInfo =>
+          beautifyTrace(
+            arguments = s"${CmdLine.walletId} <walletId>",
+            description = "Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses",
+            apiDocOperation = "getShelleyWalletMigrationInfo",
+            examples = List(
+              s"${CmdLine.getShelleyWalletMigrationInfo} ${CmdLine.walletId} $exampleWalletId",
             )
           )
         case cmd => trace(s"$cmd help not supported")
