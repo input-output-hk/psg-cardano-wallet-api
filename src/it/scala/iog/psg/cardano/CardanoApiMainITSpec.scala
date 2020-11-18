@@ -15,14 +15,14 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.time.{Millis, Minute, Minutes, Seconds, Span}
+import org.scalatest.time._
 
 import scala.io.Source
 
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll with Eventually {
 
   override def afterAll(): Unit = {
-    Seq(/*2,*/ 3).map { num =>
+    Seq(2, 3).map { num =>
       val walletId = TestWalletsConfig.walletsMap(num).id
       runCmdLine(
         CmdLine.deleteWallet,

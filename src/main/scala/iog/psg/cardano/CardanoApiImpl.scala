@@ -381,7 +381,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[MigrationResponse]]] = {
+  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(
@@ -390,7 +390,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
           method = POST,
           entity = marshalled
         ),
-        _.toMigrationsResponse
+        _.toSubmitMigrationResponse
       )
     }}
   }

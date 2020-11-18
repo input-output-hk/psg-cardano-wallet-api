@@ -309,7 +309,7 @@ trait CardanoApi {
    * @param addresses recipient addresses
    * @return migrate shelley wallet request
    */
-  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[MigrationResponse]]]
+  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
 
   /**
    * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
@@ -346,7 +346,7 @@ trait CardanoApi {
    * @param passphrase wallet's passphrase
    * @return quit stake pool request
    */
-  def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]]
+  def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationCostResponse]]
 
   /**
    * Stop delegating completely. The wallet's stake will become inactive.
@@ -356,5 +356,5 @@ trait CardanoApi {
    * @param passphrase wallet's passphrase
    * @return quit stake pool request
    */
-  def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]]
+  def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationCostResponse]]
 }

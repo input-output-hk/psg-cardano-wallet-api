@@ -314,9 +314,9 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<List<CardanoApiCodec.MigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
+    public CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
         IndexedSeq<String> addressesList = CollectionConverters.asScala(addresses).toIndexedSeq();
-        CompletionStage<Seq<CardanoApiCodec.MigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
+        CompletionStage<Seq<CardanoApiCodec.SubmitMigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
         return response.thenApply(CollectionConverters::asJava);
     }
 
