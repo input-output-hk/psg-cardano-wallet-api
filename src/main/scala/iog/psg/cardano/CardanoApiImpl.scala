@@ -1,15 +1,12 @@
 package iog.psg.cardano
 
-import java.io.File
 import java.time.ZonedDateTime
-import java.util.Scanner
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
-import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
@@ -100,7 +97,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def networkParameters(): CardanoApiRequest[NetworkParameters] = {
+  override def networkParameters(): CardanoApiRequest[NetworkParameters] =
     CardanoApiRequest(
       HttpRequest(
         uri = s"${network}/parameters",
@@ -108,17 +105,15 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       ),
       _.toNetworkParametersResponse
     )
-  }
 
   /**
    * @inheritdoc
    */
-  override def createRestoreWallet(
-    name: String,
-    passphrase: String,
-    mnemonicSentence: MnemonicSentence,
-    mnemonicSecondFactor: Option[MnemonicSentence] = None,
-    addressPoolGap: Option[Int] = None
+  override def createRestoreWallet(name: String,
+                                   passphrase: String,
+                                   mnemonicSentence: MnemonicSentence,
+                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                                   addressPoolGap: Option[Int] = None
   ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =
@@ -311,8 +306,9 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
    * @inheritdoc
    */
   override def updatePassphrase(walletId: String,
-                                 oldPassphrase: String,
-                                 newPassphrase: String): Future[CardanoApiRequest[Unit]] = {
+                                oldPassphrase: String,
+                                newPassphrase: String
+  ): Future[CardanoApiRequest[Unit]] = {
 
     val uri = Uri(s"$wallets/${walletId}/passphrase")
     val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
@@ -355,7 +351,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
     CardanoApiRequest(
       HttpRequest(
         uri = uri,
-        method = GET,
+        method = GET
       ),
       _.toUTxOStatisticsResponse
     )
@@ -379,9 +375,12 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
+  override def migrateShelleyWallet(walletId: String,
+                                    passphrase: String,
+                                    addresses: Seq[String]
+  ): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
-    Marshal(updater).to[RequestEntity] map { marshalled => {
+    Marshal(updater).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
           uri = generateMigrationsUrl(walletId),
@@ -390,7 +389,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         ),
         _.toSubmitMigrationResponse
       )
-    }}
+    }
   }
 
   /**

@@ -317,7 +317,10 @@ trait CardanoApi {
    * @param addresses recipient addresses
    * @return migrate shelley wallet request
    */
-  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
+  def migrateShelleyWallet(walletId: String,
+                           passphrase: String,
+                           addresses: Seq[String]
+  ): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
 
   /**
    * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
