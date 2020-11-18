@@ -327,7 +327,7 @@ public interface CardanoApi {
      * @return migrate shelley wallet request
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
+    CompletionStage<List<CardanoApiCodec.MigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
 
     /**
      * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
@@ -367,7 +367,7 @@ public interface CardanoApi {
      * @param passphrase wallet's passphrase
      * @return quit stake pool request
      */
-    CompletionStage<CardanoApiCodec.SubmitMigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException;
+    CompletionStage<CardanoApiCodec.MigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException;
 
     /**
      * Stop delegating completely. The wallet's stake will become inactive.
@@ -378,5 +378,5 @@ public interface CardanoApi {
      * @return quit stake pool request
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    CompletionStage<CardanoApiCodec.SubmitMigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException;
+    CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException;
 }

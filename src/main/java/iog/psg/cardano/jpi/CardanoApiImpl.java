@@ -314,9 +314,9 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
+    public CompletionStage<List<CardanoApiCodec.MigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
         IndexedSeq<String> addressesList = CollectionConverters.asScala(addresses).toIndexedSeq();
-        CompletionStage<Seq<CardanoApiCodec.SubmitMigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
+        CompletionStage<Seq<CardanoApiCodec.MigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
         return response.thenApply(CollectionConverters::asJava);
     }
 
@@ -349,7 +349,7 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<CardanoApiCodec.SubmitMigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException {
+    public CompletionStage<CardanoApiCodec.MigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException {
         return helpExecute.execute(api.joinStakePool(walletId, stakePoolId, passphrase));
     }
 
@@ -357,7 +357,7 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<CardanoApiCodec.SubmitMigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException {
+    public CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException {
         return helpExecute.execute(api.quitStakePool(walletId, passphrase));
     }
 

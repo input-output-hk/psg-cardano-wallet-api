@@ -77,7 +77,7 @@ object CardanoApiCodec {
     implicit val encodeBlock: Encoder[Block] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeWalletAddress: Encoder[WalletAddress] = dropNulls(deriveConfiguredEncoder)
     implicit val encodeStakePool: Encoder[StakePool] = dropNulls(deriveConfiguredEncoder)
-    implicit val encodeSubmitMigrationResponse: Encoder[SubmitMigrationResponse] = dropNulls(deriveConfiguredEncoder)
+    implicit val encodeSubmitMigrationResponse: Encoder[MigrationResponse] = dropNulls(deriveConfiguredEncoder)
 
     private def decodeQuantityUnit[T](c: HCursor)(implicit d: Decoder[T]) = for {
       quantity <- c.downField("quantity").as[T]
@@ -401,7 +401,7 @@ object CardanoApiCodec {
                                       )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  final case class SubmitMigrationResponse(
+  final case class MigrationResponse(
                                         id: String,
                                         amount: QuantityUnit[Long],
                                         insertedAt: Option[TimedBlock],
@@ -578,11 +578,11 @@ object CardanoApiCodec {
     def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
       to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
 
-    def toSubmitMigrationResponse: Future[CardanoApiResponse[SubmitMigrationResponse]] =
-      to[SubmitMigrationResponse](Unmarshal(_).to[CardanoApiResponse[SubmitMigrationResponse]])
+    def toSubmitMigrationResponse: Future[CardanoApiResponse[MigrationResponse]] =
+      to[MigrationResponse](Unmarshal(_).to[CardanoApiResponse[MigrationResponse]])
 
-    def toSubmitMigrationsResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
-      to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
+    def toSubmitMigrationsResponse: Future[CardanoApiResponse[Seq[MigrationResponse]]] =
+      to[Seq[MigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[MigrationResponse]]])
 
     def toMigrationCostResponse: Future[CardanoApiResponse[MigrationCostResponse]] =
       to[MigrationCostResponse](Unmarshal(_).to[CardanoApiResponse[MigrationCostResponse]])

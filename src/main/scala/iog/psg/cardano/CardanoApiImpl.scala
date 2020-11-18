@@ -381,7 +381,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
+  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[MigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(
@@ -438,7 +438,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[SubmitMigrationResponse]] = {
+  override def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]] = {
     val updater = PassphraseRequest(passphrase = passphrase)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(
@@ -455,7 +455,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[SubmitMigrationResponse]] = {
+  override def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]] = {
     val updater = PassphraseRequest(passphrase = passphrase)
     Marshal(updater).to[RequestEntity] map { marshalled => {
       CardanoApiRequest(

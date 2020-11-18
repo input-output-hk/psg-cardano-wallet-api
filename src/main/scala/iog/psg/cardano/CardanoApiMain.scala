@@ -241,7 +241,7 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
           val addresses = arguments.get(CmdLine.addresses).split(",").toSeq
-          unwrap[Seq[SubmitMigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
+          unwrap[Seq[MigrationResponse]](api.migrateShelleyWallet(walletId, passphrase, addresses).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.getShelleyWalletMigrationInfo)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[MigrationCostResponse](api.getShelleyWalletMigrationInfo(walletId).executeBlocking, trace(_))
@@ -252,11 +252,11 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val stakePoolId = arguments.get(CmdLine.stakePoolId)
           val passphrase = arguments.get(CmdLine.passphrase)
-          unwrap[SubmitMigrationResponse](api.joinStakePool(walletId, stakePoolId, passphrase).executeBlocking, trace(_))
+          unwrap[MigrationResponse](api.joinStakePool(walletId, stakePoolId, passphrase).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.quitStakePool)) {
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
-          unwrap[SubmitMigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
+          unwrap[MigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
