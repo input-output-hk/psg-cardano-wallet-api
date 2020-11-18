@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v1.4.3
         with:
           java-version: '11.0.8'
-      - run: sbt coverage test it:test coverageReport
+      - run: sbt assembly coverage test it:test coverageReport
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
         with:
