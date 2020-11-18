@@ -292,7 +292,7 @@ class CardanoJpiSpec
   }
 
   "PUT /stake-pools/{stakePoolId}/wallets/{walletId}" should "Delegate all (current and future) addresses from the given wallet to the given stake pool" in {
-    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationCostsResponse
   }
 
   it should "return not found" in {
@@ -300,7 +300,7 @@ class CardanoJpiSpec
   }
 
   "DELETE /stake-pools/*/wallets/{walletId}" should "Stop delegating completely" in {
-    api.quitStakePool(wallet.id, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+    api.quitStakePool(wallet.id, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationCostsResponse
   }
 
   it should "return not found" in {

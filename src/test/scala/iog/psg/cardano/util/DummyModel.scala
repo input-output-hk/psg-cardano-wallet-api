@@ -16,6 +16,7 @@ trait DummyModel { self: Assertions =>
   final val walletPassphrase = UUID.randomUUID().toString
   protected val withdrawal = "500"
   final val addressPoolGap = 500
+  final val stakePoolId = "pool1wqaz0q0zhtxlgn0ewssevn2mrtm30fgh2g7hr7z9rj5856457mm"
 
   final lazy val dummyDateTime = ZonedDateTime.parse("2000-01-02T03:04:05.000Z")
 

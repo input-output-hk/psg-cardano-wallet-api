@@ -349,7 +349,7 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<CardanoApiCodec.MigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException {
+    public CompletionStage<CardanoApiCodec.SubmitMigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException {
         return helpExecute.execute(api.joinStakePool(walletId, stakePoolId, passphrase));
     }
 
@@ -357,7 +357,7 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException {
+    public CompletionStage<CardanoApiCodec.SubmitMigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException {
         return helpExecute.execute(api.quitStakePool(walletId, passphrase));
     }
 

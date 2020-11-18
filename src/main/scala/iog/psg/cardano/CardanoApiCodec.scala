@@ -578,7 +578,10 @@ object CardanoApiCodec {
     def toPostExternalTransactionResponse: Future[CardanoApiResponse[PostExternalTransactionResponse]] =
       to[PostExternalTransactionResponse](Unmarshal(_).to[CardanoApiResponse[PostExternalTransactionResponse]])
 
-    def toSubmitMigrationResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
+    def toSubmitMigrationResponse: Future[CardanoApiResponse[SubmitMigrationResponse]] =
+      to[SubmitMigrationResponse](Unmarshal(_).to[CardanoApiResponse[SubmitMigrationResponse]])
+
+    def toSubmitMigrationsResponse: Future[CardanoApiResponse[Seq[SubmitMigrationResponse]]] =
       to[Seq[SubmitMigrationResponse]](Unmarshal(_).to[CardanoApiResponse[Seq[SubmitMigrationResponse]]])
 
     def toMigrationCostResponse: Future[CardanoApiResponse[MigrationCostResponse]] =

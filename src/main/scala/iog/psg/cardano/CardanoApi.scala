@@ -346,7 +346,7 @@ trait CardanoApi {
    * @param passphrase wallet's passphrase
    * @return quit stake pool request
    */
-  def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[MigrationCostResponse]]
+  def joinStakePool(walletId: String, stakePoolId: String, passphrase: String): Future[CardanoApiRequest[SubmitMigrationResponse]]
 
   /**
    * Stop delegating completely. The wallet's stake will become inactive.
@@ -356,5 +356,5 @@ trait CardanoApi {
    * @param passphrase wallet's passphrase
    * @return quit stake pool request
    */
-  def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationCostResponse]]
+  def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[SubmitMigrationResponse]]
 }

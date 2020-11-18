@@ -252,11 +252,11 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val stakePoolId = arguments.get(CmdLine.stakePoolId)
           val passphrase = arguments.get(CmdLine.passphrase)
-          unwrap[MigrationCostResponse](api.joinStakePool(walletId, stakePoolId, passphrase).executeBlocking, trace(_))
+          unwrap[SubmitMigrationResponse](api.joinStakePool(walletId, stakePoolId, passphrase).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.quitStakePool)) {
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
-          unwrap[MigrationCostResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
+          unwrap[SubmitMigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
