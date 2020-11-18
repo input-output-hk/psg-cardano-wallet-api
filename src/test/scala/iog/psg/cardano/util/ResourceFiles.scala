@@ -1,5 +1,9 @@
 package iog.psg.cardano.util
 
+import akka.stream.Materializer
+import akka.stream.alpakka.json.scaladsl.JsonReader
+import akka.stream.scaladsl.{Sink, Source => AkkaSource}
+import akka.util.ByteString
 import io.circe.Decoder
 import io.circe.parser.decode
 import iog.psg.cardano.CardanoApiCodec._
@@ -24,6 +28,15 @@ trait ResourceFiles { self: Assertions =>
 
   final def getJsonFromFile(file: String): String =
     getFileContent(s"jsons/$file")
+
+  final def decodeViaStream(file: String, jsonPath: String)(implicit mat: Materializer) = {
+    val source = Source.fromURL(getClass.getResource(s"/jsons/$file"))
+    val jsonStr = source.mkString
+    AkkaSource
+      .single(ByteString.fromString(jsonStr))
+      .via(JsonReader.select(jsonPath))
+      .runWith(Sink.seq)
+  }
 
   final def decodeJsonFile[T](file: String)(implicit dec: Decoder[T]): T = {
     val jsonStr = getJsonFromFile(file)
