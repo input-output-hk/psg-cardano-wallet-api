@@ -93,12 +93,39 @@ trait CardanoApi {
   def getWallet(walletId: String): CardanoApiRequest[Wallet]
 
   /**
+   * Update wallet's name
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet #putWallet]]
+   *
+   * @param walletId wallet's id
+   * @param name new wallet's name
+   * @return update wallet request
+   */
+  def updateName(walletId: String, name: String): Future[CardanoApiRequest[Wallet]]
+
+  /**
    * Gives network information
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkInformation #getNetworkInformation]]
    *
    * @return network info request
    */
   def networkInfo: CardanoApiRequest[NetworkInfo]
+
+  /**
+   * Gives network clock information
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock #getNetworkClock]]
+   *
+   * @param forceNtpCheck When this flag is set, the request will block until NTP server responds or will timeout after a while without any answer from the NTP server.
+   * @return network clock info request
+   */
+  def networkClock(forceNtpCheck: Option[Boolean] = None): CardanoApiRequest[NetworkClock]
+
+  /**
+   * Gives network parameters
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters #getNetworkParameters]]
+   *
+   * @return network parameters request
+   */
+  def networkParameters(): CardanoApiRequest[NetworkParameters]
 
   /**
    * Create and restore a wallet from a mnemonic sentence or account public key.
@@ -129,6 +156,15 @@ trait CardanoApi {
    */
   def listAddresses(walletId: String,
                     state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]]
+
+  /**
+   * Give useful information about the structure of a given address.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/inspectAddress #inspectAddress]]
+   *
+   * @param addressId
+   * @return address inspect request
+   */
+  def inspectAddress(addressId: String): CardanoApiRequest[WalletAddress]
 
   /**
    * Lists all incoming and outgoing wallet's transactions.
@@ -216,6 +252,16 @@ trait CardanoApi {
                                          transactionId: String): CardanoApiRequest[CreateTransactionResponse]
 
   /**
+   * Forget pending transaction
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction #deleteTransaction]]
+   *
+   * @param walletId wallet's id
+   * @param transactionId transaction's id
+   * @return forget pending transaction request
+   */
+  def deleteTransaction(walletId: String, transactionId: String): CardanoApiRequest[Unit]
+
+  /**
    * Update Passphrase
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWalletPassphrase #putWalletPassphrase]]
    * @param walletId wallet's id
@@ -234,8 +280,42 @@ trait CardanoApi {
    * @param walletId wallet's id
    * @return delete wallet request
    */
-  def deleteWallet(
-                    walletId: String
-                  ): CardanoApiRequest[Unit]
+  def deleteWallet(walletId: String): CardanoApiRequest[Unit]
 
+  /**
+   * Return the UTxOs distribution across the whole wallet, in the form of a histogram
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics #getUTxOsStatistics]]
+   *
+   * @param walletId wallet's id
+   * @return get UTxOs statistics request
+   */
+  def getUTxOsStatistics(walletId: String): CardanoApiRequest[UTxOStatistics]
+
+  /**
+   * Submits a transaction that was created and signed outside of cardano-wallet.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction #postExternalTransaction]]
+   *
+   * @param binary message binary blob string
+   * @return post external transaction request
+   */
+  def postExternalTransaction(binary: String): CardanoApiRequest[PostExternalTransactionResponse]
+
+  /**
+   * Submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/migrateShelleyWallet #migrateShelleyWallet]]
+   *
+   * @param walletId wallet's id
+   * @param passphrase wallet's master passphrase
+   * @param addresses recipient addresses
+   * @return migrate shelley wallet request
+   */
+  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
+
+  /**
+   * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getShelleyWalletMigrationInfo #getShelleyWalletMigrationInfo]]
+   * @param walletId wallet's id
+   * @return migration cost request
+   */
+  def getShelleyWalletMigrationInfo(walletId: String): CardanoApiRequest[MigrationCostResponse]
 }

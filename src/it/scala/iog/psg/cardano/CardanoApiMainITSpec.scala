@@ -16,15 +16,23 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.io.Source
+
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     Seq(2, 3).map { num =>
-    val walletId = TestWalletsConfig.walletsMap(num).id
+      val walletId = TestWalletsConfig.walletsMap(num).id
       runCmdLine(
         CmdLine.deleteWallet,
-        CmdLine.walletId, walletId)
+        CmdLine.walletId, walletId
+      )
     }
+    val wallet1 = TestWalletsConfig.walletsMap(1)
+    runCmdLine(CmdLine.updateName,
+      CmdLine.walletId, wallet1.id,
+      CmdLine.name, wallet1.name
+    )
     super.afterAll()
   }
 
@@ -52,9 +60,19 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     results.reverse
   }
 
-  "The Cmd line -netInfo" should "support retrieving netInfo" in {
+  "The Cmd line -netInfo" should "support retrieving network information" in {
     val cmdLineResults = runCmdLine(CmdLine.netInfo)
     assert(cmdLineResults.exists(_.contains("ready")), s"Testnet API service not ready - '$baseUrl' \n $cmdLineResults")
+  }
+
+  "The Cmd line -netClockInfo" should "support retrieving network clock information" in {
+    val cmdLineResults = runCmdLine(CmdLine.netClockInfo)
+    assert(cmdLineResults.exists(_.contains("available")), s"Testnet API service not available - '$baseUrl' \n $cmdLineResults")
+  }
+
+  "The Cmd line -netParams" should "support retrieving network params" in {
+    val cmdLineResults = runCmdLine(CmdLine.netParams)
+    assert(cmdLineResults.exists(_.contains("genesis_block_hash")), s"Testnet API service not available - '$baseUrl' \n $cmdLineResults")
   }
 
   "The Cmd Line -wallets" should "show our test wallet in the list" in new TestWalletFixture(walletNum = 1) {
@@ -106,6 +124,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains(testWalletId)), "Test wallet not found.")
+  }
+
+  "The Cmd Line -updateName -wallet [walletId] -name [name]" should "update wallet's name" in new TestWalletFixture(walletNum = 1){
+    val newName = s"${testWalletName}_updated"
+    val cmdLineResults = runCmdLine(
+      CmdLine.updateName,
+      CmdLine.walletId, testWalletId,
+      CmdLine.name, newName
+    )
+
+    assert(cmdLineResults.exists(_.contains(newName)), "wallet's name not updated.")
   }
 
   "The Cmd Line -createWallet" should "create wallet 2" in new TestWalletFixture(walletNum = 2){
@@ -246,6 +275,84 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     val foundTx = resultsListWalletTxs.exists(_.contains(txId))
     assert(foundTx, s"Couldn't find txId $txId in transactions ")
+
+    runCmdLine(
+      CmdLine.deleteTx,
+      CmdLine.txId, txId,
+      CmdLine.walletId, testWalletId
+    )
+
+    val resultsListWalletTxsAfterDelete = runCmdLine(
+      CmdLine.listWalletTransactions,
+      CmdLine.start, preTxTime.toString,
+      CmdLine.`end`, postTxTime.toString,
+      CmdLine.walletId, testWalletId)
+
+    val notFoundTx = !resultsListWalletTxsAfterDelete.exists(_.contains(txId))
+    assert(notFoundTx, s"txId $txId not deleted")
+  }
+
+  "The Cmd Lines -inspectAddress" should "inspect address" in new TestWalletFixture(walletNum = 1){
+    val unusedAddr = getUnusedAddressWallet1
+    val results = runCmdLine(
+      CmdLine.inspectWalletAddress,
+      CmdLine.address, unusedAddr
+    )
+    assert(results.exists(_.contains("address_style")), "missing address_style")
+  }
+
+  "The Cmd Lines -getUTxO" should "get UTxOs statistics" in new TestWalletFixture(walletNum = 1){
+    val results = runCmdLine(
+      CmdLine.getUTxOsStatistics,
+      CmdLine.walletId, testWalletId
+    )
+    assert(results.exists(_.contains("distribution")), "Missing UTxOs distribution across the whole wallet")
+  }
+
+  //Ignoring as its in experimental state
+  //"The Cmd Line -postExternalTransaction"
+  ignore should "submit a transaction that was created and signed outside of cardano-wallet" in new TestWalletFixture(walletNum = 1){
+    val source = Source.fromURL(getClass.getResource("/tx.raw"))
+    val binary = source.mkString
+    source.close()
+
+    val results = runCmdLine(
+      CmdLine.postExternalTransaction,
+      CmdLine.binary, binary
+    )
+    assert(results.exists(_.contains("id")), "UTxOs distribution across the whole wallet")
+  }
+
+  // keeping ignored, as it transfers all lovelace from 1 to another
+  //"The Cmd Line -migrateShelleyWallet"
+  ignore should "submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses" in {
+    val wallet1 = TestWalletsConfig.walletsMap(2)
+    val wallet2 = TestWalletsConfig.walletsMap(3)
+
+    val cmdResults: Seq[String] = runCmdLine(
+      CmdLine.listWalletAddresses,
+      CmdLine.state, "unused",
+      CmdLine.walletId, wallet2.id)
+
+    val addresses = decode[Seq[WalletAddressId]](cmdResults.last).toOption.getOrElse(Nil).take(3).map(_.id).mkString(",")
+
+    val results = runCmdLine(
+      CmdLine.migrateShelleyWallet,
+      CmdLine.walletId, wallet1.id,
+      CmdLine.passphrase, wallet1.passphrase,
+      CmdLine.addresses, addresses
+    )
+
+    assert(results.exists(_.contains("id")), "Migration id")
+  }
+
+  "The Cmd Line -getShelleyWalletMigrationInfo" should "calculate the cost" in new TestWalletFixture(walletNum = 1){
+    val results = runCmdLine(
+      CmdLine.getShelleyWalletMigrationInfo,
+      CmdLine.walletId, wallet.id
+    )
+
+    assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
   }
 
   "The Cmd Line --help" should "show possible commands" in {
@@ -267,18 +374,27 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |Commands:
         |
         | -netInfo
+        | -netClockInfo
+        | -netParams
         | -wallets
         | -deleteWallet -walletId <walletId>
         | -wallet -walletId <walletId>
+        | -updateName -walletId <walletId> -name <name>
         | -createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -estimateFee -walletId <walletId> -amount <amount> -address <address>
         | -updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
         | -listAddresses -walletId <walletId> -state <state>
+        | -inspectAddress -address <address>
         | -listTxs -walletId <walletId> [-start <start_date>] [-end <end_date>] [-order <order>] [-minWithdrawal <minWithdrawal>]
         | -createTx -walletId <walletId> -amount <amount> -address <address> -passphrase <passphrase> [-metadata <metadata>]
+        | -deleteTx -walletId <walletId> -txId <txId>
         | -fundTx -walletId <walletId> -amount <amount> -address <address>
-        | -getTx -walletId <walletId> -txId <txId>""".stripMargin
+        | -getTx -walletId <walletId> -txId <txId>
+        | -getUTxO -walletId <walletId>
+        | -postExternalTransaction -binary <binary_string> ( experimental )
+        | -migrateShelleyWallet -walletId <walletId> -passphrase <passphrase> -addresses <addresses>
+        | -getShelleyWalletMigrationInfo -walletId <walletId>""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -321,6 +437,27 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | $CMDLINE -netInfo""".stripMargin.trim
   }
 
+  it should "show -netClockInfo help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.netClockInfo)
+    results.mkString("\n").stripMargin.trim shouldBe """ Show network clock information
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkClock ]
+                                                       |
+                                                       | Arguments: [-forceNtpCheck <forceNtpCheck>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -netClockInfo
+                                                       | $CMDLINE -netClockInfo -forceNtpCheck true""".stripMargin.trim
+  }
+
+  it should "show -netParams help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.netParams)
+    results.mkString("\n").stripMargin.trim shouldBe """ Returns the set of network parameters for the current epoch.
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getNetworkParameters ]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -netParams""".stripMargin.trim
+  }
+
   it should "show listWallets help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.listWallets)
     results.mkString("\n").stripMargin.trim shouldBe """ Return a list of known wallets, ordered from oldest to newest
@@ -350,6 +487,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -wallet -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show updateName help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.updateName)
+    results.mkString("\n").stripMargin.trim shouldBe """ Update wallet's name
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/putWallet ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -name <name>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -updateName -walletId 1234567890123456789012345678901234567890 -name new_name""".stripMargin.trim
   }
 
   it should "show createWallet help" in {
@@ -414,6 +562,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | $CMDLINE -listAddresses -walletId 1234567890123456789012345678901234567890 -state unused""".stripMargin.trim
   }
 
+  it should "show inspectWalletAddress help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.inspectWalletAddress)
+    results.mkString("\n").stripMargin.trim shouldBe """ Give useful information about the structure of a given address.
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/inspectAddress ]
+                                                       |
+                                                       | Arguments: -address <address>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -inspectAddress -address addr12345678901234567890123456789012345678901234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
   it should "show listWalletTransactions help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.listWalletTransactions)
     results.mkString("\n").stripMargin.trim shouldBe """ Lists all incoming and outgoing wallet's transactions, dates in ISO_ZONED_DATE_TIME format, order: ascending, descending ( default )
@@ -454,6 +613,17 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | """.stripMargin.trim
   }
 
+  it should "show deleteTx help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.deleteTx)
+    results.mkString("\n").stripMargin.trim shouldBe """ Delete pending transaction by id
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/deleteTransaction ]
+                                                       |
+                                                       | Arguments: -walletId <walletId> -txId <txId>
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -deleteTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890""".stripMargin.trim
+  }
+
   it should "show getTx help" in {
     val results = runCmdLine(CmdLine.help, CmdLine.getTx)
     results.mkString("\n").stripMargin.trim shouldBe """ Get transaction by id
@@ -463,6 +633,30 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -getTx -walletId 1234567890123456789012345678901234567890 -txId ABCDEF1234567890""".stripMargin.trim
+  }
+
+  it should "show getUTxO help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.getUTxOsStatistics)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Return the UTxOs distribution across the whole wallet, in the form of a histogram
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getUTxOsStatistics ]
+        |
+        | Arguments: -walletId <walletId>
+        |
+        | Examples:
+        | $CMDLINE -getUTxO -walletId 1234567890123456789012345678901234567890""".stripMargin.trim
+  }
+
+  it should "show postExternalTransaction help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.postExternalTransaction)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ Submits a transaction that was created and signed outside of cardano-wallet ( experimental )
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postExternalTransaction ]
+        |
+        | Arguments: -binary <binary>
+        |
+        | Examples:
+        | $CMDLINE -postExternalTransaction -binary 82839f8200d8185824825820d78b4cf8eb832c2207a9a2c787ec232d2fbf88ad432c05bfae9bff58d756d59800f""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

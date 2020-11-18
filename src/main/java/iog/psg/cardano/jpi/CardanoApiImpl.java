@@ -3,6 +3,8 @@ package iog.psg.cardano.jpi;
 import iog.psg.cardano.CardanoApiCodec;
 import scala.Enumeration;
 import scala.Some;
+import scala.collection.immutable.IndexedSeq;
+import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
 
 import java.util.List;
@@ -137,6 +139,14 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
+    public CompletionStage<Void> deleteTransaction(String walletId, String transactionId) throws CardanoApiException {
+        return helpExecute.execute(api.deleteTransaction(walletId, transactionId)).thenApply(x -> null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFee(
             String walletId, List<CardanoApiCodec.Payment> payments) throws CardanoApiException {
         return estimateFee(walletId, payments, "self", null);
@@ -199,6 +209,15 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
+    public CompletionStage<CardanoApiCodec.WalletAddress> inspectAddress(
+            String addressId) throws CardanoApiException {
+        return helpExecute.execute(api.inspectAddress(addressId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public CompletionStage<List<CardanoApiCodec.CreateTransactionResponse>> listTransactions(
             ListTransactionsParamBuilder builder) throws CardanoApiException {
         return helpExecute.execute(
@@ -237,8 +256,76 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
+    public CompletionStage<CardanoApiCodec.Wallet> updateName(
+            String walletId,
+            String name) throws CardanoApiException {
+        return helpExecute.execute(api.updateName(walletId, name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public CompletionStage<CardanoApiCodec.NetworkInfo> networkInfo() throws CardanoApiException {
         return helpExecute.execute(api.networkInfo());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.NetworkClock> networkClock() throws CardanoApiException {
+        return networkClock(null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.NetworkClock> networkClock(Boolean forceNtpCheck) throws CardanoApiException {
+        return helpExecute.execute(api.networkClock(option(forceNtpCheck)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.NetworkParameters> networkParameters() throws CardanoApiException {
+        return helpExecute.execute(api.networkParameters());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.UTxOStatistics> getUTxOsStatistics(String walletId) throws CardanoApiException {
+        return helpExecute.execute(api.getUTxOsStatistics(walletId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.PostExternalTransactionResponse> postExternalTransaction(String binary) throws CardanoApiException {
+        return helpExecute.execute(api.postExternalTransaction(binary));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
+        IndexedSeq<String> addressesList = CollectionConverters.asScala(addresses).toIndexedSeq();
+        CompletionStage<Seq<CardanoApiCodec.SubmitMigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
+        return response.thenApply(CollectionConverters::asJava);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.MigrationCostResponse> getShelleyWalletMigrationInfo(String walletId) throws CardanoApiException {
+        return helpExecute.execute(api.getShelleyWalletMigrationInfo(walletId));
     }
 
     private static <T> scala.Option<T> option(final T value) {

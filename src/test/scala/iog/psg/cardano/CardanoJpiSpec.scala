@@ -4,6 +4,7 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CompletionStage
 
 import akka.actor.ActorSystem
+import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.jpi.{AddressFilter, JpiResponseCheck, ListTransactionsParamBuilder}
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
@@ -21,13 +22,14 @@ class CardanoJpiSpec
     with ScalaFutures
     with InMemoryCardanoApi
     with DummyModel
-    with JsonFiles {
+    with ResourceFiles {
 
   lazy val api = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
 
   private def tryGetErrorMessage[T](completionStage: CompletionStage[T]) =
     Try(completionStage.toCompletableFuture.get()).toEither.swap.getOrElse(fail("should fail")).getMessage
 
+  private val addressNotFoundError = "iog.psg.cardano.jpi.CardanoApiException: Message: Addresses not found, Code: 404"
   private val walletNotFoundError = "iog.psg.cardano.jpi.CardanoApiException: Message: Wallet not found, Code: 404"
 
   "GET /wallets" should "return wallets list" in {
@@ -47,6 +49,22 @@ class CardanoJpiSpec
 
   "GET /network/information" should "return network information" in {
     api.networkInfo.toCompletableFuture.get() shouldBe networkInfo
+  }
+
+  "GET /network/clock" should "return network clock with forced ntp check" in {
+    api.networkClock(true).toCompletableFuture.get() shouldBe networkClockForced
+  }
+
+  it should "return network clock without forced ntp check" in {
+    api.networkClock(false).toCompletableFuture.get() shouldBe networkClock
+  }
+
+  it should "return network clock without forced ntp check param" in {
+    api.networkClock().toCompletableFuture.get() shouldBe networkClock
+  }
+
+  "GET /network/parameters" should "return network clock with forced ntp check" in {
+    api.networkParameters().toCompletableFuture.get() shouldBe networkParameters
   }
 
   "POST /wallets" should "create a wallet, using all params" in {
@@ -88,7 +106,7 @@ class CardanoJpiSpec
 
   it should "return wallet's used + unused addresses" in {
     val ids = api.listAddresses(wallet.id).toCompletableFuture.get().asScala.toList.map(_.id)
-    ids shouldBe addresses.map(_.id)
+    ids shouldBe addressesIds.map(_.id)
   }
 
   it should "return wallet not found error" in {
@@ -158,6 +176,14 @@ class CardanoJpiSpec
     ) shouldBe walletNotFoundError
   }
 
+  "DELETE /wallets/{walletId}/transactions" should "forget pending transaction" in {
+    api.deleteTransaction(wallet.id, firstTransactionId).toCompletableFuture.get() shouldBe null
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.deleteTransaction("invalid_wallet_id", firstTransactionId)) shouldBe walletNotFoundError
+  }
+
   "POST /wallets/{fromWalletId}/payment-fees" should "estimate fee" in {
     api.estimateFee(wallet.id, payments.payments.asJava, withdrawal, txMetadata).toCompletableFuture.get() shouldBe estimateFeeResponse
   }
@@ -191,12 +217,62 @@ class CardanoJpiSpec
     ) shouldBe walletNotFoundError
   }
 
+  "PUT /wallets/{walletId" should "update name" in {
+    val newName = s"${wallet.name}_updated"
+    api.updateName(wallet.id, newName).toCompletableFuture.get().name shouldBe newName
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api
+      .updateName("invalid_wallet_id", "random_name")) shouldBe walletNotFoundError
+  }
+
   "DELETE /wallets/{walletId" should "delete wallet" in {
     api.deleteWallet(wallet.id).toCompletableFuture.get() shouldBe null
   }
 
   it should "return not found" in {
     tryGetErrorMessage(api.deleteWallet("invalid_wallet_id")) shouldBe walletNotFoundError
+  }
+
+  "GET /addresses/{addressId}" should "inspect address" in {
+    api.inspectAddress(addressToInspect.id).toCompletableFuture.get() shouldBe address
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.inspectAddress("invalid_address_id")) shouldBe addressNotFoundError
+  }
+
+  "GET /wallets/{walletId}/statistics/utxos" should "get UTxOs statistics" in {
+    api.getUTxOsStatistics(wallet.id).toCompletableFuture.get() shouldBe uTxOStatistics
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.getUTxOsStatistics("invalid_address_id")) shouldBe walletNotFoundError
+  }
+
+  "POST /proxy/transactions" should "submit a transaction that was created and signed outside of cardano-wallet" in {
+    api.postExternalTransaction(txRawContent).toCompletableFuture.get() shouldBe jsonFileProxyTransactionResponse
+  }
+
+  it should "fail on invalid request body" in {
+    tryGetErrorMessage(api.postExternalTransaction("1234567890")) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid binary string, Code: 400"
+  }
+
+  "POST /wallets/{walletId}/migrations" should "submit one or more transactions which transfers all funds from a Shelley wallet to a set of addresses" in {
+    api.migrateShelleyWallet(wallet.id, walletPassphrase, unUsedAddresses.map(_.id).asJava).toCompletableFuture.get().asScala shouldBe jsonFileMigrationsResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.migrateShelleyWallet("invalid_address_id", walletPassphrase, unUsedAddresses.map(_.id).asJava)) shouldBe walletNotFoundError
+  }
+
+  "GET /wallets/{walletId}/migrations" should "calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses" in {
+    api.getShelleyWalletMigrationInfo(wallet.id).toCompletableFuture.get() shouldBe jsonFileMigrationCostsResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.getShelleyWalletMigrationInfo("invalid_address_id")) shouldBe walletNotFoundError
   }
 
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
@@ -208,7 +284,7 @@ class CardanoJpiSpec
     with ScalaFutures
     with InMemoryCardanoApi
     with DummyModel
-    with JsonFiles {
+    with ResourceFiles {
     override implicit val as: ActorSystem = getCurrentSpecAS
     lazy val customApi: jpi.CardanoApi = JpiResponseCheck.buildWithPredefinedApiExecutor(inMemoryExecutor, as)
   }

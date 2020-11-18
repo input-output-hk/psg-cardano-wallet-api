@@ -1,0 +1,33 @@
+{
+  "genesis_block_hash": "3c07030e36bfffe67e2e2ec09e5293d384637cd2f004356ef320f3fe6c52041a",
+  "blockchain_start_time": "2019-02-27T14:46:45.000Z",
+  "slot_length": {
+    "quantity": 10,
+    "unit": "second"
+  },
+  "epoch_length": {
+    "quantity": 42000,
+    "unit": "slot"
+  },
+  "epoch_stability": {
+    "quantity": 1337,
+    "unit": "block"
+  },
+  "active_slot_coefficient": {
+    "quantity": 42,
+    "unit": "percent"
+  },
+  "decentralization_level": {
+    "quantity": 42,
+    "unit": "percent"
+  },
+  "desired_pool_number": 100,
+  "minimum_utxo_value": {
+    "quantity": 42000000,
+    "unit": "lovelace"
+  },
+  "hardfork_at": {
+    "epoch_number": 14,
+    "epoch_start_time": "2019-02-27T14:46:45.000Z"
+  }
+}

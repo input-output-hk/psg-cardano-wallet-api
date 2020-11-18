@@ -7,7 +7,7 @@ import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
 import iog.psg.cardano.TestWalletsConfig.baseUrl
 import iog.psg.cardano.common.TestWalletFixture
-import iog.psg.cardano.util.{Configure, CustomPatienceConfiguration, ModelCompare}
+import iog.psg.cardano.util.{Configure, ModelCompare}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -18,6 +18,9 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
 
   override def afterAll(): Unit = {
     sut.deleteWallet(TestWalletsConfig.walletsMap(3).id)
+
+    val wallet1 = TestWalletsConfig.walletsMap(1)
+    sut.updateWalletName(wallet1.id, wallet1.name)
     super.afterAll()
   }
 
@@ -161,6 +164,10 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
     responseMetadataMap(Long.MaxValue - 1) shouldBe MetadataValueStr("1" * 64)
   }
 
+  it should "update wallet 2 name" in new TestWalletFixture(1){
+    val newName = s"${testWalletName}_updated"
+    sut.updateWalletName(testWalletId, newName) shouldBe newName
+  }
 
   it should "delete wallet 2" in new TestWalletFixture(2){
     sut.deleteWallet(testWalletId)
