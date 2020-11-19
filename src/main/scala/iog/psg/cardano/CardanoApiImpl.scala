@@ -1,23 +1,21 @@
 package iog.psg.cardano
 
-import java.io.File
 import java.time.ZonedDateTime
-import java.util.Scanner
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
-import akka.util.ByteString
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
 import iog.psg.cardano.CardanoApi.Order.Order
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
-private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem) extends CardanoApi {
+private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem)
+    extends CardanoApi {
 
   import CardanoApiCodec._
   import CardanoApiCodec.ImplicitCodecs._
@@ -99,7 +97,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def networkParameters(): CardanoApiRequest[NetworkParameters] = {
+  override def networkParameters(): CardanoApiRequest[NetworkParameters] =
     CardanoApiRequest(
       HttpRequest(
         uri = s"${network}/parameters",
@@ -107,18 +105,16 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       ),
       _.toNetworkParametersResponse
     )
-  }
 
   /**
    * @inheritdoc
    */
-  override def createRestoreWallet(
-                                    name: String,
-                                    passphrase: String,
-                                    mnemonicSentence: MnemonicSentence,
-                                    mnemonicSecondFactor: Option[MnemonicSentence] = None,
-                                    addressPoolGap: Option[Int] = None
-                                  ): Future[CardanoApiRequest[Wallet]] = {
+  override def createRestoreWallet(name: String,
+                                   passphrase: String,
+                                   mnemonicSentence: MnemonicSentence,
+                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                                   addressPoolGap: Option[Int] = None
+  ): Future[CardanoApiRequest[Wallet]] = {
 
     val createRestore =
       CreateRestore(
@@ -146,7 +142,8 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
    * @inheritdoc
    */
   override def listAddresses(walletId: String,
-                             state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]] = {
+                             state: Option[AddressFilter]
+  ): CardanoApiRequest[Seq[WalletAddressId]] = {
 
     val baseUri = Uri(s"$wallets/${walletId}/addresses")
 
@@ -186,16 +183,16 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
                                 start: Option[ZonedDateTime] = None,
                                 end: Option[ZonedDateTime] = None,
                                 order: Order = Order.descendingOrder,
-                                minWithdrawal: Option[Int] = None): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
+                                minWithdrawal: Option[Int] = None
+  ): CardanoApiRequest[Seq[CreateTransactionResponse]] = {
     val baseUri = Uri(s"$wallets/${walletId}/transactions")
 
     val queries =
-      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal))
-        .collect {
-          case (queryParamName, order: Order) => queryParamName -> order.toString
-          case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
-          case (queryParamName, Some(minWith: Int)) => queryParamName -> minWith.toString
-        }
+      Seq("start", "end", "order", "minWithdrawal").zip(Seq(start, end, order, minWithdrawal)).collect {
+        case (queryParamName, order: Order)            => queryParamName -> order.toString
+        case (queryParamName, Some(dt: ZonedDateTime)) => queryParamName -> zonedDateToString(dt)
+        case (queryParamName, Some(minWith: Int))      => queryParamName -> minWith.toString
+      }
 
     val uriWithQueries = baseUri.withQuery(Query(queries: _*))
 
@@ -216,8 +213,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
                                  payments: Payments,
                                  metadata: Option[TxMetadataIn],
                                  withdrawal: Option[String]
-                                ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
-
+  ): Future[CardanoApiRequest[CreateTransactionResponse]] = {
 
     val createTx = CreateTransaction(passphrase, payments.payments, metadata, withdrawal)
 
@@ -240,7 +236,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
                            payments: Payments,
                            withdrawal: Option[String],
                            metadataIn: Option[TxMetadataIn] = None
-                          ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
+  ): Future[CardanoApiRequest[EstimateFeeResponse]] = {
 
     val estimateFees = EstimateFee(payments.payments, withdrawal, metadataIn)
 
@@ -260,7 +256,8 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
    * @inheritdoc
    */
   override def fundPayments(walletId: String,
-                            payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]] = {
+                            payments: Payments
+  ): Future[CardanoApiRequest[FundPaymentsResponse]] =
     Marshal(payments).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
@@ -271,14 +268,13 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         _.toFundPaymentsResponse
       )
     }
-  }
 
   /**
    * @inheritdoc
    */
-  override def getTransaction[T <: TxMetadataIn](
-                                                  walletId: String,
-                                                  transactionId: String): CardanoApiRequest[CreateTransactionResponse] = {
+  override def getTransaction[T <: TxMetadataIn](walletId: String,
+                                                 transactionId: String
+  ): CardanoApiRequest[CreateTransactionResponse] = {
 
     val uri = Uri(s"$wallets/${walletId}/transactions/${transactionId}")
 
@@ -309,15 +305,15 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def updatePassphrase(
-                                 walletId: String,
-                                 oldPassphrase: String,
-                                 newPassphrase: String): Future[CardanoApiRequest[Unit]] = {
+  override def updatePassphrase(walletId: String,
+                                oldPassphrase: String,
+                                newPassphrase: String
+  ): Future[CardanoApiRequest[Unit]] = {
 
     val uri = Uri(s"$wallets/${walletId}/passphrase")
     val updater = UpdatePassphrase(oldPassphrase, newPassphrase)
 
-    Marshal(updater).to[RequestEntity] map { marshalled => {
+    Marshal(updater).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
           uri = uri,
@@ -327,22 +323,21 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         _.toUnit
       )
     }
-    }
   }
 
   /**
    * @inheritdoc
    */
   override def deleteWallet(
-                             walletId: String
-                           ): CardanoApiRequest[Unit] = {
+    walletId: String
+  ): CardanoApiRequest[Unit] = {
 
     val uri = Uri(s"$wallets/${walletId}")
 
     CardanoApiRequest(
       HttpRequest(
         uri = uri,
-        method = DELETE,
+        method = DELETE
       ),
       _.toUnit
     )
@@ -356,7 +351,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
     CardanoApiRequest(
       HttpRequest(
         uri = uri,
-        method = GET,
+        method = GET
       ),
       _.toUTxOStatisticsResponse
     )
@@ -380,9 +375,12 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
+  override def migrateShelleyWallet(walletId: String,
+                                    passphrase: String,
+                                    addresses: Seq[String]
+  ): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
-    Marshal(updater).to[RequestEntity] map { marshalled => {
+    Marshal(updater).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
           uri = generateMigrationsUrl(walletId),
@@ -391,7 +389,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         ),
         _.toSubmitMigrationResponse
       )
-    }}
+    }
   }
 
   /**

@@ -1,14 +1,13 @@
 package iog.psg.cardano
 
-
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import iog.psg.cardano.CardanoApi.Order.Order
 
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.{ Duration, DurationInt, FiniteDuration }
+import scala.concurrent.{ Await, ExecutionContext, Future }
 
 /**
  * Defines the API which wraps the Cardano API, depends on CardanoApiCodec for it's implementation,
@@ -24,7 +23,9 @@ object CardanoApi {
   type CardanoApiResponse[T] = Either[ErrorMessage, T]
 
   final case class ErrorMessage(message: String, code: String)
-  final case class CardanoApiRequest[T](request: HttpRequest, mapper: HttpResponse => Future[CardanoApiResponse[T]])
+  final case class CardanoApiRequest[T](request: HttpRequest,
+                                        mapper: HttpResponse => Future[CardanoApiResponse[T]]
+  )
 
   object Order extends Enumeration {
     type Order = Value
@@ -34,12 +35,14 @@ object CardanoApi {
 
   object CardanoApiOps {
 
-    implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]]) extends AnyVal {
+    implicit class FlattenOp[T](val knot: Future[CardanoApiResponse[Future[CardanoApiResponse[T]]]])
+        extends AnyVal {
 
-      def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] = knot.flatMap {
-        case Left(errorMessage) => Future.successful(Left(errorMessage))
-        case Right(vaue) => vaue
-      }
+      def flattenCardanoApiResponse(implicit ec: ExecutionContext): Future[CardanoApiResponse[T]] =
+        knot.flatMap {
+          case Left(errorMessage) => Future.successful(Left(errorMessage))
+          case Right(vaue)        => vaue
+        }
     }
 
     implicit class FutOp[T](val request: CardanoApiRequest[T]) extends AnyVal {
@@ -47,17 +50,24 @@ object CardanoApi {
     }
 
     //tie execute to ioEc
-    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) {
-      def execute: Future[CardanoApiResponse[T]] = {
+    implicit class CardanoApiRequestFOps[T](requestF: Future[CardanoApiRequest[T]])(implicit
+      executor: ApiRequestExecutor,
+      ec: ExecutionContext,
+      as: ActorSystem
+    ) {
+      def execute: Future[CardanoApiResponse[T]] =
         requestF.flatMap(_.execute)
-      }
 
       def executeBlocking(implicit maxWaitTime: Duration): CardanoApiResponse[T] =
         Await.result(execute, maxWaitTime)
 
     }
 
-    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T])(implicit executor: ApiRequestExecutor, ec: ExecutionContext, as: ActorSystem) {
+    implicit class CardanoApiRequestOps[T](request: CardanoApiRequest[T])(implicit
+      executor: ApiRequestExecutor,
+      ec: ExecutionContext,
+      as: ActorSystem
+    ) {
 
       def execute: Future[CardanoApiResponse[T]] = executor.execute(request)
 
@@ -138,13 +148,12 @@ trait CardanoApi {
    * @param addressPoolGap An optional number of consecutive unused addresses allowed
    * @return create/restore wallet request
    */
-  def createRestoreWallet(
-                           name: String,
-                           passphrase: String,
-                           mnemonicSentence: MnemonicSentence,
-                           mnemonicSecondFactor: Option[MnemonicSentence] = None,
-                           addressPoolGap: Option[Int] = None
-                         ): Future[CardanoApiRequest[Wallet]]
+  def createRestoreWallet(name: String,
+                          passphrase: String,
+                          mnemonicSentence: MnemonicSentence,
+                          mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                          addressPoolGap: Option[Int] = None
+  ): Future[CardanoApiRequest[Wallet]]
 
   /**
    * List of known addresses, ordered from newest to oldest
@@ -154,8 +163,7 @@ trait CardanoApi {
    * @param state addresses state: used, unused
    * @return list wallet addresses request
    */
-  def listAddresses(walletId: String,
-                    state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]]
+  def listAddresses(walletId: String, state: Option[AddressFilter]): CardanoApiRequest[Seq[WalletAddressId]]
 
   /**
    * Give useful information about the structure of a given address.
@@ -186,7 +194,8 @@ trait CardanoApi {
                        start: Option[ZonedDateTime] = None,
                        end: Option[ZonedDateTime] = None,
                        order: Order = Order.descendingOrder,
-                       minWithdrawal: Option[Int] = None): CardanoApiRequest[Seq[CreateTransactionResponse]]
+                       minWithdrawal: Option[Int] = None
+  ): CardanoApiRequest[Seq[CreateTransactionResponse]]
 
   /**
    * Create and send transaction from the wallet.
@@ -206,7 +215,7 @@ trait CardanoApi {
                         payments: Payments,
                         metadata: Option[TxMetadataIn],
                         withdrawal: Option[String]
-                       ): Future[CardanoApiRequest[CreateTransactionResponse]]
+  ): Future[CardanoApiRequest[CreateTransactionResponse]]
 
   /**
    * Estimate fee for the transaction. The estimate is made by assembling multiple transactions and analyzing the
@@ -226,7 +235,7 @@ trait CardanoApi {
                   payments: Payments,
                   withdrawal: Option[String],
                   metadataIn: Option[TxMetadataIn] = None
-                 ): Future[CardanoApiRequest[EstimateFeeResponse]]
+  ): Future[CardanoApiRequest[EstimateFeeResponse]]
 
   /**
    * Select coins to cover the given set of payments.
@@ -236,8 +245,7 @@ trait CardanoApi {
    * @param payments A list of target outputs ( address, amount )
    * @return fund payments request
    */
-  def fundPayments(walletId: String,
-                   payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]]
+  def fundPayments(walletId: String, payments: Payments): Future[CardanoApiRequest[FundPaymentsResponse]]
 
   /**
    * Get transaction by id.
@@ -247,9 +255,9 @@ trait CardanoApi {
    * @param transactionId transaction's id
    * @return get transaction request
    */
-  def getTransaction[T <: TxMetadataIn](
-                                         walletId: String,
-                                         transactionId: String): CardanoApiRequest[CreateTransactionResponse]
+  def getTransaction[T <: TxMetadataIn](walletId: String,
+                                        transactionId: String
+  ): CardanoApiRequest[CreateTransactionResponse]
 
   /**
    * Forget pending transaction
@@ -269,10 +277,10 @@ trait CardanoApi {
    * @param newPassphrase new passphrase
    * @return update passphrase request
    */
-  def updatePassphrase(
-                        walletId: String,
-                        oldPassphrase: String,
-                        newPassphrase: String): Future[CardanoApiRequest[Unit]]
+  def updatePassphrase(walletId: String,
+                       oldPassphrase: String,
+                       newPassphrase: String
+  ): Future[CardanoApiRequest[Unit]]
 
   /**
    * Delete wallet by id
@@ -309,7 +317,10 @@ trait CardanoApi {
    * @param addresses recipient addresses
    * @return migrate shelley wallet request
    */
-  def migrateShelleyWallet(walletId: String, passphrase: String, addresses: Seq[String]): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
+  def migrateShelleyWallet(walletId: String,
+                           passphrase: String,
+                           addresses: Seq[String]
+  ): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]]
 
   /**
    * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
