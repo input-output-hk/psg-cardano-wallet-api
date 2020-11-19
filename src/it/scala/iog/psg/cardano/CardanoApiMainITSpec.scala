@@ -384,7 +384,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     implicit val patienceConfig =
       PatienceConfig(timeout = scaled(Span(3, Minutes)), interval = scaled(Span(1, Seconds)))
 
-    //not_delegating_to
     eventually {
       val quitStakePoolCmdLineResult = runCmdLine(
         CmdLine.quitStakePool,

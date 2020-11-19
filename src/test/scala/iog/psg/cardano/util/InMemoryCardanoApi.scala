@@ -199,8 +199,6 @@ trait InMemoryCardanoApi {
 
       val networkClockR = "network/clock(.+)?".r
 
-      println(s"spi: $apiAddress method: $method")
-
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
