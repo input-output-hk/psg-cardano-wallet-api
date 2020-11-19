@@ -273,6 +273,10 @@ class CardanoApiSpec
     api.quitStakePool("invalid_wallet_id", walletPassphrase).executeExpectingErrorOrFail() shouldBe ErrorMessage("Not found", "404")
   }
 
+  "GET /stake-pools/maintenance-actions" should "return current status of the stake pools maintenance actions" in {
+    api.getMaintenanceActions().executeOrFail() shouldBe jsonFileStakePoolsMaintenanceActions
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

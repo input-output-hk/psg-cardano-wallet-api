@@ -470,6 +470,12 @@ object CardanoApiCodec {
                               retirement: Option[NextEpoch]
                             )
 
+  @ConfiguredJsonCodec
+  final case class GcStakePools(status: String, lastRun: ZonedDateTime)
+
+  @ConfiguredJsonCodec
+  final case class StakePoolMaintenanceActionsStatus(gcStakePools: GcStakePools)
+
   @ConfiguredJsonCodec(encodeOnly = true)
   final case class PassphraseRequest(passphrase: String)
 
@@ -589,6 +595,9 @@ object CardanoApiCodec {
 
     def toStakePoolsResponse: Future[CardanoApiResponse[Seq[StakePool]]] =
       to[Seq[StakePool]](Unmarshal(_).to[CardanoApiResponse[Seq[StakePool]]])
+
+    def toStakePoolMaintenanceActionsStatusResponse: Future[CardanoApiResponse[StakePoolMaintenanceActionsStatus]] =
+      to[StakePoolMaintenanceActionsStatus](Unmarshal(_).to[CardanoApiResponse[StakePoolMaintenanceActionsStatus]])
 
     def toUnit: Future[CardanoApiResponse[Unit]] = {
       if (response.status == StatusCodes.NoContent) {

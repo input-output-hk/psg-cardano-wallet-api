@@ -361,6 +361,14 @@ public class CardanoApiImpl implements CardanoApi {
         return helpExecute.execute(api.quitStakePool(walletId, passphrase));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.StakePoolMaintenanceActionsStatus> getMaintenanceActions() throws CardanoApiException {
+        return helpExecute.execute(api.getMaintenanceActions());
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }

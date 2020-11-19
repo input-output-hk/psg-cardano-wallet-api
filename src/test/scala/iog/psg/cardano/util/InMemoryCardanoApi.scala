@@ -199,6 +199,8 @@ trait InMemoryCardanoApi {
 
       val networkClockR = "network/clock(.+)?".r
 
+      println(s"spi: $apiAddress method: $method")
+
       (apiAddress, method) match {
         case ("network/information", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("netinfo.json"))
@@ -337,6 +339,8 @@ trait InMemoryCardanoApi {
             resp <- if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
             else badRequest(s"Invalid binary string")
           } yield resp
+        case (s"stake-pools/maintenance-actions", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("stake_pools_maintenance_actions.json"))
         case ("stake-pools?stake=12345", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("stake_pools.json"))
         case (r"stake-pools.+", HttpMethods.GET) =>

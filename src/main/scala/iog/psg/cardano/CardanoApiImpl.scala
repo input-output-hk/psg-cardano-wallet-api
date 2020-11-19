@@ -469,4 +469,16 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
     }}
   }
 
+  /**
+   * @inheritdoc
+   */
+  override def getMaintenanceActions(): CardanoApiRequest[StakePoolMaintenanceActionsStatus] = {
+    CardanoApiRequest(
+      HttpRequest(
+        uri = s"$stakePools/maintenance-actions",
+        method = GET
+      ),
+      _.toStakePoolMaintenanceActionsStatusResponse
+    )
+  }
 }

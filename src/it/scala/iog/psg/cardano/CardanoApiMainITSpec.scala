@@ -396,6 +396,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     }
   }
 
+  //TODO maintance actions
+
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
 
@@ -440,7 +442,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -getShelleyWalletMigrationInfo -walletId <walletId>
         | -listStakePools -stake <stake>
         | -joinStakePool -walletId <walletId> -stakePoolId <stakePoolId> -passphrase <passphrase>
-        | -quitStakePool -walletId <walletId> -passphrase <passphrase>""".stripMargin
+        | -quitStakePool -walletId <walletId> -passphrase <passphrase>
+        | -stakePoolGetMaintenanceActions""".stripMargin
   }
 
   it should "show -baseUrl help" in {
@@ -750,6 +753,19 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         |
         | Examples:
         | $CMDLINE -walletId 1234567890123456789012345678901234567890 -passphrase Password123!""".stripMargin.trim
+  }
+
+  it should "show stakePoolGetMaintenanceActions help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.stakePoolGetMaintenanceActions)
+    println(results.mkString("\n").stripMargin.trim)
+    results.mkString("\n").stripMargin.trim shouldBe
+      """ View maintenance actions
+        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions ]
+        |
+        | Arguments: -stakePoolGetMaintenanceActions
+        |
+        | Examples:
+        | $CMDLINE -stakePoolGetMaintenanceActions""".stripMargin.trim
   }
 
   private def getUnusedAddressWallet2 = getUnusedAddress(TestWalletsConfig.walletsMap(2).id)

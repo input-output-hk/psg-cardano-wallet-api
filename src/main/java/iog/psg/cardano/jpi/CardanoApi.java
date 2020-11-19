@@ -379,4 +379,13 @@ public interface CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException;
+
+    /**
+     * View maintenance actions
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions">#getMaintenanceActions</a>
+     *
+     * @return the current status of the stake pools maintenance actions
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.StakePoolMaintenanceActionsStatus> getMaintenanceActions() throws CardanoApiException;
 }

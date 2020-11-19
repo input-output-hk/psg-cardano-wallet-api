@@ -45,6 +45,7 @@ object CardanoApiMain {
     val estimateFeeStakePool = "-estimateFeeStakePool"
     val joinStakePool = "-joinStakePool"
     val quitStakePool = "-quitStakePool"
+    val stakePoolGetMaintenanceActions = "-stakePoolGetMaintenanceActions"
 
     //Parameters
     val baseUrl = "-baseUrl"
@@ -257,6 +258,8 @@ object CardanoApiMain {
           val walletId = arguments.get(CmdLine.walletId)
           val passphrase = arguments.get(CmdLine.passphrase)
           unwrap[MigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.stakePoolGetMaintenanceActions)) {
+          unwrap[StakePoolMaintenanceActionsStatus](api.getMaintenanceActions().executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -317,6 +320,7 @@ object CardanoApiMain {
     val cmdLineListStakePools = s"${CmdLine.listStakePools} ${CmdLine.stake} <stake>"
     val cmdLineJoinStakePool = s"${CmdLine.joinStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.stakePoolId} <stakePoolId> ${CmdLine.passphrase} <passphrase>"
     val cmdLineQuitStakePool = s"${CmdLine.quitStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase>"
+    val cmdLineStakePoolMaintenanceActions = s"${CmdLine.stakePoolGetMaintenanceActions}"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -360,6 +364,7 @@ object CardanoApiMain {
       trace(" "+cmdLineListStakePools)
       trace(" "+cmdLineJoinStakePool)
       trace(" "+cmdLineQuitStakePool)
+      trace(" "+cmdLineStakePoolMaintenanceActions)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -629,6 +634,15 @@ object CardanoApiMain {
             apiDocOperation = "quitStakePool",
             examples = List(
               s"${CmdLine.walletId} $exampleWalletId ${CmdLine.passphrase} Password123!"
+            )
+          )
+        case CmdLine.stakePoolGetMaintenanceActions =>
+          beautifyTrace(
+            arguments = s"${CmdLine.stakePoolGetMaintenanceActions}",
+            description = "View maintenance actions",
+            apiDocOperation = "getMaintenanceActions",
+            examples = List(
+              s"${CmdLine.stakePoolGetMaintenanceActions}"
             )
           )
         case cmd => trace(s"$cmd help not supported")

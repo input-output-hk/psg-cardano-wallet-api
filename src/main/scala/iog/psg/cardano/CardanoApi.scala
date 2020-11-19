@@ -357,4 +357,12 @@ trait CardanoApi {
    * @return quit stake pool request
    */
   def quitStakePool(walletId: String, passphrase: String): Future[CardanoApiRequest[MigrationResponse]]
+
+  /**
+   * View maintenance actions
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions #getMaintenanceActions]]
+   *
+   * @return the current status of the stake pools maintenance actions
+   */
+  def getMaintenanceActions(): CardanoApiRequest[StakePoolMaintenanceActionsStatus]
 }

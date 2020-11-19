@@ -17,10 +17,11 @@ trait ResourceFiles { self: Assertions =>
   final lazy val jsonFileCreatedTransactionResponse = decodeJsonFile[CreateTransactionResponse]("transaction.json")
   final lazy val jsonFileCreatedTransactionsResponse = decodeJsonFile[Seq[CreateTransactionResponse]]("transactions.json")
   final lazy val jsonFileProxyTransactionResponse = decodeJsonFile[PostExternalTransactionResponse]("proxy_trans_resp.json")
+  final lazy val jsonFileMigrationResponse = decodeJsonFile[MigrationResponse]("migration.json")
   final lazy val jsonFileMigrationsResponse = decodeJsonFile[Seq[MigrationResponse]]("migrations.json")
   final lazy val jsonFileMigrationCostsResponse = decodeJsonFile[MigrationCostResponse]("migration_costs.json")
   final lazy val jsonFileStakePoolsResponse = decodeJsonFile[Seq[StakePool]]("stake_pools.json")
-  final lazy val jsonFileMigrationResponse = decodeJsonFile[MigrationResponse]("migration.json")  //TODO this should be renamed
+  final lazy val jsonFileStakePoolsMaintenanceActions = decodeJsonFile[StakePoolMaintenanceActionsStatus]("stake_pools_maintenance_actions.json")
 
   final lazy val txRawContent = getFileContent("tx.raw")
 
