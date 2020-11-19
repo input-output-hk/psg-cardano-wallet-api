@@ -384,8 +384,17 @@ public interface CardanoApi {
      * View maintenance actions
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions">#getMaintenanceActions</a>
      *
-     * @return the current status of the stake pools maintenance actions
+     * @return the current status of the stake pools maintenance actions request
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.StakePoolMaintenanceActionsStatus> getMaintenanceActions() throws CardanoApiException;
+
+    /**
+     * Trigger Maintenance actions
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postMaintenanceAction">#postMaintenanceAction</a>
+     *
+     * @return Trigger Maintenance actions request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<Void> postMaintenanceAction() throws CardanoApiException;
 }

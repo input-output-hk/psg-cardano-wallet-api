@@ -479,6 +479,9 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(encodeOnly = true)
   final case class PassphraseRequest(passphrase: String)
 
+  @ConfiguredJsonCodec(encodeOnly = true)
+  final case class PostMaintenanceActionRequest(maintenanceAction: String)
+
   def stringToZonedDate(dateAsString: String): Try[ZonedDateTime] = {
     Try(ZonedDateTime.parse(dateAsString, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
   }

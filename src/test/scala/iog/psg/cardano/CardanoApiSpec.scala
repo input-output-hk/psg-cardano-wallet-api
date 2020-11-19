@@ -277,6 +277,10 @@ class CardanoApiSpec
     api.getMaintenanceActions().executeOrFail() shouldBe jsonFileStakePoolsMaintenanceActions
   }
 
+  "POST /stake-pools/maintenance-actions" should "perform maintenance actions on stake pools" in {
+    api.postMaintenanceAction().executeOrFail() shouldBe ()
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

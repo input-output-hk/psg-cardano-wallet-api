@@ -341,6 +341,12 @@ trait InMemoryCardanoApi {
           } yield resp
         case (s"stake-pools/maintenance-actions", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("stake_pools_maintenance_actions.json"))
+        case (s"stake-pools/maintenance-actions", HttpMethods.POST) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkStringField(jsonBody, "maintenance_action", "gc_stake_pools")
+            response <- noContentResponse()
+          } yield response
         case ("stake-pools?stake=12345", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("stake_pools.json"))
         case (r"stake-pools.+", HttpMethods.GET) =>

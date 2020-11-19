@@ -362,7 +362,15 @@ trait CardanoApi {
    * View maintenance actions
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions #getMaintenanceActions]]
    *
-   * @return the current status of the stake pools maintenance actions
+   * @return the current status of the stake pools maintenance actions request
    */
   def getMaintenanceActions(): CardanoApiRequest[StakePoolMaintenanceActionsStatus]
+
+  /**
+   * Trigger Maintenance actions
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postMaintenanceAction #postMaintenanceAction]]
+   *
+   * @return Trigger Maintenance actions request
+   */
+  def postMaintenanceAction(): Future[CardanoApiRequest[Unit]]
 }

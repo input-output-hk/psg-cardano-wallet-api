@@ -311,6 +311,10 @@ class CardanoJpiSpec
     api.getMaintenanceActions().toCompletableFuture.get() shouldBe jsonFileStakePoolsMaintenanceActions
   }
 
+  "POST /stake-pools/maintenance-actions" should "perform maintenance actions on stake pools" in {
+    api.postMaintenanceAction().toCompletableFuture.get() shouldBe null
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

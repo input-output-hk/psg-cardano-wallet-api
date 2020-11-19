@@ -481,4 +481,21 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toStakePoolMaintenanceActionsStatusResponse
     )
   }
+
+  /**
+   * @inheritdoc
+   */
+  override def postMaintenanceAction(): Future[CardanoApiRequest[Unit]] = {
+    val action = PostMaintenanceActionRequest("gc_stake_pools")
+    Marshal(action).to[RequestEntity] map { marshalled => {
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/maintenance-actions",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toUnit
+      )
+    }}
+  }
 }

@@ -369,6 +369,11 @@ public class CardanoApiImpl implements CardanoApi {
         return helpExecute.execute(api.getMaintenanceActions());
     }
 
+    @Override
+    public CompletionStage<Void> postMaintenanceAction() throws CardanoApiException {
+        return helpExecute.execute(api.postMaintenanceAction()).thenApply(x -> null);
+    }
+
     private static <T> scala.Option<T> option(final T value) {
         return (value != null) ? new Some<T>(value) : scala.Option.apply((T) null);
     }

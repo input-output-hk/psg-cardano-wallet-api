@@ -46,6 +46,7 @@ object CardanoApiMain {
     val joinStakePool = "-joinStakePool"
     val quitStakePool = "-quitStakePool"
     val stakePoolGetMaintenanceActions = "-stakePoolGetMaintenanceActions"
+    val stakePoolPostMaintenanceActions = "-stakePoolPostMaintenanceActions"
 
     //Parameters
     val baseUrl = "-baseUrl"
@@ -260,6 +261,8 @@ object CardanoApiMain {
           unwrap[MigrationResponse](api.quitStakePool(walletId, passphrase).executeBlocking, trace(_))
         } else if (hasArgument(CmdLine.stakePoolGetMaintenanceActions)) {
           unwrap[StakePoolMaintenanceActionsStatus](api.getMaintenanceActions().executeBlocking, trace(_))
+        } else if (hasArgument(CmdLine.stakePoolPostMaintenanceActions)) {
+          unwrap[Unit](api.postMaintenanceAction().executeBlocking, trace(_))
         } else {
           trace("No command recognised")
         }
@@ -320,7 +323,8 @@ object CardanoApiMain {
     val cmdLineListStakePools = s"${CmdLine.listStakePools} ${CmdLine.stake} <stake>"
     val cmdLineJoinStakePool = s"${CmdLine.joinStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.stakePoolId} <stakePoolId> ${CmdLine.passphrase} <passphrase>"
     val cmdLineQuitStakePool = s"${CmdLine.quitStakePool} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase>"
-    val cmdLineStakePoolMaintenanceActions = s"${CmdLine.stakePoolGetMaintenanceActions}"
+    val cmdLineStakePoolGetMaintenanceActions = s"${CmdLine.stakePoolGetMaintenanceActions}"
+    val cmdLineStakePoolPostMaintenanceActions = s"${CmdLine.stakePoolPostMaintenanceActions}"
 
     val cmdLineBaseUrl = s"${CmdLine.baseUrl} <url> <command>"
     val cmdLineTraceToFile = s"${CmdLine.traceToFile} <filename> <command>"
@@ -364,7 +368,8 @@ object CardanoApiMain {
       trace(" "+cmdLineListStakePools)
       trace(" "+cmdLineJoinStakePool)
       trace(" "+cmdLineQuitStakePool)
-      trace(" "+cmdLineStakePoolMaintenanceActions)
+      trace(" "+cmdLineStakePoolGetMaintenanceActions)
+      trace(" "+cmdLineStakePoolPostMaintenanceActions)
     } else {
       extraParams.headOption.getOrElse("") match {
         case CmdLine.baseUrl =>
@@ -643,6 +648,15 @@ object CardanoApiMain {
             apiDocOperation = "getMaintenanceActions",
             examples = List(
               s"${CmdLine.stakePoolGetMaintenanceActions}"
+            )
+          )
+        case CmdLine.stakePoolPostMaintenanceActions =>
+          beautifyTrace(
+            arguments = s"${CmdLine.stakePoolPostMaintenanceActions}",
+            description = "Trigger maintenance actions",
+            apiDocOperation = "postMaintenanceAction",
+            examples = List(
+              s"${CmdLine.stakePoolPostMaintenanceActions}"
             )
           )
         case cmd => trace(s"$cmd help not supported")
