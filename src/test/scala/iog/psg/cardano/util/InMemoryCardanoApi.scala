@@ -152,11 +152,7 @@ trait InMemoryCardanoApi {
 
       def checkValueOrFail[A](jsonValue: A, expectedValue: A, fieldName: String): Future[Unit] =
         if (jsonValue == expectedValue) Future.successful(())
-        else {
-          println(s"INVALID: ${jsonValue}")
-          println(s"INVALID: ${expectedValue}")
-          Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
-        }
+        else Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
 
       def getAsString(json: Json, field: String): String = json.\\(field).headOption.flatMap(_.asString).get
 
