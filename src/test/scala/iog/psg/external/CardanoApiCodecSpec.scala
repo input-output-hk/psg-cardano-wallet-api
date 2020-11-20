@@ -118,7 +118,6 @@ class CardanoApiCodecSpec
 
   "Decode transactions" should "decode new transaction" in {
     val decodedTX = decodeJsonFile[CreateTransactionResponse]("transaction_new.json")
-    println(decodedTX)
     decodedTX.id shouldBe "6931f472901635ddb594b19b983403f9fd5e3fbbfc45a9c61d01c0abf335c425"
   }
 
