@@ -37,6 +37,7 @@ object CardanoApiCodec {
     implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
     implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+    implicit val createRestoreWithKeyEntityEncoder: Encoder[CreateRestoreWithKey] = dropNulls(deriveConfiguredEncoder)
     implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
     implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
@@ -279,7 +280,7 @@ object CardanoApiCodec {
                                     )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class CreateRestore(
+  final case class CreateRestore(
                             name: String,
                             passphrase: String,
                             mnemonicSentence: IndexedSeq[String],
@@ -296,6 +297,9 @@ object CardanoApiCodec {
       mnemonicSecondFactor.isEmpty || (mnemonicSecondFactorLength == 9 || mnemonicSecondFactorLength == 12)
     )
   }
+
+  @ConfiguredJsonCodec(decodeOnly = true)
+  final case class CreateRestoreWithKey(name: String, accountPublicKey: String, addressPoolGap: Option[Int])
 
   object Units extends Enumeration {
     type Units = Value
@@ -428,7 +432,7 @@ object CardanoApiCodec {
                      balance: Balance,
                      delegation: Option[Delegation],
                      name: String,
-                     passphrase: Passphrase,
+                     passphrase: Option[Passphrase],
                      state: SyncStatus,
                      tip: NetworkTip
                    )

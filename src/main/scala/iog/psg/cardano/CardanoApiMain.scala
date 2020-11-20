@@ -27,7 +27,9 @@ object CardanoApiMain {
     val deleteWallet = "-deleteWallet"
     val getWallet = "-wallet"
     val createWallet = "-createWallet"
+    val createWalletWithKey = "-createWalletWithKey"
     val restoreWallet = "-restoreWallet"
+    val restoreWalletWithKey = "-restoreWalletWithKey"
     val estimateFee = "-estimateFee"
     val updatePassphrase = "-updatePassphrase"
     val listWalletAddresses = "-listAddresses"
@@ -52,6 +54,7 @@ object CardanoApiMain {
     val name = "-name"
     val oldPassphrase = "-oldPassphrase"
     val passphrase = "-passphrase"
+    val accountPublicKey = "-accountPublicKey"
     val metadata = "-metadata"
     val mnemonic = "-mnemonic"
     val mnemonicSecondary = "-mnemonicSecondary"
@@ -222,6 +225,17 @@ object CardanoApiMain {
             addressPoolGap
           ).executeBlocking, trace(_))
 
+        } else if (hasArgument(CmdLine.createWalletWithKey) || hasArgument(CmdLine.restoreWalletWithKey)) {
+          val name = arguments.get(CmdLine.name)
+          val accountPublicKey = arguments.get(CmdLine.accountPublicKey)
+          val addressPoolGap = arguments(CmdLine.addressPoolGap).map(_.toInt)
+
+          unwrap[CardanoApiCodec.Wallet](api.createRestoreWalletWithKey(
+            name,
+            accountPublicKey,
+            addressPoolGap
+          ).executeBlocking, trace(_))
+
         } else if (hasArgument(CmdLine.getUTxOsStatistics)) {
           val walletId = arguments.get(CmdLine.walletId)
           unwrap[UTxOStatistics](api.getUTxOsStatistics(walletId).executeBlocking, trace(_))
@@ -287,7 +301,9 @@ object CardanoApiMain {
     val cmdLineFundTx = s"${CmdLine.fundTx} ${CmdLine.walletId} <walletId> ${CmdLine.amount} <amount> ${CmdLine.address} <address>"
     val cmdLineListWalletTransactions = s"${CmdLine.listWalletTransactions} ${CmdLine.walletId} <walletId> [${CmdLine.start} <start_date>] [${CmdLine.end} <end_date>] [${CmdLine.order} <order>] [${CmdLine.minWithdrawal} <minWithdrawal>]"
     val cmdLineCreateWallet = s"${CmdLine.createWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
+    val cmdLineCreateWalletWithKey = s"${CmdLine.createWalletWithKey} ${CmdLine.name} <walletName> ${CmdLine.accountPublicKey} <accountPublicKey> [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineRestoreWallet = s"${CmdLine.restoreWallet} ${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
+    val cmdLineRestoreWalletWithKey = s"${CmdLine.restoreWalletWithKey} ${CmdLine.name} <walletName> ${CmdLine.accountPublicKey} <accountPublicKey> [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]"
     val cmdLineGetUTxOsStatistics = s"${CmdLine.getUTxOsStatistics} ${CmdLine.walletId} <walletId>"
     val cmdLinePostExternalTransaction = s"${CmdLine.postExternalTransaction} ${CmdLine.binary} <binary_string>"
     val cmdLineMigrateShelleyWallet = s"${CmdLine.migrateShelleyWallet} ${CmdLine.walletId} <walletId> ${CmdLine.passphrase} <passphrase> ${CmdLine.addresses} <addresses>"
@@ -317,7 +333,9 @@ object CardanoApiMain {
       trace(" "+cmdLineGetWallet)
       trace(" "+cmdLineUpdateName)
       trace(" "+cmdLineCreateWallet)
+      trace(" "+cmdLineCreateWalletWithKey)
       trace(" "+cmdLineRestoreWallet)
+      trace(" "+cmdLineRestoreWalletWithKey)
       trace(" "+cmdLineEstimateFee)
       trace(" "+cmdLineUpdatePassphrase)
       trace(" "+cmdLineListWalletAddresses)
@@ -423,7 +441,7 @@ object CardanoApiMain {
           )
         case CmdLine.createWallet =>
           beautifyTrace(
-            arguments = s"${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]",
+            arguments = s"${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <address_pool_gap>]",
             description = "Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )",
             apiDocOperation = "postWallet",
             examples = List(
@@ -432,6 +450,18 @@ object CardanoApiMain {
               s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.addressPoolGap} 10"
             )
           )
+
+        case CmdLine.createWalletWithKey =>
+          beautifyTrace(
+            arguments = s"${CmdLine.name} <walletName> ${CmdLine.accountPublicKey} <accountPublicKey> [${CmdLine.addressPoolGap} <address_pool_gap>]",
+            description = "Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )",
+            apiDocOperation = "postWallet",
+            examples = List(
+              s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.accountPublicKey} accountkey",
+              s"${CmdLine.createWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.accountPublicKey} accountkey ${CmdLine.addressPoolGap} 10",
+            )
+          )
+
         case CmdLine.restoreWallet =>
           beautifyTrace(
             arguments = s"${CmdLine.name} <walletName> ${CmdLine.passphrase} <passphrase> ${CmdLine.mnemonic} <mnemonic> [${CmdLine.mnemonicSecondary} <mnemonicSecondary>] [${CmdLine.addressPoolGap} <mnemonicaddress_pool_gap>]",
@@ -440,7 +470,16 @@ object CardanoApiMain {
             examples = List(
               s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic'",
               s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_1 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.mnemonicSecondary} '$exampleMnemonicSecondary'",
-              s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.addressPoolGap} 10"
+              s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.passphrase} Password12345! ${CmdLine.mnemonic} '$exampleMnemonic' ${CmdLine.addressPoolGap} 10")
+          )
+        case CmdLine.restoreWalletWithKey =>
+          beautifyTrace(
+            arguments = s"${CmdLine.name} <walletName> ${CmdLine.accountPublicKey} <accountPublicKey> [${CmdLine.addressPoolGap} <address_pool_gap>]",
+            description = "Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )",
+            apiDocOperation = "postWallet",
+            examples = List(
+              s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.accountPublicKey} accountkey",
+              s"${CmdLine.restoreWallet} ${CmdLine.name} new_wallet_2 ${CmdLine.accountPublicKey} accountkey ${CmdLine.addressPoolGap} 10"
             )
           )
         case CmdLine.estimateFee =>
