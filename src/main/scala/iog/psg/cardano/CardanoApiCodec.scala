@@ -368,10 +368,26 @@ object CardanoApiCodec {
                   )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class TimedBlock(
-                         time: ZonedDateTime,
-                         block: Block
-                       )
+  final case class TimedBlock(
+                               time: ZonedDateTime,
+                               @deprecated("block parameter is removed from API since v2020-11-17")
+                               block: Option[Block],
+                               slotNumber: Option[Int],
+                               epochNumber: Option[Int],
+                               height: Option[QuantityUnit[Long]],
+                               absoluteSlotNumber: Option[Long]
+                             )
+
+  object TimedBlock {
+    def apply(time: ZonedDateTime, block: Block): TimedBlock =
+      TimedBlock(time = time,
+        block = Some(block),
+        slotNumber = Some(block.slotNumber),
+        epochNumber = Some(block.epochNumber),
+        height = Some(block.height),
+        absoluteSlotNumber = block.absoluteSlotNumber
+      )
+  }
 
   @ConfiguredJsonCodec
   final case class TimedFlattenBlock(
