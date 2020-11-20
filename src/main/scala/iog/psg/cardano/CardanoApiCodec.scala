@@ -487,10 +487,7 @@ object CardanoApiCodec {
       decodeResponseEntityOrHandleError(response, () => strictEntityF.flatMap(f))
 
     def toWallet: Future[CardanoApiResponse[Wallet]]
-    = to[Wallet](str => {
-      println("str: "+str.getData().utf8String)
-      Unmarshal(str).to[CardanoApiResponse[Wallet]]
-    })
+    = to[Wallet](Unmarshal(_).to[CardanoApiResponse[Wallet]])
 
     def toWallets: Future[CardanoApiResponse[Seq[Wallet]]]
     = to[Seq[Wallet]](Unmarshal(_).to[CardanoApiResponse[Seq[Wallet]]])

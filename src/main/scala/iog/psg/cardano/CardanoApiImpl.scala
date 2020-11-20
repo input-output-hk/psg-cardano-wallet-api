@@ -3,7 +3,7 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.marshalling.{ Marshal, Marshaller }
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
@@ -106,6 +106,20 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toNetworkParametersResponse
     )
 
+  private def prepareCreateRestoreRequest[T](
+    body: T
+  )(implicit m: Marshaller[T, RequestEntity]) =
+    Marshal(body).to[RequestEntity].map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toWallet
+      )
+    }
+
   /**
    * @inheritdoc
    */
@@ -114,9 +128,8 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
                                    mnemonicSentence: MnemonicSentence,
                                    mnemonicSecondFactor: Option[MnemonicSentence] = None,
                                    addressPoolGap: Option[Int] = None
-  ): Future[CardanoApiRequest[Wallet]] = {
-
-    val createRestore =
+  ): Future[CardanoApiRequest[Wallet]] =
+    prepareCreateRestoreRequest(
       CreateRestore(
         name,
         passphrase,
@@ -124,42 +137,22 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         mnemonicSecondFactor.map(_.mnemonicSentence),
         addressPoolGap
       )
-
-    Marshal(createRestore).to[RequestEntity].map { marshalled =>
-      CardanoApiRequest(
-        HttpRequest(
-          uri = s"$wallets",
-          method = POST,
-          entity = marshalled
-        ),
-        _.toWallet
-      )
-    }
-
-  }
+    )
 
   /**
    * @inheritdoc
    */
-  override def createRestoreWalletWithKey(name: String, accountPublicKey: String, addressPoolGap: Option[Int] = None): Future[CardanoApiRequest[Wallet]] = {
-    val createRestore =
+  override def createRestoreWalletWithKey(name: String,
+                                          accountPublicKey: String,
+                                          addressPoolGap: Option[Int] = None
+  ): Future[CardanoApiRequest[Wallet]] =
+    prepareCreateRestoreRequest(
       CreateRestoreWithKey(
         name,
         accountPublicKey,
         addressPoolGap
       )
-
-    Marshal(createRestore).to[RequestEntity].map { marshalled =>
-      CardanoApiRequest(
-        HttpRequest(
-          uri = s"$wallets",
-          method = POST,
-          entity = marshalled
-        ),
-        _.toWallet
-      )
-    }
-  }
+    )
 
   /**
    * @inheritdoc
