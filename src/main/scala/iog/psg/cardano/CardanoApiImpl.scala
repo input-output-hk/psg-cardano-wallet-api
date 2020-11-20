@@ -141,6 +141,29 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
+  override def createRestoreWalletWithKey(name: String, accountPublicKey: AccountPublicKey, addressPoolGap: Option[Int] = None): Future[CardanoApiRequest[Wallet]] = {
+    val createRestore =
+      CreateRestoreWithKey(
+        name,
+        accountPublicKey.key,
+        addressPoolGap
+      )
+
+    Marshal(createRestore).to[RequestEntity].map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$wallets",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toWallet
+      )
+    } //TODO DRY
+  }
+
+  /**
+   * @inheritdoc
+   */
   override def listAddresses(walletId: String,
                              state: Option[AddressFilter]
   ): CardanoApiRequest[Seq[WalletAddressId]] = {
@@ -403,5 +426,4 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       ),
       _.toMigrationCostResponse
     )
-
 }

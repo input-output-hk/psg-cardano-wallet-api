@@ -49,6 +49,22 @@ public interface CardanoApi {
             int addressPoolGap) throws CardanoApiException;
 
     /**
+     * Create and restore a wallet from a mnemonic sentence or account public key.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet">#postWallet</a>
+     *
+     * @param name wallet's name
+     * @param accountPublicKey An extended account public key (public key + chain code)
+     * @param addressPoolGap An optional number of consecutive unused addresses allowed
+     * @return create/restore wallet request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.Wallet> createRestoreWithKey(
+            String name,
+            CardanoApiCodec.AccountPublicKey accountPublicKey,
+            int addressPoolGap
+    ) throws CardanoApiException;
+
+    /**
      * Create and send transaction from the wallet.
      * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postTransaction">#postTransaction</a>
      *

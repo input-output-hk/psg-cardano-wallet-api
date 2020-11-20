@@ -59,9 +59,14 @@ class CardanoApiSpec
     api.networkParameters().executeOrFail() shouldBe networkParameters
   }
 
-  "POST /wallets" should "" in {
+  "POST /wallets" should "create wallet" in {
     api
       .createRestoreWallet(randomWalletName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))
+      .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
+  }
+
+  it should "create wallet using account public key" in {
+    api.createRestoreWalletWithKey(randomWalletName, accountPublicKey, Some(addressPoolGap))
       .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
   }
 

@@ -36,11 +36,11 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
 
   "Jpi CardanoAPI" should "allow override of execute" in new TestWalletFixture(1) {
     val api = JpiResponseCheck.buildWithDummyApiExecutor()
-    val mnem = GenericMnemonicSentence(testWalletMnemonic)
+    val mnem = GenericMnemonicSentence(getTestWalletMnemonicOrFail)
     val createdWallet = api
       .createRestore(
         testWalletName,
-        testWalletPassphrase,
+        getTestWalletPassphraseOrFail,
         mnem.mnemonicSentence.asJava,
         10
       ).toCompletableFuture.get()
@@ -76,7 +76,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
         )
       ),
       name = "name",
-      passphrase = Passphrase(lastUpdatedAt = ZonedDateTime.parse("2000-01-02T10:01:02+01:00")),
+      passphrase = Some(Passphrase(lastUpdatedAt = ZonedDateTime.parse("2000-01-02T10:01:02+01:00"))),
       state = SyncStatus(SyncState.ready, None),
       tip = networkTip
     )
@@ -90,15 +90,15 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
 
   "Test wallet" should "exist or be created" in new TestWalletFixture(1) {
 
-    val aryLen = testWalletMnemonic.split(" ").length
-    val aryLen2 = TestWalletsConfig.walletsMap(2).mnemonic.split(" ").length
+    val aryLen = getTestWalletMnemonicOrFail.split(" ").length
+    val aryLen2 = TestWalletsConfig.walletsMap(2).mnemonic.get.split(" ").length
 
-    val mnem = GenericMnemonicSentence(testWalletMnemonic)
+    val mnem = GenericMnemonicSentence(getTestWalletMnemonicOrFail)
     sut
       .findOrCreateTestWallet(
         testWalletId,
         testWalletName,
-        testWalletPassphrase,
+        getTestWalletPassphraseOrFail,
         mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
@@ -107,30 +107,30 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
   }
 
   it should "create r find wallet 2" in new TestWalletFixture(2){
-    val mnem = GenericMnemonicSentence(testWalletMnemonic)
+    val mnem = GenericMnemonicSentence(getTestWalletMnemonicOrFail)
     sut
       .findOrCreateTestWallet(
         testWalletId,
         testWalletName,
-        testWalletPassphrase,
+        getTestWalletPassphraseOrFail,
         mnem.mnemonicSentence.asJava, 10) shouldBe true
   }
 
   it should "allow password change in wallet 2" in new TestWalletFixture(2) {
-    sut.passwordChange(testWalletId, testWalletPassphrase, testWalletPassphrase)
+    sut.passwordChange(testWalletId, getTestWalletPassphraseOrFail, getTestWalletPassphraseOrFail)
     //now this is the wrong password
-    an[Exception] shouldBe thrownBy(sut.passwordChange(testWalletId, testWalletPassphrase.toUpperCase(), testWalletPassphrase))
+    an[Exception] shouldBe thrownBy(sut.passwordChange(testWalletId, getTestWalletPassphraseOrFail.toUpperCase(), getTestWalletPassphraseOrFail))
 
-    sut.passwordChange(testWalletId, testWalletPassphrase, testWalletPassphrase.toUpperCase())
+    sut.passwordChange(testWalletId, getTestWalletPassphraseOrFail, getTestWalletPassphraseOrFail.toUpperCase())
   }
 
   it should "create wallet with secondary factor" in new TestWalletFixture(3) {
-    val mnem = GenericMnemonicSentence(testWalletMnemonic)
-    val mnemSecondary = GenericMnemonicSecondaryFactor(testWalletMnemonicSecondary.get)
+    val mnem = GenericMnemonicSentence(getTestWalletMnemonicOrFail)
+    val mnemSecondary = GenericMnemonicSecondaryFactor(getTestWalletMnemonicSecondaryOrFail)
 
     val createdWallet = sut.createTestWallet(
       testWalletName,
-      testWalletPassphrase,
+      getTestWalletPassphraseOrFail,
       mnem.mnemonicSentence.asJava,
       mnemSecondary.mnemonicSentence.asJava,
       10)
@@ -139,7 +139,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
   }
 
   it should "fund payments" in new TestWalletFixture(1) {
-    val response = sut.fundPayments(testWalletId, testAmountToTransfer.get.toInt)
+    val response = sut.fundPayments(testWalletId, getTestAmountToTransferOrFail.toInt)
 
   }
 
@@ -151,7 +151,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
     )
 
     val createTxResponse =
-      sut.paymentToSelf(testWalletId, testWalletPassphrase, testAmountToTransfer.get.toInt, metadata.asJava)
+      sut.paymentToSelf(testWalletId, getTestWalletPassphraseOrFail, getTestAmountToTransferOrFail.toInt, metadata.asJava)
     val id = createTxResponse.id
     val getTxResponse = sut.getTx(testWalletId, createTxResponse.id)
 

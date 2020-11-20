@@ -156,6 +156,20 @@ trait CardanoApi {
   ): Future[CardanoApiRequest[Wallet]]
 
   /**
+   * Create and restore a wallet from a mnemonic sentence or account public key.
+   * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet #postWallet]]
+   *
+   * @param name wallet's name
+   * @param accountPublicKey An extended account public key (public key + chain code)
+   * @param addressPoolGap An optional number of consecutive unused addresses allowed
+   * @return create/restore wallet request
+   */
+  def createRestoreWalletWithKey(name: String,
+                          accountPublicKey: AccountPublicKey,
+                          addressPoolGap: Option[Int] = None
+                         ): Future[CardanoApiRequest[Wallet]]
+
+  /**
    * List of known addresses, ordered from newest to oldest
    * Api Url: [[https://input-output-hk.github.io/cardano-wallet/api/edge/#tag/Addresses #Addresses]]
    *

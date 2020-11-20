@@ -21,7 +21,7 @@ import scala.io.Source
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
-    Seq(2, 3).map { num =>
+    Seq(2, 3, 4).map { num =>
       val walletId = TestWalletsConfig.walletsMap(num).id
       runCmdLine(
         CmdLine.deleteWallet,
@@ -85,9 +85,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
       .getOrElse {
         val cmdLineResults = runCmdLine(
           CmdLine.createWallet,
-          CmdLine.passphrase, testWalletPassphrase,
+          CmdLine.passphrase, getTestWalletPassphraseOrFail,
           CmdLine.name, testWalletName,
-          CmdLine.mnemonic, testWalletMnemonic)
+          CmdLine.mnemonic, getTestWalletMnemonicOrFail)
 
         assert(cmdLineResults.exists(_.contains(testWalletId)), "Test Wallet not created")
       }
@@ -99,7 +99,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     val cmdLineResults = runCmdLine(
       CmdLine.estimateFee,
-      CmdLine.amount, testAmountToTransfer.get,
+      CmdLine.amount, getTestAmountToTransferOrFail,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
     assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
@@ -110,9 +110,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     val cmdLineResults = runCmdLine(
       CmdLine.estimateFee,
-      CmdLine.amount, testAmountToTransfer.get,
+      CmdLine.amount, getTestAmountToTransferOrFail,
       CmdLine.address, unusedAddr,
-      CmdLine.metadata, testMetadata.get,
+      CmdLine.metadata, getTestMetadataOrFail,
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(r => r.contains("estimated_min") && r.contains("estimated_max")))
@@ -140,9 +140,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Line -createWallet" should "create wallet 2" in new TestWalletFixture(walletNum = 2){
     val results = runCmdLine(
       CmdLine.createWallet,
-      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.passphrase, getTestWalletPassphraseOrFail,
       CmdLine.name, testWalletName,
-      CmdLine.mnemonic, testWalletMnemonic)
+      CmdLine.mnemonic, getTestWalletMnemonicOrFail)
 
     assert(results.last.contains(testWalletId), "Test wallet 2 not found.")
   }
@@ -150,12 +150,27 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   it should "create wallet with secondary factor" in new TestWalletFixture(walletNum = 3){
     val results = runCmdLine(
       CmdLine.createWallet,
-      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.passphrase, getTestWalletPassphraseOrFail,
       CmdLine.name, testWalletName,
-      CmdLine.mnemonic, testWalletMnemonic,
-      CmdLine.mnemonicSecondary, testWalletMnemonicSecondary.get
+      CmdLine.mnemonic, getTestWalletMnemonicOrFail,
+      CmdLine.mnemonicSecondary, getTestWalletMnemonicSecondaryOrFail
     )
     assert(results.last.contains(testWalletId), "Test wallet 3 not found.")
+  }
+
+  it should "create wallet with public key" in new TestWalletFixture(walletNum = 4) {
+    runCmdLine(
+      CmdLine.deleteWallet,
+      CmdLine.walletId, testWalletId
+    )
+
+    val results = runCmdLine(
+      CmdLine.createWalletWithKey,
+      CmdLine.name, testWalletName,
+      CmdLine.accountPublicKey, getTestWalletPublicKeyOrFail
+    )
+
+    assert(results.last.contains(testWalletId), "Test wallet 4 not found.")
   }
 
   it should "not create a wallet with a bad mnemonic" in {
@@ -171,8 +186,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Line -updatePassphrase" should "allow password change in test wallet 2" in new TestWalletFixture(walletNum = 2){
     val cmdLineResults = runCmdLine(
       CmdLine.updatePassphrase,
-      CmdLine.oldPassphrase, testWalletPassphrase,
-      CmdLine.passphrase, testWalletPassphrase.toUpperCase,
+      CmdLine.oldPassphrase, getTestWalletPassphraseOrFail,
+      CmdLine.passphrase, getTestWalletPassphraseOrFail.toUpperCase,
       CmdLine.walletId, testWalletId)
 
     assert(cmdLineResults.exists(_.contains("Unit result from update passphrase")))
@@ -195,14 +210,29 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Line -restoreWallet" should "restore deleted wallet 2" in new TestWalletFixture(walletNum = 2){
     val cmdLineResults = runCmdLine(
       CmdLine.restoreWallet,
-      CmdLine.passphrase, testWalletPassphrase,
+      CmdLine.passphrase, getTestWalletPassphraseOrFail,
       CmdLine.name, testWalletName,
-      CmdLine.mnemonic, testWalletMnemonic)
+      CmdLine.mnemonic, getTestWalletMnemonicOrFail)
 
     val jsonResponse = parse(cmdLineResults.last).getOrElse(fail("Invalid json"))
     val id = jsonResponse.\\("id").headOption.flatMap(_.asString).getOrElse(fail("Missing id field"))
 
     id shouldBe testWalletId
+  }
+
+  it should "restore wallet with public key" in new TestWalletFixture(walletNum = 4) {
+    runCmdLine(
+      CmdLine.deleteWallet,
+      CmdLine.walletId, testWalletId
+    )
+
+    val results = runCmdLine(
+      CmdLine.restoreWalletWithKey,
+      CmdLine.name, testWalletName,
+      CmdLine.accountPublicKey, getTestWalletPublicKeyOrFail
+    )
+
+    assert(results.last.contains(testWalletId), "Test wallet 4 not found.")
   }
 
   "The Cmd Line -listAddresses -walletId [walletId] -state [state]" should "list unused wallet addresses" in new TestWalletFixture(walletNum = 1){
@@ -234,7 +264,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Line -fundTx" should "fund payments" in new TestWalletFixture(walletNum = 1){
     val cmdLineResults = runCmdLine(
       CmdLine.fundTx,
-      CmdLine.amount, testAmountToTransfer.get,
+      CmdLine.amount, getTestAmountToTransferOrFail,
       CmdLine.address, getUnusedAddressWallet2,
       CmdLine.walletId, testWalletId)
 
@@ -248,9 +278,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
     val resultsCreateTx = runCmdLine(
       CmdLine.createTx,
-      CmdLine.passphrase, testWalletPassphrase,
-      CmdLine.amount, testAmountToTransfer.get,
-      CmdLine.metadata, testMetadata.get,
+      CmdLine.passphrase, getTestWalletPassphraseOrFail,
+      CmdLine.amount, getTestAmountToTransferOrFail,
+      CmdLine.metadata, getTestMetadataOrFail,
       CmdLine.address, unusedAddr,
       CmdLine.walletId, testWalletId)
 
@@ -339,7 +369,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     val results = runCmdLine(
       CmdLine.migrateShelleyWallet,
       CmdLine.walletId, wallet1.id,
-      CmdLine.passphrase, wallet1.passphrase,
+      CmdLine.passphrase, wallet1.passphrase.get,
       CmdLine.addresses, addresses
     )
 
@@ -349,7 +379,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
   "The Cmd Line -getShelleyWalletMigrationInfo" should "calculate the cost" in new TestWalletFixture(walletNum = 1){
     val results = runCmdLine(
       CmdLine.getShelleyWalletMigrationInfo,
-      CmdLine.walletId, wallet.id
+      CmdLine.walletId, walletConfig.id
     )
 
     assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
@@ -357,6 +387,7 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
+    println(results.mkString("\n"))
     results.mkString("\n") shouldBe
       """This super simple tool allows developers to access a cardano wallet backend from the command line
         |
@@ -381,7 +412,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
         | -wallet -walletId <walletId>
         | -updateName -walletId <walletId> -name <name>
         | -createWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+        | -createWalletWithKey -name <walletName> -accountPublicKey <accountPublicKey> [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -restoreWallet -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+        | -restoreWalletWithKey -name <walletName> -accountPublicKey <accountPublicKey> [-addressPoolGap <mnemonicaddress_pool_gap>]
         | -estimateFee -walletId <walletId> -amount <amount> -address <address>
         | -updatePassphrase -walletId <walletId> -oldPassphrase <oldPassphrase> -passphrase <newPassphrase>
         | -listAddresses -walletId <walletId> -state <state>
@@ -505,12 +538,24 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     results.mkString("\n").stripMargin.trim shouldBe """ Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
                                                        | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
                                                        |
-                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <mnemonicaddress_pool_gap>]
+                                                       | Arguments: -name <walletName> -passphrase <passphrase> -mnemonic <mnemonic> [-mnemonicSecondary <mnemonicSecondary>] [-addressPoolGap <address_pool_gap>]
                                                        |
                                                        | Examples:
                                                        | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad'
                                                        | $CMDLINE -createWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -mnemonicSecondary 'ability make always any pulse swallow marriage media dismiss'
                                                        | $CMDLINE -createWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10""".stripMargin.trim
+  }
+
+  it should "show createWalletWithKey help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.createWalletWithKey)
+    results.mkString("\n").stripMargin.trim shouldBe """ Create new wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+                                                       |
+                                                       | Arguments: -name <walletName> -accountPublicKey <accountPublicKey> [-addressPoolGap <address_pool_gap>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -createWallet -name new_wallet_2 -accountPublicKey accountkey
+                                                       | $CMDLINE -createWallet -name new_wallet_2 -accountPublicKey accountkey -addressPoolGap 10""".stripMargin.trim
   }
 
   it should "show restoreWallet help" in {
@@ -525,6 +570,18 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
                                                        | $CMDLINE -restoreWallet -name new_wallet_1 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -mnemonicSecondary 'ability make always any pulse swallow marriage media dismiss'
                                                        | $CMDLINE -restoreWallet -name new_wallet_2 -passphrase Password12345! -mnemonic 'ability make always any pulse swallow marriage media dismiss degree edit spawn distance state dad' -addressPoolGap 10
                                                        |""".stripMargin.trim
+  }
+
+  it should "show restoreWalletWithKey help" in {
+    val results = runCmdLine(CmdLine.help, CmdLine.restoreWalletWithKey)
+    results.mkString("\n").stripMargin.trim shouldBe """ Restore wallet ( mnemonic can be generated on: https://iancoleman.io/bip39/ )
+                                                       | [ https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postWallet ]
+                                                       |
+                                                       | Arguments: -name <walletName> -accountPublicKey <accountPublicKey> [-addressPoolGap <address_pool_gap>]
+                                                       |
+                                                       | Examples:
+                                                       | $CMDLINE -restoreWallet -name new_wallet_2 -accountPublicKey accountkey
+                                                       | $CMDLINE -restoreWallet -name new_wallet_2 -accountPublicKey accountkey -addressPoolGap 10""".stripMargin.trim
   }
 
   it should "show estimateFee help" in {

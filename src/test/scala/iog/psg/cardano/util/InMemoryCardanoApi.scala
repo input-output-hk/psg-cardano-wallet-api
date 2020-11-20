@@ -9,23 +9,27 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.util.ByteString
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.circe.{Json, parser}
+import io.circe.{ parser, Json }
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
-import iog.psg.cardano.CardanoApiCodec.{GenericMnemonicSecondaryFactor, GenericMnemonicSentence}
+import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
+import iog.psg.cardano.CardanoApiCodec.{ GenericMnemonicSecondaryFactor, GenericMnemonicSentence }
 import iog.psg.cardano.jpi.CardanoApiException
-import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
+import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
 import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
 
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with ResourceFiles with DummyModel =>
 
-  protected val postWalletFieldsToCheck: List[String] = List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
-  protected val postTransactionFieldsToCheck: List[String] = List("passphrase", "payments", "metadata", "withdrawal")
+  protected val postWalletFieldsToCheck: List[String] =
+    List("name", "passphrase", "mnemonic_sentence", "mnemonic_second_factor", "address_pool_gap")
+  protected val postWalletXPubFieldsToCheck: List[String] =
+    List("name", "account_public_key", "address_pool_gap")
+  protected val postTransactionFieldsToCheck: List[String] =
+    List("passphrase", "payments", "metadata", "withdrawal")
   protected val postEstimateFeeFieldsToCheck: List[String] = List("payments", "withdrawal", "metadata")
   protected val submitMigrationsFieldsToCheck: List[String] = List("passphrase", "addresses")
 
@@ -55,7 +59,8 @@ trait InMemoryCardanoApi {
   }
 
   implicit final class InMemoryFExecutor[T](req: Future[CardanoApiRequest[T]]) {
-    def executeOrFail(): T = inMemoryExecutor.execute(req.futureValue).futureValue.getOrElse(fail("Request failed."))
+    def executeOrFail(): T =
+      inMemoryExecutor.execute(req.futureValue).futureValue.getOrElse(fail("Request failed."))
 
     def executeExpectingErrorOrFail(): ErrorMessage =
       inMemoryExecutor.execute(req.futureValue).futureValue.swap.getOrElse(fail("Request should failed."))
@@ -87,7 +92,9 @@ trait InMemoryCardanoApi {
       }
 
       matchesDates && transaction.withdrawals.exists(wd => wd.amount.quantity >= minWithdrawal)
-    }.sortWith((ta, tb) => if (order.toString == Order.descendingOrder.toString) ta.id > tb.id else ta.id < tb.id)
+    }.sortWith((ta, tb) =>
+      if (order.toString == Order.descendingOrder.toString) ta.id > tb.id else ta.id < tb.id
+    )
 
   val inMemoryExecutor: ApiRequestExecutor = new ApiRequestExecutor {
     override def execute[T](
@@ -108,9 +115,8 @@ trait InMemoryCardanoApi {
       val method = request.request.method
       lazy val query = request.request.uri.query().toMap
 
-      def noContentResponse(): Future[CardanoApiResponse[T]] = {
+      def noContentResponse(): Future[CardanoApiResponse[T]] =
         request.mapper(HttpResponse(status = StatusCodes.NoContent))
-      }
 
       def notFound(msg: String): Future[CardanoApiResponse[T]] = {
         val json: String = ErrorMessage(msg, "404").asJson.noSpaces
@@ -134,14 +140,23 @@ trait InMemoryCardanoApi {
         if (missingFields.isEmpty)
           Future.successful(())
         else
-          Future.failed(new CardanoApiException(s"Invalid json body, missing fields: ${missingFields.mkString(", ")}", "400"))
+          Future.failed(
+            new CardanoApiException(
+              s"Invalid json body, missing fields: ${missingFields.mkString(", ")}",
+              "400"
+            )
+          )
       }
 
       def getQueryZonedDTParam(name: String): ZonedDateTime = ZonedDateTime.parse(query(name))
 
       def checkValueOrFail[A](jsonValue: A, expectedValue: A, fieldName: String): Future[Unit] =
         if (jsonValue == expectedValue) Future.successful(())
-        else Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
+        else {
+          println(s"INVALID: ${jsonValue}")
+          println(s"INVALID: ${expectedValue}")
+          Future.failed(new CardanoApiException(s"Invalid $fieldName", "400"))
+        }
 
       def getAsString(json: Json, field: String): String = json.\\(field).headOption.flatMap(_.asString).get
 
@@ -155,7 +170,11 @@ trait InMemoryCardanoApi {
           _ <- checkValueOrFail(jsonAddresses, payments.payments.map(_.address), "payments.address")
           jsonAmount = jsonPayments.flatMap(_.\\("amount"))
           jsonAmountQuantities = jsonAmount.flatMap(_.\\("quantity").flatMap(_.asNumber.flatMap(_.toLong)))
-          _ <- checkValueOrFail(jsonAmountQuantities, payments.payments.map(_.amount.quantity), "amount.quantity")
+          _ <- checkValueOrFail(
+            jsonAmountQuantities,
+            payments.payments.map(_.amount.quantity),
+            "amount.quantity"
+          )
           jsonAmountUnits = jsonAmount.flatMap(_.\\("unit").flatMap(_.asString))
           _ <- checkValueOrFail(jsonAmountUnits, payments.payments.map(_.amount.unit.toString), "amount.unit")
         } yield ()
@@ -172,13 +191,15 @@ trait InMemoryCardanoApi {
       def checkWithdrawalField(json: Json): Future[Unit] =
         checkStringField(json, "withdrawal", withdrawal)
 
-      def checkAddressesField(json: Json): Future[Unit] =  {
+      def checkAddressesField(json: Json): Future[Unit] = {
         val jsonAddresses = json.\\("addresses").head.asArray.getOrElse(Vector.empty).flatMap(_.asString)
         if (jsonAddresses.nonEmpty) Future.successful(())
         else Future.failed(new CardanoApiException(s"Invalid address", "400"))
       }
 
-      def checkMetadataField(json: Json, fieldsToCheck: List[String]): Future[Unit] = if (fieldsToCheck.contains("metadata")) {
+      def checkMetadataField(json: Json, fieldsToCheck: List[String]): Future[Unit] = if (
+        fieldsToCheck.contains("metadata")
+      ) {
         for {
           metadata <- {
             val metaResults = json.\\("metadata")
@@ -216,8 +237,7 @@ trait InMemoryCardanoApi {
           request.mapper(httpEntityFromJson("wallets.json"))
 
         case ("wallets", HttpMethods.POST) =>
-          for {
-            json <- unmarshalJsonBody()
+          def postWalletChecks(json: Json) = for {
             _ <- checkIfContainsProperJsonKeys(json, postWalletFieldsToCheck)
             _ <- checkPassphraseField(json)
             jsonMnemonicSentence = GenericMnemonicSentence(getAsMnemonicString(json, "mnemonic_sentence"))
@@ -225,12 +245,28 @@ trait InMemoryCardanoApi {
             _ <- {
               val fieldName = "mnemonic_second_factor"
               if (postWalletFieldsToCheck.contains(fieldName)) {
-                val jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(getAsMnemonicString(json, fieldName))
+                val jsonMnemonicSecondFactor = GenericMnemonicSecondaryFactor(
+                  getAsMnemonicString(json, fieldName)
+                )
                 checkValueOrFail(jsonMnemonicSecondFactor, mnemonicSecondFactor, fieldName)
               } else {
                 Future.successful(())
               }
             }
+          } yield ()
+
+          def postWalletXPubChecks(json: Json) = for {
+            _ <- checkIfContainsProperJsonKeys(json, postWalletXPubFieldsToCheck)
+            key = getAsString(json, "account_public_key")
+            _ <- checkValueOrFail(key, accountPublicKey.key, "account_public_key")
+          } yield ()
+
+          for {
+            json <- unmarshalJsonBody()
+            _ <-
+              if (json.\\("account_public_key").headOption.flatMap(_.asString).isDefined)
+                postWalletXPubChecks(json)
+              else postWalletChecks(json)
             jsonName = getAsString(json, "name")
             jsonAddressPoolGap = json.\\("address_pool_gap").headOption.flatMap(_.asNumber).get.toInt.get
             response <- wallet.copy(name = jsonName, addressPoolGap = jsonAddressPoolGap).toJsonResponse()
@@ -269,7 +305,10 @@ trait InMemoryCardanoApi {
         case (s"wallets/${jsonFileWallet.id}/transactions?order=descending", HttpMethods.GET) =>
           jsonFileCreatedTransactionsResponse.sortWith(_.id > _.id).toJsonResponse()
 
-        case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.GET) =>
+        case (
+              s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}",
+              HttpMethods.GET
+            ) =>
           request.mapper(httpEntityFromJson("transaction.json"))
 
         case (r"wallets/.+/transactions.start=.+", HttpMethods.GET) =>
@@ -292,7 +331,10 @@ trait InMemoryCardanoApi {
             response <- request.mapper(httpEntityFromJson("transaction.json"))
           } yield response
 
-        case (s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}", HttpMethods.DELETE) =>
+        case (
+              s"wallets/${jsonFileWallet.id}/transactions/${jsonFileCreatedTransactionResponse.id}",
+              HttpMethods.DELETE
+            ) =>
           noContentResponse()
 
         case (s"wallets/${jsonFileWallet.id}/migrations", HttpMethods.GET) =>
@@ -327,14 +369,15 @@ trait InMemoryCardanoApi {
         case (r"wallets/.+", _)                               => notFound("Wallet not found")
         case (s"addresses/${addressToInspect.id}", HttpMethods.GET) =>
           request.mapper(httpEntityFromJson("address_inspect.json"))
-        case (r"addresses/.+", _)                             => notFound("Addresses not found")
+        case (r"addresses/.+", _) => notFound("Addresses not found")
         case ("proxy/transactions", HttpMethods.POST) =>
           for {
             binaryStr <- request.request.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_.utf8String)
-            resp <- if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
-            else badRequest(s"Invalid binary string")
+            resp <-
+              if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
+              else badRequest(s"Invalid binary string")
           } yield resp
-        case _                                                => notFound("Not found")
+        case _ => notFound("Not found")
       }
 
     }

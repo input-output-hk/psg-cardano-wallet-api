@@ -37,6 +37,7 @@ object CardanoApiCodec {
     implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
     implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+    implicit val createRestoreWithKeyEntityEncoder: Encoder[CreateRestoreWithKey] = dropNulls(deriveConfiguredEncoder)
     implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
     implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
@@ -231,6 +232,10 @@ object CardanoApiCodec {
         mnemonicSentence.length == 24, s"Mnemonic word list must be 15, 21, or 24 long (not ${mnemonicSentence.length})")
   }
 
+  final case class AccountPublicKey(key: String) {
+    //require(key.length == 114)
+  }
+
   object GenericMnemonicSentence {
     def apply(mnemonicString: String): GenericMnemonicSentence =
       GenericMnemonicSentence(mnemonicString.split(" ").toIndexedSeq)
@@ -279,7 +284,7 @@ object CardanoApiCodec {
                                     )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class CreateRestore(
+  final case class CreateRestore(
                             name: String,
                             passphrase: String,
                             mnemonicSentence: IndexedSeq[String],
@@ -296,6 +301,9 @@ object CardanoApiCodec {
       mnemonicSecondFactor.isEmpty || (mnemonicSecondFactorLength == 9 || mnemonicSecondFactorLength == 12)
     )
   }
+
+  @ConfiguredJsonCodec(decodeOnly = true)
+  final case class CreateRestoreWithKey(name: String, accountPublicKey: String, addressPoolGap: Option[Int])
 
   object Units extends Enumeration {
     type Units = Value
@@ -428,7 +436,7 @@ object CardanoApiCodec {
                      balance: Balance,
                      delegation: Option[Delegation],
                      name: String,
-                     passphrase: Passphrase,
+                     passphrase: Option[Passphrase],
                      state: SyncStatus,
                      tip: NetworkTip
                    )
@@ -483,7 +491,10 @@ object CardanoApiCodec {
       decodeResponseEntityOrHandleError(response, () => strictEntityF.flatMap(f))
 
     def toWallet: Future[CardanoApiResponse[Wallet]]
-    = to[Wallet](Unmarshal(_).to[CardanoApiResponse[Wallet]])
+    = to[Wallet](str => {
+      println("str: "+str.getData().utf8String)
+      Unmarshal(str).to[CardanoApiResponse[Wallet]]
+    })
 
     def toWallets: Future[CardanoApiResponse[Seq[Wallet]]]
     = to[Seq[Wallet]](Unmarshal(_).to[CardanoApiResponse[Seq[Wallet]]])
