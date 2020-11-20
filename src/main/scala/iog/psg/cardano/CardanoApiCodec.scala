@@ -366,7 +366,7 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec(decodeOnly = true)
   final case class TimedBlock(
                                time: ZonedDateTime,
-                               @deprecated("block parameter is removed from API since 11.2020")
+                               @deprecated("block parameter is removed from API since v2020-11-17")
                                block: Option[Block],
                                slotNumber: Option[Int],
                                epochNumber: Option[Int],
