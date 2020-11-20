@@ -227,7 +227,7 @@ object CardanoApiMain {
 
         } else if (hasArgument(CmdLine.createWalletWithKey) || hasArgument(CmdLine.restoreWalletWithKey)) {
           val name = arguments.get(CmdLine.name)
-          val accountPublicKey = AccountPublicKey(arguments.get(CmdLine.accountPublicKey))
+          val accountPublicKey = arguments.get(CmdLine.accountPublicKey)
           val addressPoolGap = arguments(CmdLine.addressPoolGap).map(_.toInt)
 
           unwrap[CardanoApiCodec.Wallet](api.createRestoreWalletWithKey(

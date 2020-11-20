@@ -165,7 +165,7 @@ trait CardanoApi {
    * @return create/restore wallet request
    */
   def createRestoreWalletWithKey(name: String,
-                          accountPublicKey: AccountPublicKey,
+                          accountPublicKey: String,
                           addressPoolGap: Option[Int] = None
                          ): Future[CardanoApiRequest[Wallet]]
 

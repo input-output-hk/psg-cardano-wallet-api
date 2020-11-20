@@ -232,10 +232,6 @@ object CardanoApiCodec {
         mnemonicSentence.length == 24, s"Mnemonic word list must be 15, 21, or 24 long (not ${mnemonicSentence.length})")
   }
 
-  final case class AccountPublicKey(key: String) {
-    require(key.length == 128)
-  }
-
   object GenericMnemonicSentence {
     def apply(mnemonicString: String): GenericMnemonicSentence =
       GenericMnemonicSentence(mnemonicString.split(" ").toIndexedSeq)

@@ -141,11 +141,11 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   /**
    * @inheritdoc
    */
-  override def createRestoreWalletWithKey(name: String, accountPublicKey: AccountPublicKey, addressPoolGap: Option[Int] = None): Future[CardanoApiRequest[Wallet]] = {
+  override def createRestoreWalletWithKey(name: String, accountPublicKey: String, addressPoolGap: Option[Int] = None): Future[CardanoApiRequest[Wallet]] = {
     val createRestore =
       CreateRestoreWithKey(
         name,
-        accountPublicKey.key,
+        accountPublicKey,
         addressPoolGap
       )
 

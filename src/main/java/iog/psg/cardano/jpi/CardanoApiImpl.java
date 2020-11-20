@@ -77,7 +77,7 @@ public class CardanoApiImpl implements CardanoApi {
     @Override
     public CompletionStage<CardanoApiCodec.Wallet> createRestoreWithKey(
             String name,
-            CardanoApiCodec.AccountPublicKey accountPublicKey,
+            String accountPublicKey,
             int addressPoolGap
     ) throws CardanoApiException {
         return helpExecute.execute(

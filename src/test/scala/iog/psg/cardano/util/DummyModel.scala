@@ -215,7 +215,7 @@ trait DummyModel { self: Assertions =>
     )
   )
 
-  final lazy val accountPublicKey = AccountPublicKey((1 to 128).map(_ => "a").mkString)
+  final lazy val accountPublicKey = (1 to 128).map(_ => "a").mkString
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
   final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")
