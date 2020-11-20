@@ -158,7 +158,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
         ),
         _.toWallet
       )
-    } //TODO DRY
+    }
   }
 
   /**

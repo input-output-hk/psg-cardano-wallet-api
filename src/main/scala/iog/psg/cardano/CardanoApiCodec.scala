@@ -233,7 +233,7 @@ object CardanoApiCodec {
   }
 
   final case class AccountPublicKey(key: String) {
-    //require(key.length == 114)
+    require(key.length == 128)
   }
 
   object GenericMnemonicSentence {

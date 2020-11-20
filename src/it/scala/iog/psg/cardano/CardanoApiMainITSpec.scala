@@ -387,7 +387,6 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd Line --help" should "show possible commands" in {
     val results = runCmdLine(CmdLine.help)
-    println(results.mkString("\n"))
     results.mkString("\n") shouldBe
       """This super simple tool allows developers to access a cardano wallet backend from the command line
         |
