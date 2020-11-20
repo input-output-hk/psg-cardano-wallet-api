@@ -33,8 +33,8 @@ trait DummyModel { self: Assertions =>
     OutAddress(address = addressIdStr, amount = QuantityUnit(quantity = 42000000, unit = Units.lovelace))
 
   final lazy val timedBlock = TimedBlock(
-    time = dummyDateTime,
-    block = Block(
+    dummyDateTime,
+    Block(
       slotNumber = 1337,
       epochNumber = 14,
       height = QuantityUnit(1337, Units.block),

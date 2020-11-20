@@ -116,17 +116,11 @@ class CardanoApiCodecSpec
     qu.asJson.noSpaces shouldBe """{"quantity":123,"unit":"lovelace"}"""
   }
 
-  "Decode transactions" should "decode huge file" in {
-    val jsonFileTxs =
-      decodeViaStream(file = "transactions_huge.json", jsonPath = "$[*]").futureValue
-        .map(_.utf8String)
-        .map(jsonStr =>
-          decode[CreateTransactionResponse](jsonStr).getOrElse(fail(s"Could not decode $jsonStr"))
-        )
-
-    jsonFileTxs.size shouldBe 701
-    jsonFileTxs.head.id shouldBe "1b38b632d8fd9575bb669900046c089807f2437307b37e0cec0f7d83a6d02869"
-    jsonFileTxs.last.id shouldBe "d7b3efda1d44daf481937de314d2a25fe301c509c95acfbb215b413856b9730b"
+  "Decode transactions" should "decode new transaction" in {
+    val decodedTX = decodeJsonFile[CreateTransactionResponse]("transaction_new.json")
+    println(decodedTX)
+    decodedTX.id shouldBe "6931f472901635ddb594b19b983403f9fd5e3fbbfc45a9c61d01c0abf335c425"
   }
+
 
 }
