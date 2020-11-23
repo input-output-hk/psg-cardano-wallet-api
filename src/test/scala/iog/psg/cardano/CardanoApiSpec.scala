@@ -266,6 +266,46 @@ class CardanoApiSpec
     api.getShelleyWalletMigrationInfo("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
+  "GET /stake-pools" should "List all known stake pools ordered by descending non_myopic_member_rewards." in {
+    api.listStakePools(stake = 12345).executeOrFail() shouldBe jsonFileStakePoolsResponse
+  }
+
+  it should "return error" in {
+    api.listStakePools(stake = -1).executeExpectingErrorOrFail() shouldBe ErrorMessage("Invalid stake parameter", "400")
+  }
+
+  "GET /wallets/{walletId}/delegation-fees" should "Estimate fee for joining or leaving a stake pool" in {
+    api.estimateFeeStakePool(wallet.id).executeOrFail() shouldBe estimateFeeResponse
+  }
+
+  it should "return not found" in {
+    api.estimateFeeStakePool("invalid_wallet_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
+  }
+
+  "PUT /stake-pools/{stakePoolId}/wallets/{walletId}" should "Delegate all (current and future) addresses from the given wallet to the given stake pool" in {
+    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).executeOrFail() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    api.joinStakePool("invalid_wallet_id", stakePoolId, walletPassphrase).executeExpectingErrorOrFail() shouldBe ErrorMessage("Not found", "404")
+  }
+
+  "DELETE /stake-pools/*/wallets/{walletId}" should "Stop delegating completely" in {
+    api.quitStakePool(wallet.id, walletPassphrase).executeOrFail() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    api.quitStakePool("invalid_wallet_id", walletPassphrase).executeExpectingErrorOrFail() shouldBe ErrorMessage("Not found", "404")
+  }
+
+  "GET /stake-pools/maintenance-actions" should "return current status of the stake pools maintenance actions" in {
+    api.getMaintenanceActions().executeOrFail() shouldBe jsonFileStakePoolsMaintenanceActions
+  }
+
+  "POST /stake-pools/maintenance-actions" should "perform maintenance actions on stake pools" in {
+    api.postMaintenanceAction().executeOrFail() shouldBe ()
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-test-system")
 
 }

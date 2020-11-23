@@ -254,7 +254,7 @@ trait InMemoryCardanoApi {
           def postWalletXPubChecks(json: Json) = for {
             _ <- checkIfContainsProperJsonKeys(json, postWalletXPubFieldsToCheck)
             key = getAsString(json, "account_public_key")
-            _ <- checkValueOrFail(key, accountPublicKey.key, "account_public_key")
+            _ <- checkValueOrFail(key, accountPublicKey, "account_public_key")
           } yield ()
 
           for {
@@ -355,6 +355,9 @@ trait InMemoryCardanoApi {
             response <- request.mapper(httpEntityFromJson("estimate_fees.json"))
           } yield response
 
+        case (s"wallets/${jsonFileWallet.id}/delegation-fees", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("estimate_fees.json"))
+
         case (s"wallets/${jsonFileWallet.id}/coin-selections/random", HttpMethods.POST) =>
           request.mapper(httpEntityFromJson("coin_selections_random.json"))
 
@@ -373,6 +376,30 @@ trait InMemoryCardanoApi {
               if (binaryStr == txRawContent) jsonFileProxyTransactionResponse.toJsonResponse()
               else badRequest(s"Invalid binary string")
           } yield resp
+        case (s"stake-pools/maintenance-actions", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("stake_pools_maintenance_actions.json"))
+        case (s"stake-pools/maintenance-actions", HttpMethods.POST) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkStringField(jsonBody, "maintenance_action", "gc_stake_pools")
+            response <- noContentResponse()
+          } yield response
+        case ("stake-pools?stake=12345", HttpMethods.GET) =>
+          request.mapper(httpEntityFromJson("stake_pools.json"))
+        case (r"stake-pools.+", HttpMethods.GET) =>
+          badRequest("Invalid stake parameter")
+        case (s"stake-pools/$stakePoolId/wallets/${jsonFileWallet.id}", HttpMethods.PUT) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkPassphraseField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migration.json"))
+          } yield response
+        case (s"stake-pools/*/wallets/${jsonFileWallet.id}", HttpMethods.DELETE) =>
+          for {
+            jsonBody <- unmarshalJsonBody()
+            _        <- checkPassphraseField(jsonBody)
+            response <- request.mapper(httpEntityFromJson("migration.json"))
+          } yield response
         case _ => notFound("Not found")
       }
 

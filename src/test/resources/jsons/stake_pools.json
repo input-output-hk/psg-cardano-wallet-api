@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pool1wqaz0q0zhtxlgn0ewssevn2mrtm30fgh2g7hr7z9rj5856457mm",
+    "metrics": {
+      "non_myopic_member_rewards": {
+        "quantity": 42000000,
+        "unit": "lovelace"
+      },
+      "relative_stake": {
+        "quantity": 42.2,
+        "unit": "percent"
+      },
+      "saturation": 0.74,
+      "produced_blocks": {
+        "quantity": 1337,
+        "unit": "block"
+      }
+    },
+    "cost": {
+      "quantity": 42000000,
+      "unit": "lovelace"
+    },
+    "margin": {
+      "quantity": 42.9,
+      "unit": "percent"
+    },
+    "pledge": {
+      "quantity": 42000000,
+      "unit": "lovelace"
+    },
+    "metadata": {
+      "ticker": "IOHK",
+      "name": "string",
+      "description": "string",
+      "homepage": "https://iohk.io"
+    },
+    "retirement": {
+      "epoch_number": 14,
+      "epoch_start_time": "2019-02-27T14:46:45.000Z"
+    }
+  }
+]

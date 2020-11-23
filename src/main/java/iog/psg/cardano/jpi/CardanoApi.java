@@ -343,7 +343,7 @@ public interface CardanoApi {
      * @return migrate shelley wallet request
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
-    CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
+    CompletionStage<List<CardanoApiCodec.MigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException;
 
     /**
      * Calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses
@@ -353,4 +353,64 @@ public interface CardanoApi {
      * @throws CardanoApiException thrown on API error response, contains error message and code from API
      */
     CompletionStage<CardanoApiCodec.MigrationCostResponse> getShelleyWalletMigrationInfo(String walletId) throws CardanoApiException;
+
+    /**
+     * List all known stake pools ordered by descending non_myopic_member_rewards.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/listStakePools">#listStakePools</a>
+     *
+     * @param stake The stake the user intends to delegate in Lovelace. Required.
+     * @return list stake pools request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<List<CardanoApiCodec.StakePool>> listStakePools(Integer stake) throws CardanoApiException;
+
+    /**
+     * Estimate fee for joining or leaving a stake pool
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getDelegationFee">#getDelegationFee</a>
+     *
+     * @param walletId wallet's id
+     * @return estimate fee request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFeeStakePool(String walletId) throws CardanoApiException;
+
+    /**
+     * Delegate all (current and future) addresses from the given wallet to the given stake pool.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/joinStakePool">#joinStakePool</a>
+     *
+     * @param walletId wallet's id
+     * @param stakePoolId stakePool's id
+     * @param passphrase wallet's passphrase
+     * @return quit stake pool request
+     */
+    CompletionStage<CardanoApiCodec.MigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException;
+
+    /**
+     * Stop delegating completely. The wallet's stake will become inactive.
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/quitStakePool">#quitStakePool</a>
+     *
+     * @param walletId wallet's id
+     * @param passphrase wallet's passphrase
+     * @return quit stake pool request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException;
+
+    /**
+     * View maintenance actions
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/getMaintenanceActions">#getMaintenanceActions</a>
+     *
+     * @return the current status of the stake pools maintenance actions request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<CardanoApiCodec.StakePoolMaintenanceActionsStatus> getMaintenanceActions() throws CardanoApiException;
+
+    /**
+     * Trigger Maintenance actions
+     * Api Url: <a href="https://input-output-hk.github.io/cardano-wallet/api/edge/#operation/postMaintenanceAction">#postMaintenanceAction</a>
+     *
+     * @return Trigger Maintenance actions request
+     * @throws CardanoApiException thrown on API error response, contains error message and code from API
+     */
+    CompletionStage<Void> postMaintenanceAction() throws CardanoApiException;
 }

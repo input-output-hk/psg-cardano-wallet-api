@@ -26,6 +26,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   private val proxy = s"${baseUriWithPort}proxy"
   private val wallets = s"${baseUriWithPort}wallets"
   private val network = s"${baseUriWithPort}network"
+  private val stakePools = s"${baseUriWithPort}stake-pools"
   private def generateMigrationsUrl(walletId: String) = s"$wallets/$walletId/migrations"
 
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
@@ -394,7 +395,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
   override def migrateShelleyWallet(walletId: String,
                                     passphrase: String,
                                     addresses: Seq[String]
-  ): Future[CardanoApiRequest[Seq[SubmitMigrationResponse]]] = {
+  ): Future[CardanoApiRequest[Seq[MigrationResponse]]] = {
     val updater = SubmitMigration(passphrase = passphrase, addresses = addresses)
     Marshal(updater).to[RequestEntity] map { marshalled =>
       CardanoApiRequest(
@@ -403,7 +404,7 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
           method = POST,
           entity = marshalled
         ),
-        _.toSubmitMigrationResponse
+        _.toSubmitMigrationsResponse
       )
     }
   }
@@ -419,4 +420,101 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       ),
       _.toMigrationCostResponse
     )
+
+  /**
+   * @inheritdoc
+   */
+  override def listStakePools(stake: Int): CardanoApiRequest[Seq[StakePool]] = {
+    val url = Uri(s"$stakePools?stake=$stake")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toStakePoolsResponse
+    )
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def estimateFeeStakePool(walletId: String): CardanoApiRequest[EstimateFeeResponse] = {
+    val url = Uri(s"$wallets/$walletId/delegation-fees")
+    CardanoApiRequest(
+      HttpRequest(
+        uri = url,
+        method = GET
+      ),
+      _.toEstimateFeeResponse
+    )
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def joinStakePool(walletId: String,
+                             stakePoolId: String,
+                             passphrase: String
+  ): Future[CardanoApiRequest[MigrationResponse]] = {
+    val updater = PassphraseRequest(passphrase = passphrase)
+    Marshal(updater).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/$stakePoolId/wallets/$walletId",
+          method = PUT,
+          entity = marshalled
+        ),
+        _.toSubmitMigrationResponse
+      )
+    }
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def quitStakePool(walletId: String,
+                             passphrase: String
+  ): Future[CardanoApiRequest[MigrationResponse]] = {
+    val updater = PassphraseRequest(passphrase = passphrase)
+    Marshal(updater).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/*/wallets/$walletId",
+          method = DELETE,
+          entity = marshalled
+        ),
+        _.toSubmitMigrationResponse
+      )
+    }
+  }
+
+  /**
+   * @inheritdoc
+   */
+  override def getMaintenanceActions(): CardanoApiRequest[StakePoolMaintenanceActionsStatus] =
+    CardanoApiRequest(
+      HttpRequest(
+        uri = s"$stakePools/maintenance-actions",
+        method = GET
+      ),
+      _.toStakePoolMaintenanceActionsStatusResponse
+    )
+
+  /**
+   * @inheritdoc
+   */
+  override def postMaintenanceAction(): Future[CardanoApiRequest[Unit]] = {
+    val action = PostMaintenanceActionRequest("gc_stake_pools")
+    Marshal(action).to[RequestEntity] map { marshalled =>
+      CardanoApiRequest(
+        HttpRequest(
+          uri = s"$stakePools/maintenance-actions",
+          method = POST,
+          entity = marshalled
+        ),
+        _.toUnit
+      )
+    }
+  }
+
 }

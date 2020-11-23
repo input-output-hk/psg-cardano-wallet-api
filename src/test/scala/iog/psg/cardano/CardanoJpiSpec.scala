@@ -320,6 +320,46 @@ class CardanoJpiSpec
     tryGetErrorMessage(api.getShelleyWalletMigrationInfo("invalid_address_id")) shouldBe walletNotFoundError
   }
 
+  "GET /stake-pools" should "List all known stake pools ordered by descending non_myopic_member_rewards." in {
+    api.listStakePools(12345).toCompletableFuture.get().asScala shouldBe jsonFileStakePoolsResponse
+  }
+
+  it should "return error" in {
+    tryGetErrorMessage(api.listStakePools(-1)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Invalid stake parameter, Code: 400"
+  }
+
+  "GET /wallets/{walletId}/delegation-fees" should "Estimate fee for joining or leaving a stake pool" in {
+    api.estimateFeeStakePool(wallet.id).toCompletableFuture.get() shouldBe estimateFeeResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.estimateFeeStakePool("invalid_wallet_id")) shouldBe walletNotFoundError
+  }
+
+  "PUT /stake-pools/{stakePoolId}/wallets/{walletId}" should "Delegate all (current and future) addresses from the given wallet to the given stake pool" in {
+    api.joinStakePool(wallet.id, stakePoolId, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+   tryGetErrorMessage(api.joinStakePool("invalid_wallet_id", stakePoolId, walletPassphrase)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Not found, Code: 404"
+  }
+
+  "DELETE /stake-pools/*/wallets/{walletId}" should "Stop delegating completely" in {
+    api.quitStakePool(wallet.id, walletPassphrase).toCompletableFuture.get() shouldBe jsonFileMigrationResponse
+  }
+
+  it should "return not found" in {
+    tryGetErrorMessage(api.quitStakePool("invalid_wallet_id", walletPassphrase)) shouldBe "iog.psg.cardano.jpi.CardanoApiException: Message: Not found, Code: 404"
+  }
+
+  "GET /stake-pools/maintenance-actions" should "return current status of the stake pools maintenance actions" in {
+    api.getMaintenanceActions().toCompletableFuture.get() shouldBe jsonFileStakePoolsMaintenanceActions
+  }
+
+  "POST /stake-pools/maintenance-actions" should "perform maintenance actions on stake pools" in {
+    api.postMaintenanceAction().toCompletableFuture.get() shouldBe null
+  }
+
   override implicit val as: ActorSystem = ActorSystem("cardano-api-jpi-test-system")
 
   private def getCurrentSpecAS: ActorSystem = as

@@ -328,9 +328,9 @@ public class CardanoApiImpl implements CardanoApi {
      * {@inheritDoc}
      */
     @Override
-    public CompletionStage<List<CardanoApiCodec.SubmitMigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
+    public CompletionStage<List<CardanoApiCodec.MigrationResponse>> migrateShelleyWallet(String walletId, String passphrase, List<String> addresses) throws CardanoApiException {
         IndexedSeq<String> addressesList = CollectionConverters.asScala(addresses).toIndexedSeq();
-        CompletionStage<Seq<CardanoApiCodec.SubmitMigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
+        CompletionStage<Seq<CardanoApiCodec.MigrationResponse>> response = helpExecute.execute(api.migrateShelleyWallet(walletId, passphrase, addressesList));
         return response.thenApply(CollectionConverters::asJava);
     }
 
@@ -340,6 +340,52 @@ public class CardanoApiImpl implements CardanoApi {
     @Override
     public CompletionStage<CardanoApiCodec.MigrationCostResponse> getShelleyWalletMigrationInfo(String walletId) throws CardanoApiException {
         return helpExecute.execute(api.getShelleyWalletMigrationInfo(walletId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<List<CardanoApiCodec.StakePool>> listStakePools(Integer stake) throws CardanoApiException {
+        CompletionStage<Seq<CardanoApiCodec.StakePool>> stakePools = helpExecute.execute(api.listStakePools(stake));
+        return stakePools.thenApply(CollectionConverters::asJava);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.EstimateFeeResponse> estimateFeeStakePool(String walletId) throws CardanoApiException {
+        return helpExecute.execute(api.estimateFeeStakePool(walletId));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.MigrationResponse> joinStakePool(String walletId, String stakePoolId, String passphrase) throws CardanoApiException {
+        return helpExecute.execute(api.joinStakePool(walletId, stakePoolId, passphrase));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.MigrationResponse> quitStakePool(String walletId, String passphrase) throws CardanoApiException {
+        return helpExecute.execute(api.quitStakePool(walletId, passphrase));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CompletionStage<CardanoApiCodec.StakePoolMaintenanceActionsStatus> getMaintenanceActions() throws CardanoApiException {
+        return helpExecute.execute(api.getMaintenanceActions());
+    }
+
+    @Override
+    public CompletionStage<Void> postMaintenanceAction() throws CardanoApiException {
+        return helpExecute.execute(api.postMaintenanceAction()).thenApply(x -> null);
     }
 
     private static <T> scala.Option<T> option(final T value) {

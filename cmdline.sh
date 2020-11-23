@@ -7,4 +7,4 @@ VER=0.1.3-SNAPSHOT
 #run sbt assembly to create this jar
 NEWEST_JAR_NAME=`ls target/scala-2.13/ -Frt | egrep 'psg-cardano-wallet-api-assembly.+(jar)$' | tail -n 1`
 #-baseUrl ${BASE_URL}
-exec java -jar target/scala-2.13/${NEWEST_JAR_NAME} "$@"
+exec java -jar target/scala-2.13/${NEWEST_JAR_NAME} "$@" -baseUrl ${BASE_URL}
