@@ -404,9 +404,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     val stakePoolId: String = extractId(stakePoolsListCmdLineResult.last)
     val joinStakePoolCmdLineResult = runCmdLine(
       CmdLine.joinStakePool,
-      CmdLine.walletId, wallet.id,
+      CmdLine.walletId, walletConfig.id,
       CmdLine.stakePoolId, stakePoolId,
-      CmdLine.passphrase, wallet.passphrase
+      CmdLine.passphrase, walletConfig.passphrase.get
     )
 
     assert(!joinStakePoolCmdLineResult.exists(_.contains("Error")))
@@ -417,8 +417,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     eventually {
       val quitStakePoolCmdLineResult = runCmdLine(
         CmdLine.quitStakePool,
-        CmdLine.walletId, wallet.id,
-        CmdLine.passphrase, wallet.passphrase
+        CmdLine.walletId, walletConfig.id,
+        CmdLine.passphrase, walletConfig.passphrase.get
       )
 
       assert(!quitStakePoolCmdLineResult.exists(_.contains("Error")))
