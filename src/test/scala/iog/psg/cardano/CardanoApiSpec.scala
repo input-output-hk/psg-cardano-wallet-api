@@ -6,7 +6,7 @@ import java.time.ZonedDateTime
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import iog.psg.cardano.CardanoApi.ErrorMessage
-import iog.psg.cardano.CardanoApiCodec.AddressFilter
+import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse}
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
@@ -59,9 +59,14 @@ class CardanoApiSpec
     api.networkParameters().executeOrFail() shouldBe networkParameters
   }
 
-  "POST /wallets" should "" in {
+  "POST /wallets" should "create wallet" in {
     api
       .createRestoreWallet(randomWalletName, walletPassphrase, mnemonicSentence, Some(mnemonicSecondFactor), Some(addressPoolGap))
+      .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
+  }
+
+  it should "create wallet using account public key" in {
+    api.createRestoreWalletWithKey(randomWalletName, accountPublicKey, Some(addressPoolGap))
       .executeOrFail() shouldBe wallet.copy(name = randomWalletName, addressPoolGap = addressPoolGap)
   }
 
@@ -88,6 +93,26 @@ class CardanoApiSpec
   "GET /wallets/{walletId}/transactions" should "return wallet's transactions" in {
     val transactions = api.listTransactions(wallet.id).executeOrFail()
     transactions.map(_.id) shouldBe transactionsIdsDesc
+  }
+
+  private def getCurrentSpecAS: ActorSystem = as
+
+  sealed trait CustomInMemoryFixture extends Configure
+    with ModelCompare
+    with ScalaFutures
+    with InMemoryCardanoApi
+    with DummyModel
+    with ResourceFiles
+    with CustomPatienceConfiguration {
+    override implicit val as: ActorSystem = getCurrentSpecAS
+  }
+
+  it should "return wallet's transactions HUGE response" in new CustomInMemoryFixture {
+    override lazy val jsonFileCreatedTransactionsResponse = decodeJsonFile[Seq[CreateTransactionResponse]]("transactions_huge.json")
+    val transactions = api.listTransactions(wallet.id).executeOrFail()
+    transactions.size shouldBe 835
+    transactions.head.id shouldBe "ffcf61a0751cbbe7bd01e1822316a42f580661d8b44bea0c11041bc66f49be3d"
+    transactions.last.id shouldBe "0021cebd2a610cef5f8ce753618b3d06af5414776b79dd12dc4d842b1f900631"
   }
 
   it should "run request with proper params" in {

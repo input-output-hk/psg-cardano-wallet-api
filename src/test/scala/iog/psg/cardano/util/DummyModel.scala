@@ -171,7 +171,7 @@ trait DummyModel { self: Assertions =>
       )
     ),
     name = "Alan's Wallet",
-    passphrase = Passphrase(lastUpdatedAt = ZonedDateTime.parse("2019-02-27T14:46:45.000Z")),
+    passphrase = Some(Passphrase(lastUpdatedAt = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"))),
     state = SyncStatus(SyncState.ready, None),
     tip = networkTip
   )
@@ -215,6 +215,8 @@ trait DummyModel { self: Assertions =>
       epochNumber = 14
     )
   )
+
+  final lazy val accountPublicKey = (1 to 128).map(_ => "a").mkString
 
   final lazy val mnemonicSentence = GenericMnemonicSentence("a b c d e a b c d e a b c d e")
   final lazy val mnemonicSecondFactor = GenericMnemonicSecondaryFactor("a b c d e a b c d")

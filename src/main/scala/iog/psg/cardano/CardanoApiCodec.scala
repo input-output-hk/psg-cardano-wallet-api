@@ -37,6 +37,7 @@ object CardanoApiCodec {
     implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
     implicit val createRestoreEntityEncoder: Encoder[CreateRestore] = dropNulls(deriveConfiguredEncoder)
+    implicit val createRestoreWithKeyEntityEncoder: Encoder[CreateRestoreWithKey] = dropNulls(deriveConfiguredEncoder)
     implicit val createListAddrEntityEncoder: Encoder[WalletAddressId] = dropNulls(deriveConfiguredEncoder)
 
     implicit val decodeDateTime: Decoder[ZonedDateTime] = Decoder.decodeString.emap { s =>
@@ -280,7 +281,7 @@ object CardanoApiCodec {
                                     )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class CreateRestore(
+  final case class CreateRestore(
                             name: String,
                             passphrase: String,
                             mnemonicSentence: IndexedSeq[String],
@@ -297,6 +298,9 @@ object CardanoApiCodec {
       mnemonicSecondFactor.isEmpty || (mnemonicSecondFactorLength == 9 || mnemonicSecondFactorLength == 12)
     )
   }
+
+  @ConfiguredJsonCodec(decodeOnly = true)
+  final case class CreateRestoreWithKey(name: String, accountPublicKey: String, addressPoolGap: Option[Int])
 
   object Units extends Enumeration {
     type Units = Value
@@ -365,10 +369,26 @@ object CardanoApiCodec {
                   )
 
   @ConfiguredJsonCodec(decodeOnly = true)
-  case class TimedBlock(
-                         time: ZonedDateTime,
-                         block: Block
-                       )
+  final case class TimedBlock(
+                               time: ZonedDateTime,
+                               @deprecated("block parameter is removed from API since v2020-11-17")
+                               block: Option[Block],
+                               slotNumber: Option[Int],
+                               epochNumber: Option[Int],
+                               height: Option[QuantityUnit[Long]],
+                               absoluteSlotNumber: Option[Long]
+                             )
+
+  object TimedBlock {
+    def apply(time: ZonedDateTime, block: Block): TimedBlock =
+      TimedBlock(time = time,
+        block = Some(block),
+        slotNumber = Some(block.slotNumber),
+        epochNumber = Some(block.epochNumber),
+        height = Some(block.height),
+        absoluteSlotNumber = block.absoluteSlotNumber
+      )
+  }
 
   @ConfiguredJsonCodec
   final case class TimedFlattenBlock(
@@ -429,7 +449,7 @@ object CardanoApiCodec {
                      balance: Balance,
                      delegation: Option[Delegation],
                      name: String,
-                     passphrase: Passphrase,
+                     passphrase: Option[Passphrase],
                      state: SyncStatus,
                      tip: NetworkTip
                    )

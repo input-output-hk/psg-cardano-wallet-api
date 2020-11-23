@@ -3,7 +3,7 @@ package iog.psg.cardano
 import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.marshalling.{ Marshal, Marshaller }
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
@@ -107,26 +107,10 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       _.toNetworkParametersResponse
     )
 
-  /**
-   * @inheritdoc
-   */
-  override def createRestoreWallet(name: String,
-                                   passphrase: String,
-                                   mnemonicSentence: MnemonicSentence,
-                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
-                                   addressPoolGap: Option[Int] = None
-  ): Future[CardanoApiRequest[Wallet]] = {
-
-    val createRestore =
-      CreateRestore(
-        name,
-        passphrase,
-        mnemonicSentence.mnemonicSentence,
-        mnemonicSecondFactor.map(_.mnemonicSentence),
-        addressPoolGap
-      )
-
-    Marshal(createRestore).to[RequestEntity].map { marshalled =>
+  private def prepareCreateRestoreRequest[T](
+    body: T
+  )(implicit m: Marshaller[T, RequestEntity]) =
+    Marshal(body).to[RequestEntity].map { marshalled =>
       CardanoApiRequest(
         HttpRequest(
           uri = s"$wallets",
@@ -137,7 +121,39 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       )
     }
 
-  }
+  /**
+   * @inheritdoc
+   */
+  override def createRestoreWallet(name: String,
+                                   passphrase: String,
+                                   mnemonicSentence: MnemonicSentence,
+                                   mnemonicSecondFactor: Option[MnemonicSentence] = None,
+                                   addressPoolGap: Option[Int] = None
+  ): Future[CardanoApiRequest[Wallet]] =
+    prepareCreateRestoreRequest(
+      CreateRestore(
+        name,
+        passphrase,
+        mnemonicSentence.mnemonicSentence,
+        mnemonicSecondFactor.map(_.mnemonicSentence),
+        addressPoolGap
+      )
+    )
+
+  /**
+   * @inheritdoc
+   */
+  override def createRestoreWalletWithKey(name: String,
+                                          accountPublicKey: String,
+                                          addressPoolGap: Option[Int] = None
+  ): Future[CardanoApiRequest[Wallet]] =
+    prepareCreateRestoreRequest(
+      CreateRestoreWithKey(
+        name,
+        accountPublicKey,
+        addressPoolGap
+      )
+    )
 
   /**
    * @inheritdoc
@@ -500,4 +516,5 @@ private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionCont
       )
     }
   }
+
 }

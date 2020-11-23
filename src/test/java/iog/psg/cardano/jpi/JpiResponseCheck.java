@@ -156,7 +156,7 @@ public class JpiResponseCheck {
                             new CardanoApiCodec.Balance(dummy, dummy, dummy),
                             Option.apply(delegation),
                             "name",
-                            new CardanoApiCodec.Passphrase(dummyDate),
+                            Option.apply(new CardanoApiCodec.Passphrase(dummyDate)),
                             state,
                             tip));
                     return result.toCompletableFuture();
