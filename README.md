@@ -67,7 +67,7 @@ Alternatively, for 'tire kicking' purposes you may try  `http://cardano-wallet-t
 
 Add the library to your dependencies 
 
-`libraryDependencies += "solutions.iog" %% "psg-cardano-wallet-api" % "0.2.2"`
+`libraryDependencies += "solutions.iog" %% "psg-cardano-wallet-api" % "x.x.x"`
 
 The api calls return a HttpRequest set up to the correct url and a mapper to take the entity result and 
 map it from Json to the corresponding case classes. Using `networkInfo` as an example...
@@ -94,8 +94,9 @@ object Main {
     val api = new CardanoApi(baseUri)
 
     val networkInfoF: Future[CardanoApiResponse[NetworkInfo]] =
-      api.networkInfo.execute
+      api.networkInfo.execute // async (recommended)
 
+    // OR use blocking version for tests 
     val networkInfo: CardanoApiResponse[NetworkInfo] =
       api.networkInfo.executeBlocking
 
@@ -114,7 +115,7 @@ First, add the library to your dependencies,
 <dependency>
   <groupId>solutions.iog</groupId>
   <artifactId>psg-cardano-wallet-api_2.13</artifactId>
-  <version>0.2.2</version>
+  <version>x.x.x</version>
 </dependency>
 ```
 
@@ -127,8 +128,8 @@ ActorSystem as = ActorSystem.create();
 ExecutorService es = Executors.newFixedThreadPool(10);
 CardanoApiBuilder builder =
         CardanoApiBuilder.create("http://localhost:8090/v2/")
-                .withActorSystem(as)
-                .withExecutorService(es);
+                .withActorSystem(as) // <- ActorSystem optional
+                .withExecutorService(es); // <- ExecutorService optional
 
 CardanoApi api = builder.build();
 

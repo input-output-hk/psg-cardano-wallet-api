@@ -67,9 +67,13 @@ public class JpiResponseCheck {
         return w.id().contentEquals(walletId);
     }
 
+    public String updateWalletName(String walletId, String name) throws CardanoApiException, ExecutionException, InterruptedException, TimeoutException {
+        CompletionStage<CardanoApiCodec.Wallet> walletCS = jpi.updateName(walletId, name);
+        return walletCS.thenApply(w -> w.name()).toCompletableFuture().get(timeout, timeoutUnit);
+    }
+
     public void passwordChange(String walletId, String passphrase, String newPassphrase) throws CardanoApiException, InterruptedException, ExecutionException, TimeoutException {
         jpi.updatePassphrase(walletId, passphrase, newPassphrase).toCompletableFuture().get(timeout, timeoutUnit);
-
     }
 
 
@@ -87,7 +91,7 @@ public class JpiResponseCheck {
 
     }
 
-    public CardanoApiCodec.CreateTransactionResponse paymentToSelf(String wallet1Id, String passphrase, int amountToTransfer, Map<String, String> metadata) throws Exception {
+    public CardanoApiCodec.CreateTransactionResponse paymentToSelf(String wallet1Id, String passphrase, long amountToTransfer, Map<String, String> metadata) throws Exception {
 
         Map<Long, String> metadataLongKey = new HashMap();
         metadata.forEach((k,v) -> {
@@ -99,8 +103,7 @@ public class JpiResponseCheck {
         String unusedAddrIdWallet1 = unused.get(0).id();
         CardanoApiCodec.QuantityUnit amount = new CardanoApiCodec.QuantityUnit(amountToTransfer, CardanoApiCodec.Units$.MODULE$.lovelace());
         List<CardanoApiCodec.Payment> payments = Collections.singletonList(new CardanoApiCodec.Payment(unusedAddrIdWallet1, amount));
-        CardanoApiCodec.EstimateFeeResponse response = jpi.estimateFee(wallet1Id, payments).toCompletableFuture().get(timeout, timeoutUnit);
-        long max = response.estimatedMax().quantity();
+        jpi.estimateFee(wallet1Id, payments).toCompletableFuture().get(timeout, timeoutUnit);
         return jpi.createTransaction(wallet1Id, passphrase, payments, in, null).toCompletableFuture().get(timeout, timeoutUnit);
 
     }
@@ -153,7 +156,7 @@ public class JpiResponseCheck {
                             new CardanoApiCodec.Balance(dummy, dummy, dummy),
                             Option.apply(delegation),
                             "name",
-                            new CardanoApiCodec.Passphrase(dummyDate),
+                            Option.apply(new CardanoApiCodec.Passphrase(dummyDate)),
                             state,
                             tip));
                     return result.toCompletableFuture();

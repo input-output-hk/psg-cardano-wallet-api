@@ -9,11 +9,12 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Package Command Line Jar
         uses: actions/setup-java@v1.4.2
         with:
           java-version: '11.0.8'
-      - run: sbt assembly
+      - run: sbt clean test assembly
       - name: Upload Command Line Jar
         uses: actions/upload-artifact@v2
         with:
@@ -33,9 +34,8 @@ jobs:
             mkdir -p ~/.gnupg/
             printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
             gpg --import --no-tty --batch --yes ~/.gnupg/private.key
-      - uses: actions/checkout@v2
       - name: Package
         uses: actions/setup-java@v1.4.2
         with:
             java-version: '11.0.8'
-      - run: sbt publishSigned sonatypeRelease
+      - run: sbt publishSigned

@@ -1,0 +1,15 @@
+{
+  "address_style": "Shelley",
+  "stake_reference": "none",
+  "network_tag": 123,
+  "spending_key_hash": "stringstringstringstringstringstringstringstringstringst",
+  "stake_key_hash": "stringstringstringstringstringstringstringstringstringst",
+  "script_hash": "stringstringstringstringstringstringstringstringstringstringstri",
+  "pointer": {
+    "slot_num": 0,
+    "transaction_index": 1,
+    "output_index": 2
+  },
+  "address_root": "string",
+  "derivation_path": "string_path"
+}
