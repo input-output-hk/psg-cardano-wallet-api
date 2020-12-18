@@ -255,9 +255,9 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec
   case class NetworkInfo(
                           syncProgress: SyncStatus,
-                          networkTip: NetworkTip,
+                          networkTip: Option[NetworkTip],
                           nodeTip: NodeTip,
-                          nextEpoch: NextEpoch
+                          nextEpoch: Option[NextEpoch]
                         )
 
   @ConfiguredJsonCodec

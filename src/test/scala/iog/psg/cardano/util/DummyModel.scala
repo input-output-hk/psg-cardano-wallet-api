@@ -185,9 +185,9 @@ trait DummyModel { self: Assertions =>
 
   final lazy val networkInfo = NetworkInfo(
     syncProgress = SyncStatus(SyncState.ready, None),
-    networkTip = networkTip.copy(height = None),
+    networkTip = Some(networkTip.copy(height = None)),
     nodeTip = nodeTip,
-    nextEpoch = NextEpoch(dummyDateTime, 14)
+    nextEpoch = Some(NextEpoch(dummyDateTime, 14))
   )
 
   final lazy val networkClock = NetworkClock(
