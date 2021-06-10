@@ -24,6 +24,14 @@ class CantApiSpec
     println(ConfigureFactory.config.getString("cardano.wallet3.mnemonicsecondary"))
 
     ConfigureFactory.config.getString("cardano.wallet1.mnemonic").split(" ").foreach(println)
+    println("END")
+    ConfigureFactory.config.getString("cardano.wallet2.mnemonic").split(" ").foreach(println)
+    println("END")
+    ConfigureFactory.config.getString("cardano.wallet3.mnemonic").split(" ").foreach(println)
+    println("END")
+    ConfigureFactory.config.getString("cardano.wallet3.mnemonicsecondary").split(" ").foreach(println)
+    println("END")
+
     val t = ConfigureFactory.config.getConfig("cardano")
     val f = new File("crap.txt")
     Files.write(Paths.get("crap.txt"), t.toString.getBytes(StandardCharsets.UTF_8))
