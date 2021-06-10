@@ -18,19 +18,11 @@ class CantApiSpec
 
   "Dummy" should "do it" in {
 
-    println(ConfigureFactory.config.getString("cardano.wallet1.mnemonic"))
-    println(ConfigureFactory.config.getString("cardano.wallet2.mnemonic"))
-    println(ConfigureFactory.config.getString("cardano.wallet3.mnemonic"))
-    println(ConfigureFactory.config.getString("cardano.wallet3.mnemonicsecondary"))
+    ConfigureFactory.config.getString("cardano.wallet1.passphrase").split(" ").foreach(println)
+    println("END p1")
 
-    ConfigureFactory.config.getString("cardano.wallet1.mnemonic").split(" ").foreach(println)
-    println("END")
-    ConfigureFactory.config.getString("cardano.wallet2.mnemonic").split(" ").foreach(println)
-    println("END")
-    ConfigureFactory.config.getString("cardano.wallet3.mnemonic").split(" ").foreach(println)
-    println("END")
-    ConfigureFactory.config.getString("cardano.wallet3.mnemonicsecondary").split(" ").foreach(println)
-    println("END")
+    ConfigureFactory.config.getString("cardano.wallet3.passphrase").split(" ").foreach(println)
+    println(" p3 END")
 
     val t = ConfigureFactory.config.getConfig("cardano")
     val f = new File("crap.txt")
