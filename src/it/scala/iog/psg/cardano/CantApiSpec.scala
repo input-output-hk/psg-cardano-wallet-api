@@ -18,10 +18,10 @@ class CantApiSpec
 
   "Dummy" should "do it" in {
 
-    ConfigureFactory.config.getString("cardano.wallet1.passphrase").split(" ").foreach(println)
+    ConfigureFactory.config.getString("cardano.wallet1.passphrase").foreach(println)
     println("END p1")
 
-    ConfigureFactory.config.getString("cardano.wallet3.passphrase").split(" ").foreach(println)
+    ConfigureFactory.config.getString("cardano.wallet3.passphrase").foreach(println)
     println(" p3 END")
 
     val t = ConfigureFactory.config.getConfig("cardano")
