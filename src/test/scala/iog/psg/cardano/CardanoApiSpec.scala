@@ -258,11 +258,15 @@ class CardanoApiSpec
     api.migrateShelleyWallet("invalid_address_id", walletPassphrase, unUsedAddresses.map(_.id)).executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 
-  "GET /wallets/{walletId}/migrations" should "calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses" in {
+  ignore should "calculate the exact cost of sending all funds from particular Shelley wallet to a set of addresses" in {
+    //this endopoint is "temporarily suspended" in wallet v2021.4.28
+    //"GET /wallets/{walletId}/migrations"
     api.getShelleyWalletMigrationInfo(wallet.id).executeOrFail() shouldBe jsonFileMigrationCostsResponse
   }
 
-  it should "return not found" in {
+  ignore should "return not found (migrations)" in {
+    //this endopoint is "temporarily suspended" in wallet v2021.4.28
+    //"GET /wallets/{walletId}/migrations"
     api.getShelleyWalletMigrationInfo("invalid_address_id").executeExpectingErrorOrFail() shouldBe walletNotFoundError
   }
 

@@ -282,7 +282,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
 
   "The Cmd Lines -createTx, -getTx, -listTxs" should "transact from A to B with metadata, txId should be visible in get and list" in new TestWalletFixture(walletNum = 1){
     val unusedAddr = getUnusedAddressWallet1
-    val preTxTime = ZonedDateTime.now().minusMinutes(1)
+    //subtract a day to allow for different TZs
+    val preTxTime = ZonedDateTime.now().minusDays(1)
 
     val resultsCreateTx = runCmdLine(
       CmdLine.createTx,
@@ -303,7 +304,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     
     assert(resultsGetTx.last.contains(txId), "The getTx result didn't contain the id")
 
-    val postTxTime = ZonedDateTime.now().plusMinutes(5)
+    //add a day to allow for TZ between where tests are run and where wallet is hosted
+    val postTxTime = ZonedDateTime.now().plusDays(1)
 
     val resultsListWalletTxs = runCmdLine(
       CmdLine.listWalletTransactions,
@@ -384,7 +386,9 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("id")), "Migration id")
   }
 
-  "The Cmd Line -getShelleyWalletMigrationInfo" should "calculate the cost" in new TestWalletFixture(walletNum = 1){
+  ignore should "calculate the cost" in new TestWalletFixture(walletNum = 1){
+    // "This endpoint is temporarily suspended"
+    //"The Cmd Line -getShelleyWalletMigrationInfo"
     val results = runCmdLine(
       CmdLine.getShelleyWalletMigrationInfo,
       CmdLine.walletId, walletConfig.id
@@ -393,7 +397,8 @@ class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with
     assert(results.exists(_.contains("migration_cost")), "Migration costs quantity unit")
   }
 
-  "The Cmd Line -listStakePools -joinStakePool -quitStakePool" should "List all known stake pools, join and quit" in new TestWalletFixture(walletNum = 1){
+  ignore should "List all known stake pools, join and quit" in new TestWalletFixture(walletNum = 1){
+    //"The Cmd Line -listStakePools -joinStakePool -quitStakePool"
     val stakePoolsListCmdLineResult = runCmdLine(
       CmdLine.listStakePools,
       CmdLine.stake, "10000"
