@@ -185,9 +185,9 @@ trait DummyModel { self: Assertions =>
 
   final lazy val networkInfo = NetworkInfo(
     syncProgress = SyncStatus(SyncState.ready, None),
-    networkTip = networkTip.copy(height = None),
+    networkTip = Some(networkTip.copy(height = None)),
     nodeTip = nodeTip,
-    nextEpoch = NextEpoch(dummyDateTime, 14)
+    nextEpoch = Some(NextEpoch(dummyDateTime, 14))
   )
 
   final lazy val networkClock = NetworkClock(
@@ -205,15 +205,15 @@ trait DummyModel { self: Assertions =>
     blockchain_start_time = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
     slotLength = QuantityUnit(10, Units.second),
     epochLength = QuantityUnit(42000, Units.slot),
-    epochStability = QuantityUnit(1337, Units.block),
+    epochStability = Some(QuantityUnit(1337, Units.block)),
     activeSlotCoefficient = QuantityUnit(42, Units.percent),
     decentralizationLevel = QuantityUnit(42, Units.percent),
     desiredPoolNumber = 100,
-    minimumUtxoValue = QuantityUnit(42000000, Units.lovelace), 
-    hardforkAt = NextEpoch(
+    minimumUtxoValue = QuantityUnit(42000000, Units.lovelace),
+    hardforkAt = Some(NextEpoch(
       epochStartTime = ZonedDateTime.parse("2019-02-27T14:46:45.000Z"),
       epochNumber = 14
-    )
+    ))
   )
 
   final lazy val accountPublicKey = (1 to 128).map(_ => "a").mkString

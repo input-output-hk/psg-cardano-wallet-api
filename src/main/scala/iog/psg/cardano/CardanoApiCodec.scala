@@ -255,9 +255,9 @@ object CardanoApiCodec {
   @ConfiguredJsonCodec
   case class NetworkInfo(
                           syncProgress: SyncStatus,
-                          networkTip: NetworkTip,
+                          networkTip: Option[NetworkTip],
                           nodeTip: NodeTip,
-                          nextEpoch: NextEpoch
+                          nextEpoch: Option[NextEpoch]
                         )
 
   @ConfiguredJsonCodec
@@ -272,12 +272,14 @@ object CardanoApiCodec {
                                       blockchain_start_time: ZonedDateTime,
                                       slotLength: QuantityUnit[Long],
                                       epochLength: QuantityUnit[Long],
-                                      epochStability: QuantityUnit[Long],
+                                      @deprecated("'epoch stability' is removed from API in v2021.4.28")
+                                      epochStability: Option[QuantityUnit[Long]],
                                       activeSlotCoefficient: QuantityUnit[Long],
                                       decentralizationLevel: QuantityUnit[Long],
                                       desiredPoolNumber: Long,
                                       minimumUtxoValue: QuantityUnit[Long],
-                                      hardforkAt: NextEpoch
+                                      @deprecated("'hard fork at' is removed from API in v2021.4.28")
+                                      hardforkAt: Option[NextEpoch]
                                     )
 
   @ConfiguredJsonCodec(decodeOnly = true)
