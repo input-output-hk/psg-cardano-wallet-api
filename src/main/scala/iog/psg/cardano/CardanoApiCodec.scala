@@ -325,6 +325,8 @@ object CardanoApiCodec {
     type TxState = Value
     val pending = Value("pending")
     val inLedger = Value("in_ledger")
+    val expired = Value("expired")
+    val submitted = Value("submitted")
   }
 
   @ConfiguredJsonCodec(encodeOnly = true) final case class QuantityUnit[T] private(quantity: T, unit: Units)
