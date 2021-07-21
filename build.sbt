@@ -12,6 +12,7 @@ lazy val rootProject = (project in file("."))
     Defaults.itSettings,
     IntegrationTest / dependencyClasspath := (IntegrationTest / dependencyClasspath).value ++ (Test / exportedProducts).value,
     name:= "psg-cardano-wallet-api",
+    version:= "0.2.4.1",
     scalaVersion := "2.13.3",
     organization := "solutions.iog",
     homepage := Some(url("https://github.com/input-output-hk/psg-cardano-wallet-api")),
@@ -25,19 +26,22 @@ lazy val rootProject = (project in file("."))
     description := "A java/scala wrapper for the cardano wallet backend API",
     usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F"),
     isSnapshot := false,
-    publishTo := Some {
-      // publish to the sonatype repository
-      val sonaUrl = "https://oss.sonatype.org/"
+    publishTo := {
+      val nexus = "https://nexus.mcsherrylabs.com/"
       if (isSnapshot.value)
-        "snapshots" at sonaUrl + "content/repositories/snapshots"
+        Some("snapshots" at nexus + "repository/snapshots")
       else
-        "releases" at sonaUrl + "service/local/staging/deploy/maven2"
+        Some("releases"  at nexus + "repository/releases")
     },
-    credentials += Credentials("Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    sys.env.getOrElse("SONA_USER", ""),
-    sys.env.getOrElse("SONA_PASS", "")),
-    dynverSonatypeSnapshots in ThisBuild := true,
+    credentials += sys.env.get("NEXUS_USER").map(userName => Credentials(
+      "Sonatype Nexus Repository Manager",
+      "nexus.mcsherrylabs.com",
+      userName,
+      sys.env.getOrElse("NEXUS_PASS", ""))
+    ).getOrElse(
+      Credentials(Path.userHome / ".ivy2" / ".credentials")
+    ),
+    //dynverSonatypeSnapshots in ThisBuild := true,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations"),
     parallelExecution in Test := true,
