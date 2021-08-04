@@ -1,0 +1,22 @@
+{
+  "decentralization" : 0,
+  "stakePoolDeposit" : 500000000,
+  "poolRetireMaxEpoch" : 18,
+  "protocolVersion" : {
+    "minor" : 0,
+    "major" : 4
+  },
+  "minUTxOValue" : 1000000,
+  "txFeePerByte" : 44,
+  "maxTxSize" : 16384,
+  "minPoolCost" : 340000000,
+  "treasuryCut" : 0.2,
+  "maxBlockBodySize" : 65536,
+  "stakePoolTargetNum" : 500,
+  "extraPraosEntropy" : null,
+  "txFeeFixed" : 155381,
+  "maxBlockHeaderSize" : 1100,
+  "poolPledgeInfluence" : 0.3,
+  "stakeAddressDeposit" : 2000000,
+  "monetaryExpansion" : 3.0e-3
+}

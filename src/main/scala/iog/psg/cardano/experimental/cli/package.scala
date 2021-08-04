@@ -10,6 +10,4 @@ package object cli {
   }
 
   type CanCopy[F] = { def copy(c: ProcessBuilderHelper): F }
-
-
 }

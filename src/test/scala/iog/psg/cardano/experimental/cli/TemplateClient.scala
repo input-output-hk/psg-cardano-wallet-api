@@ -25,12 +25,10 @@ object TemplateClient {
 
     //val sudoCmd = Seq("sudo", "-S", "CARDANO_NODE_SOCKET_PATH=/var/lib/docker/volumes/cardano-cli_node-ipc/_data/node.socket")
     val builder = ProcessBuilderHelper()
-      .withWorkingDirectory(new File(workingDirPath))
       .withCommand("sudo")
       .withCommand("-S")
       .withCommand("CARDANO_NODE_SOCKET_PATH=/var/lib/docker/volumes/cardano-cli_node-ipc/_data/node.socket")
       .withCommand("./cardano-cli")
-      .withPreviousCmd(builderSudo)
 
 
     val outFile: File = makeFileName("protocol4.json")

@@ -36,6 +36,6 @@ trait CliCmd {
     result +: buf.toSeq
   }
 
-
+  def stringRepr: String = builder.toCommand
 }
 

@@ -1,34 +1,27 @@
 package iog.psg.cardano.util
 
-import com.typesafe.config.Config
-
 import java.io.File
-import scala.collection.mutable
-import scala.jdk.CollectionConverters.CollectionHasAsScala
-import scala.language.reflectiveCalls
-import scala.sys.process.{Process, ProcessBuilder, ProcessLogger}
-
+import scala.sys.process.Process
+import scala.sys.process.ProcessBuilder
 
 case class ProcessBuilderHelper(
-                              command: Seq[String] = Seq.empty,
-                              parameters: Seq[String] = Seq.empty,
-                              env: Map[String, String] = Map.empty,
-                              workingDirectory: Option[File] = None,
-                              prevCmd: Option[ProcessBuilderHelper] = None) {
+  sudo: Boolean = false,
+  command: Vector[String] = Vector.empty,
+  parameters: Vector[String] = Vector.empty,
+  env: Map[String, String] = Map.empty,
+) {
+
+  def withSudo: ProcessBuilderHelper = {
+    copy(sudo = true)
+  }
+
   def withCommand(cmd: String): ProcessBuilderHelper = {
     copy(command = command :+ cmd)
   }
 
-  def withPreviousCmd(prev: ProcessBuilderHelper): ProcessBuilderHelper = {
-    copy(prevCmd = Some(prev))
-  }
-
-  def withWorkingDirectory(wd: File): ProcessBuilderHelper = {
-    copy(workingDirectory = Some(wd))
-  }
-
   def withParam(param: String): ProcessBuilderHelper = {
-    copy(parameters = parameters :+ param)    }
+    copy(parameters = parameters :+ param)
+  }
 
   def withParam(param: String, value: String): ProcessBuilderHelper = {
     copy(parameters = parameters :+ param :+ value)
@@ -42,12 +35,14 @@ case class ProcessBuilderHelper(
     copy(env = env + (envName -> value))
   }
 
-
-  lazy val processBuilder: ProcessBuilder = {
-    val p = Process(command ++ parameters, workingDirectory, extraEnv = env.toSeq: _*)
-    prevCmd.map(_.processBuilder.#|(p)).getOrElse(p)
+  def toCommand: String = {
+    (if (sudo) "sudo " else "") +
+      env.iterator.map { case (k, v) => s"$k=$v" }.mkString(start = "", sep = " ", end = " ") +
+      (command ++ parameters).mkString(" ")
   }
 
+  lazy val processBuilder: ProcessBuilder = {
+    Process(command ++ parameters, None, extraEnv = env.toSeq: _*)
+  }
 }
-
 
