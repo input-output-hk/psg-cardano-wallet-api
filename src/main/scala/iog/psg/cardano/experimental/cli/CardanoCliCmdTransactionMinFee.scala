@@ -24,6 +24,6 @@ case class CardanoCliCmdTransactionMinFee(protected val builder: ProcessBuilderH
 
   def run(): String = stringValue()
 
-  override type CONCRETECASECLASS = this.type
-  override protected def copier: CanCopy[CardanoCliCmdTransactionMinFee] = this
+  override type CONCRETECASECLASS = CardanoCliCmdTransactionMinFee
+  override protected def copier = this
 }

@@ -22,6 +22,6 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   def run(): Int = exitValue()
 
-  override type CONCRETECASECLASS = this.type
-  override protected def copier: CanCopy[CardanoCliCmdTransactionBuildRaw] = this
+  override type CONCRETECASECLASS = CardanoCliCmdTransactionBuildRaw
+  override protected def copier = this
 }
