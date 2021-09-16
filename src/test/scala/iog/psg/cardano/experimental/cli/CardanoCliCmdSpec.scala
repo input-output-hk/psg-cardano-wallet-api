@@ -7,12 +7,13 @@ import java.nio.file.Files
 import scala.util.{Random, Using}
 import scala.util.Using.Releasable
 import iog.psg.cardano.util.CliCmd
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, Ignore}
 
 import java.time.Instant
 import scala.io.Source
 import scala.sys.process._
 
+@Ignore
 class CardanoCliCmdSpec
   extends AnyFunSpec
     with BeforeAndAfterAll {
