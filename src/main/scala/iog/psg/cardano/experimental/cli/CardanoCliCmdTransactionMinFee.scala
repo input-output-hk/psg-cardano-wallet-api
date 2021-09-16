@@ -1,6 +1,6 @@
 package iog.psg.cardano.experimental.cli
 
-import iog.psg.cardano.experimental.cli.param.TxBodyFile
+import iog.psg.cardano.experimental.cli.param.{TestnetMagic, TxBodyFile}
 import iog.psg.cardano.util.{CliCmd, ProcessBuilderHelper}
 
 import java.io.File
@@ -8,7 +8,8 @@ import java.io.File
 case class CardanoCliCmdTransactionMinFee(protected val builder: ProcessBuilderHelper)
   extends CliCmd
     with TxBodyFile
-    with CopyShim  {
+    with CopyShim
+    with TestnetMagic {
 
   def protocolParamsFile(protocolParams: File): CardanoCliCmdTransactionMinFee =
     copy(builder.withParam("--protocol-params-file", protocolParams))

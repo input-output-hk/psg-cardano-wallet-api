@@ -3,6 +3,8 @@ package iog.psg.cardano.experimental.cli
 import iog.psg.cardano.experimental.cli.param.OutFile
 import iog.psg.cardano.util.{CliCmd, ProcessBuilderHelper}
 
+import java.io.File
+
 case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilderHelper)
   extends CliCmd
     with OutFile
@@ -19,6 +21,9 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   def txOut(value: String): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--tx-out", value))
+
+  def txinScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
+    copy(builder.withParam("--txin-script-file", file))
 
   def run(): Int = exitValue()
 
