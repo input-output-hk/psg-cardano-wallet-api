@@ -10,20 +10,15 @@ object TemplateClient {
 
     val TESTNET_MAGIC = 1097911063
     val workingDirPath = "/home/alan/apps/cardano-cli/"
-    //val DIR= ""
-
 
     def makeFileName(name: String): File = {
       new File(new File(workingDirPath), name)
     }
-    //Files.createDirectories(Path.of(workingDirPath, DIR))
-
 
     val builderSudo = ProcessBuilderHelper()
       .withCommand("echo")
       .withParam(args.head)
 
-    //val sudoCmd = Seq("sudo", "-S", "CARDANO_NODE_SOCKET_PATH=/var/lib/docker/volumes/cardano-cli_node-ipc/_data/node.socket")
     val builder = ProcessBuilderHelper()
       .withCommand("sudo")
       .withCommand("-S")
@@ -46,7 +41,6 @@ object TemplateClient {
     if (outFile.exists()) {
       println("ok")
     }
-
 
     CardanoCli(builder)
       .address
@@ -95,21 +89,5 @@ object TemplateClient {
       .testnetMagic(TESTNET_MAGIC)
       .outFile(makeFileName("script.addr"))
       .run()
-
-    /*CardanoCli(builder)
-    .query
-    .utxo
-    .maryEra
-    .address("")
-    .outFile(new File(""))
-    .run()
-
-  CardanoCli(builder)
-    .transaction
-    .submit
-    .txFile(f)
-    .testnetMagic("").run()*/
-
   }
-
 }
