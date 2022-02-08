@@ -1,6 +1,7 @@
 package iog.psg.cardano.experimental.cli
 
-import iog.psg.cardano.util.ProcessBuilderHelper
+import iog.psg.cardano.experimental.cli.command.CardanoCli
+import iog.psg.cardano.experimental.cli.util.ProcessBuilderHelper
 
 import java.io.File
 
@@ -34,9 +35,9 @@ object TemplateClient {
       .testnetMagic(TESTNET_MAGIC)
       .outFile(outFile)
 
-    val all = cli.run()
+    val all = cli.res()
 
-    all.foreach(println)
+    println(all)
 
     if (outFile.exists()) {
       println("ok")
@@ -48,7 +49,7 @@ object TemplateClient {
       .verificationKeyFile(makeFileName("payVerKey1"))
       .signingKeyFile(makeFileName("paySignKey1"))
       .normalKey
-      .run()
+      .exitValue()
 
     CardanoCli(builder)
       .address
@@ -56,20 +57,20 @@ object TemplateClient {
       .verificationKeyFile(makeFileName("payVerKey2"))
       .signingKeyFile(makeFileName("paySignKey2"))
       .normalKey
-      .run()
+      .exitValue()
 
     // ./cardano-cli address key-hash --payment-verification-key-file $DIR/payVerKey1 > $DIR/keyHash1
     val hash1 = CardanoCli(builder)
       .address
       .keyHash
-      .paymentVerificationFile(makeFileName("payVerKey1"))
-      .run()
+      .paymentVerificationKeyFile(makeFileName("payVerKey1"))
+      .res()
 
     val hash2 = CardanoCli(builder)
       .address
       .keyHash
-      .paymentVerificationFile(makeFileName("payVerKey2"))
-      .run()
+      .paymentVerificationKeyFile(makeFileName("payVerKey2"))
+      .res()
 
     println(s"hash1 $hash1, hash2 $hash2")
 
@@ -88,6 +89,6 @@ object TemplateClient {
       .paymentScriptFile(makeFileName("allMultiSigScript"))
       .testnetMagic(TESTNET_MAGIC)
       .outFile(makeFileName("script.addr"))
-      .run()
+      .exitValue()
   }
 }

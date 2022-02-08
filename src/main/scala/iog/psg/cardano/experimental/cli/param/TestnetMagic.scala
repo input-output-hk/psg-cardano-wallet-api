@@ -1,18 +1,15 @@
 package iog.psg.cardano.experimental.cli.param
 
-import iog.psg.cardano.experimental.cli.CopyShim
-import iog.psg.cardano.util.CliCmd
+import iog.psg.cardano.experimental.cli.util.CliCmdBuilder
 
 trait TestnetMagic {
-  self: CliCmd with CopyShim =>
+  self: CliCmdBuilder =>
 
-  lazy val mainnet: CONCRETECASECLASS = {
-    copier.copy(builder.withParam("--mainnet"))
-  }
+  lazy val mainnet: Out =
+    build(_.withParam("--mainnet"))
 
-  def testnetMagic(magic: Long): CONCRETECASECLASS = {
-    copier.copy(builder.withParam("--testnet-magic", magic.toString))
-  }
+  def testnetMagic(magic: Long): Out =
+    build(_.withParam("--testnet-magic", magic))
 
-  def testnetMagic: CONCRETECASECLASS = testnetMagic(1097911063)
+  lazy val testnetMagic: Out = testnetMagic(1097911063)
 }

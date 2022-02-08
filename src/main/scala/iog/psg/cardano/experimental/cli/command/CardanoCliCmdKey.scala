@@ -1,8 +1,10 @@
-package iog.psg.cardano.experimental.cli
+package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.util.{CliCmd, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmd, ProcessBuilderHelper}
 
 case class CardanoCliCmdKey(protected val builder: ProcessBuilderHelper) extends CliCmd {
+
+  // TODO
 
   //    lazy val verificationKey = ???
   //    lazy val nonExtendedKey = ???

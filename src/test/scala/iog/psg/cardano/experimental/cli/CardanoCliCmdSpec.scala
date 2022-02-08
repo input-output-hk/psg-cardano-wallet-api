@@ -1,12 +1,13 @@
 package iog.psg.cardano.experimental.cli
 
+import iog.psg.cardano.experimental.cli.command.CardanoCli
+import iog.psg.cardano.experimental.cli.util.{CliCmd, ProcessResult, SSH}
 import org.scalatest.funspec.AnyFunSpec
 
 import java.io.File
 import java.nio.file.Files
 import scala.util.{Random, Using}
 import scala.util.Using.Releasable
-import iog.psg.cardano.util.CliCmd
 import org.scalatest.{BeforeAndAfterAll, Ignore}
 
 import java.time.Instant
@@ -137,7 +138,7 @@ class CardanoCliCmdSpec
                 cardanoCli
                   .address
                   .buildScript
-                  .withPaymentScriptFile(paymentScriptFile)
+                  .paymentScriptFile(paymentScriptFile)
                   .testnetMagic
               }
 

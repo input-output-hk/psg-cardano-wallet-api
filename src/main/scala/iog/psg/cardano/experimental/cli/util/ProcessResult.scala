@@ -1,4 +1,4 @@
-package iog.psg.cardano.experimental.cli
+package iog.psg.cardano.experimental.cli.util
 
 import scala.sys.process._
 
@@ -12,7 +12,7 @@ object ProcessResult {
 
   implicit val LazyListOfStrings: ProcessResult[LazyList[String]] = _.lazyLines
   implicit val ListOfStrings: ProcessResult[List[String]] = ProcessResult[LazyList[String]].map(_.toList)
-  implicit val String: ProcessResult[String] = ProcessResult[LazyList[String]].map(_.head)
+  implicit val String: ProcessResult[String] = ProcessResult[LazyList[String]].map(_.mkString)
   implicit val Int: ProcessResult[Int] = _.!
   implicit val Unit: ProcessResult[Unit] = _.!!
 }
