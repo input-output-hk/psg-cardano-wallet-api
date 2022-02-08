@@ -21,7 +21,7 @@ case class ProcessBuilderHelper(
     copy(parameters = parameters :+ param)
 
   def withParam[V: ParamValueEncoder](param: String, value: V): ProcessBuilderHelper =
-    copy(parameters = parameters :+ param :+ ParamValueEncoder[V].encodeValue(value))
+    copy(parameters = parameters :+ param :+ ParamValueEncoder[V].apply(value))
 
   def withEnv(envName: String, value: String): ProcessBuilderHelper =
     copy(env = env + (envName -> value))

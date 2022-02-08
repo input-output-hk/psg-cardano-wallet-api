@@ -31,7 +31,7 @@ class CardanoCliCmdSpec
   private val cardanoCli: CardanoCli = {
     CardanoCli(cardanoCliPath)
       .withCardanoNodeSocketPath(cardanoNodeSocketPath)
-      .withSudo
+      .withSudo(false)
   }
 
   private def executeRemotely[T: ProcessResult](cmd: String): T = {
@@ -120,7 +120,7 @@ class CardanoCliCmdSpec
                 cardanoCli
                   .address
                   .keyHash
-                  .paymentVerificationString(verificationKeyFile.getLines.mkString)
+                  .paymentVerificationKey(verificationKeyFile.getLines.mkString)
               }
 
               assert(hash.nonEmpty)
