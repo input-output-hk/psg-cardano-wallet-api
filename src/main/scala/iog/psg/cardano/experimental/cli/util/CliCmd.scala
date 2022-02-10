@@ -10,7 +10,7 @@ trait CliCmd {
 
   def runOrFail(): Unit = run[Unit]
 
-  protected def run[T: ProcessResult]: T = ProcessResult[T].apply(builder.processBuilder)
+  def run[T: ProcessResult]: T = ProcessResult[T].apply(builder.processBuilder)
 
   protected def stringValue(): String = run[String]
 

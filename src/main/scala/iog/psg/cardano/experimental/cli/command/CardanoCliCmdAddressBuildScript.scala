@@ -10,6 +10,5 @@ case class CardanoCliCmdAddressBuildScript(protected val builder: ProcessBuilder
     with OutFile {
 
   override type Out = CardanoCliCmdAddressBuildScript
-
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdAddressBuildScript = copy(b)
 }
