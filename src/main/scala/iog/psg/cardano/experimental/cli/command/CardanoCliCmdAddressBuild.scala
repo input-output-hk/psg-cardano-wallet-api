@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.param._
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
 
 case class CardanoCliCmdAddressBuild(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
@@ -11,7 +11,7 @@ case class CardanoCliCmdAddressBuild(protected val builder: ProcessBuilderHelper
     with PaymentVerificationKeyFile
     with PaymentScriptFile {
 
-  def res(): String = run[String]
+  def res(implicit net: NetworkChooser): String = run[String]
 
   override type Out = CardanoCliCmdAddressBuild
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdAddressBuild = copy(b)

@@ -1,14 +1,14 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.param.{TestnetMagic, TxFile}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
 
 case class CardanoCliCmdTransactionSubmit(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
     with TestnetMagic
     with TxFile {
 
-  def run(): Int = exitValue()
+  def run(implicit net: NetworkChooser): Int = exitValue
 
   override type Out = CardanoCliCmdTransactionSubmit
 

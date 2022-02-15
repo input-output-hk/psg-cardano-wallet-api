@@ -5,6 +5,7 @@ import iog.psg.cardano.experimental.cli.util.ProcessBuilderHelper
 
 import java.io.File
 
+/*
 object TemplateClient {
 
   def main(args: Array[String]): Unit = {
@@ -92,3 +93,4 @@ object TemplateClient {
       .exitValue()
   }
 }
+*/

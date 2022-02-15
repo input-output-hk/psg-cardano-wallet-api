@@ -14,6 +14,7 @@ import java.time.Instant
 import scala.io.Source
 import scala.sys.process._
 
+/*
 @Ignore
 class CardanoCliCmdSpec
   extends AnyFunSpec
@@ -151,3 +152,4 @@ class CardanoCliCmdSpec
 }
 
 
+*/

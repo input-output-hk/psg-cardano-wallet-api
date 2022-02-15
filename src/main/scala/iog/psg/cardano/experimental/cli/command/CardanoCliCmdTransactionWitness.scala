@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.param._
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
 
 case class CardanoCliCmdTransactionWitness(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
@@ -11,7 +11,7 @@ case class CardanoCliCmdTransactionWitness(protected val builder: ProcessBuilder
     with ScriptFile
     with SigningKeyFile {
 
-  def run(): Int = exitValue()
+  def run(implicit net: NetworkChooser): Int = exitValue
 
   override type Out = CardanoCliCmdTransactionWitness
 

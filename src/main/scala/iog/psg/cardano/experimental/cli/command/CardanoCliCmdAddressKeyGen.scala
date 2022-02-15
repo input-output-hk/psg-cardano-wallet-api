@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.param.SigningKeyFile
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, FileParam, ProcessBuilderHelper}
 
 import java.io.File
 
@@ -11,6 +11,10 @@ case class CardanoCliCmdAddressKeyGen(protected val builder: ProcessBuilderHelpe
 
   lazy val normalKey: CardanoCliCmdAddressKeyGenNormalKey =
     CardanoCliCmdAddressKeyGenNormalKey(builder.withParam("--normal-key"))
+
+  def verificationKeyFile(implicit fp: FileParam[CardanoCliCmdAddressKeyGen]): CardanoCliCmdAddressKeyGen = {
+    verificationKeyFile(fp.file)
+  }
 
   def verificationKeyFile(verificationKeyFile: File): CardanoCliCmdAddressKeyGen =
     CardanoCliCmdAddressKeyGen(builder.withParam("--verification-key-file", verificationKeyFile))

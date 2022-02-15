@@ -1,18 +1,37 @@
 package iog.psg.cardano.experimental.cli.util
 
+import iog.psg.cardano.experimental.cli.param.TestnetMagic
+
 trait CliCmd {
 
   protected val builder: ProcessBuilderHelper
 
-  def stringRepr: String = builder.toCommand
+  def stringRepr(implicit net: NetworkChooser): String = addNetwork.toCommand
 
-  def exitValue(): Int = run[Int]
+  def exitValue(implicit net: NetworkChooser): Int = run[Int]
 
-  def runOrFail(): Unit = run[Unit]
+  def runOrFail(implicit net: NetworkChooser): Unit = run[Unit]
 
-  def run[T: ProcessResult]: T = ProcessResult[T].apply(builder.processBuilder)
+  def run[T: ProcessResult](implicit net: NetworkChooser): T = {
 
-  protected def stringValue(): String = run[String]
+    ProcessResult[T]
+      .apply(
+        addNetwork
+          .processBuilder
+      )
+  }
 
-  protected def allValues(): List[String] = run[List[String]]
+  private def addNetwork(implicit net: NetworkChooser): ProcessBuilderHelper = {
+
+    this match {
+      case _ : TestnetMagic =>
+        net.withNetwork(builder)
+
+      case _ => builder
+    }
+
+  }
+  protected def stringValue(implicit net: NetworkChooser): String = run[String]
+
+  protected def allValues(implicit net: NetworkChooser): List[String] = run[List[String]]
 }

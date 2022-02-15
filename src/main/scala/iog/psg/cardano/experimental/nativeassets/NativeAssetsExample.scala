@@ -3,6 +3,7 @@ package iog.psg.cardano.experimental.nativeassets
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.CardanoCli
 import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, NativeAssets, TxIn, TxOut, UTXO}
+import iog.psg.cardano.experimental.cli.util.NetworkChooser
 
 import java.io.File
 import java.nio.file.{Files, Paths}
@@ -13,6 +14,8 @@ object NativeAssetsExample extends App {
     sudo: Boolean = false,
     testnetMagic: Option[Long] = None
   )
+
+  implicit val networkChooser: NetworkChooser = ???
 
   import iog.psg.cardano.experimental.cli.implicits._
 
@@ -28,14 +31,14 @@ object NativeAssetsExample extends App {
     val tokenBase16 = Base16String(tokenName)
 
     val utxo: UTXO = cardano
-      .utxo(paymentAddress, testnet = true)
+      .utxo(paymentAddress)
       .maxByOption(_.lovelace)
       .filter(_.lovelace > 0)
       .getOrElse(throw new RuntimeException(s"please fund your address: $paymentAddress"))
 
     // for our transaction calculations, we need some of the current protocol parameters
     val protocolFile = fileFactory("protocol.json")
-    cardano.protocolParams(protocolFile, testnet = true)
+    cardano.protocolParams(protocolFile)
 
     // generate policy verification and signing keys
     val policyVerKey = fileFactory("policy.vkey")
@@ -86,8 +89,7 @@ object NativeAssetsExample extends App {
       protocolParams = protocolFile,
       txInCount = txIns.size,
       txOutCount = txOuts.size,
-      witnessCount = policy.scripts.size,
-      testnet = true
+      witnessCount = policy.scripts.size
     )
 
     // re-build the transaction with real fee, ready to be signed
@@ -113,15 +115,14 @@ object NativeAssetsExample extends App {
     cardano.signTx(
       keys = NonEmptyList.of(paymentSignKey, policySignKey),
       txBody = mintTx,
-      outFile = signedTx,
-      testnet = true
+      outFile = signedTx
     )
 
     // submit the transaction
-    cardano.submitTx(signedTx, testnet = true)
+    cardano.submitTx(signedTx)
   }
 
-  val cardano = CardanoCli(Paths.get("/Users/roman/Downloads/cardano-node-1.32.1-macos (2)/cardano-cli"))
+  val cardano: CardanoCli = CardanoCli(Paths.get("./cardano-cli"))
     .withCardanoNodeSocketPath(Paths.get("/Users/roman/Library/Application Support/Daedalus Testnet/cardano-node.socket").toString)
     .withSudo(false)
 
@@ -133,7 +134,7 @@ object NativeAssetsExample extends App {
   val paymentVerKey: File = fileFactory("payment.vkey")
   val paymentSignKey: File = fileFactory("payment.skey")
 
-  val paymentAddr: String = cardano.genPaymentKeysAndAddress(paymentVerKey, paymentSignKey, testnet = true)
+  val paymentAddr: String = cardano.genPaymentKeysAndAddress(paymentVerKey, paymentSignKey)
 
   println(s"Please fund this address: $paymentAddr")
 

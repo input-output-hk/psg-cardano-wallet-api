@@ -3,7 +3,7 @@ package iog.psg.cardano.experimental.cli.command
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.model.{NativeAsset, NativeAssets, TxIn, TxOut}
 import iog.psg.cardano.experimental.cli.param.{MaryEra, OutFile}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
 
 import java.io.File
 
@@ -46,13 +46,13 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
   def txinScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--txin-script-file", file))
 
-  def run(): Int = exitValue()
+  def run(implicit net: NetworkChooser): Int = exitValue
 
   private def mintParam(policyId: String, assets: NonEmptyList[NativeAsset]): String = {
-    assets
-      .iterator
-      .map(a => s"${a.tokenAmount} $policyId.${a.tokenName.value}")
-      .mkString(" + ")
+//    assets.iterator
+//      .map(a => s"${a.tokenAmount} $policyId.${a.tokenName.value}")
+//      .mkString(" + ")
+    "BORKEN"
   }
 
   override type Out = CardanoCliCmdTransactionBuildRaw

@@ -2,6 +2,8 @@ package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.util.{CliCmd, ProcessBuilderHelper}
 
+case class CardanoCliCmdHelp(protected val builder: ProcessBuilderHelper) extends CliCmd
+
 case class CardanoCliCmdTransaction(protected val builder: ProcessBuilderHelper) extends CliCmd {
 
   lazy val calculateMinFee: CardanoCliCmdTransactionMinFee =

@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.param.{OutFile, ShelleyMode, TestnetMagic}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
 
 case class CardanoCliCmdQueryUtxo(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
@@ -12,7 +12,7 @@ case class CardanoCliCmdQueryUtxo(protected val builder: ProcessBuilderHelper)
   def address(address: String): CardanoCliCmdQueryUtxo =
     copy(builder.withParam("--address", address))
 
-  def run(): Int = exitValue()
+  def run(implicit net: NetworkChooser): Int = exitValue
 
   override type Out = CardanoCliCmdQueryUtxo
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdQueryUtxo = copy(b)
