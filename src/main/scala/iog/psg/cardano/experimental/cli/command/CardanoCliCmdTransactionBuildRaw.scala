@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import cats.data.NonEmptyList
-import iog.psg.cardano.experimental.cli.model.{NativeAsset, NativeAssets, TxIn, TxOut}
+import iog.psg.cardano.experimental.cli.model.{NativeAsset, TxIn, TxOut}
 import iog.psg.cardano.experimental.cli.param.{MaryEra, OutFile}
 import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
@@ -29,15 +29,16 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   def txOut(out: TxOut): CardanoCliCmdTransactionBuildRaw = {
     val addressOutput = s"${out.address}+${out.output}"
-    val finalParam = out.assets.fold(addressOutput)(ax => addressOutput + s"+${mintParam(ax.policyId, ax.assets)}")
+    val mintPart = NonEmptyList.fromList(out.assets).fold("")(x => "+" + mintParam(x))
+    val finalParam = addressOutput + mintPart
     txOut(finalParam)
   }
 
   def mint(value: String): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--mint", value))
 
-  def mint(assets: NativeAssets): CardanoCliCmdTransactionBuildRaw = {
-    mint(mintParam(assets.policyId, assets.assets))
+  def mint(assets: NonEmptyList[NativeAsset]): CardanoCliCmdTransactionBuildRaw = {
+    mint(mintParam(assets))
   }
 
   def mintScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
@@ -48,10 +49,10 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   def run(): Int = exitValue()
 
-  private def mintParam(policyId: String, assets: NonEmptyList[NativeAsset]): String = {
+  private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
     assets
       .iterator
-      .map(a => s"${a.tokenAmount} $policyId.${a.tokenName.value}")
+      .map(a => s"${a.tokenAmount} ${a.policyId}.${a.tokenName.value}")
       .mkString(" + ")
   }
 

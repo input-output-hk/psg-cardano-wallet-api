@@ -2,7 +2,7 @@ package iog.psg.cardano.experimental.cli.ops
 
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.CardanoCli
-import iog.psg.cardano.experimental.cli.model.{NativeAssets, TxIn, TxOut, UTXO}
+import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, TxIn, TxOut, UTXO}
 import iog.psg.cardano.experimental.cli.util.Regexes
 
 import scala.util.chaining._
@@ -60,7 +60,17 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) extends AnyVal {
       .drop(2) // drop headers
       .map { line =>
         val data = Regexes.spaces.split(line)
-        UTXO(data(0), data(1).toInt, data(2).toLong)
+
+        def get(ix: Int): Option[String] = data.lift(ix)
+
+        val maybeAssets = for {
+          tokenAmount <- get(5).flatMap(_.toIntOption)
+          policyIdAndName <- get(6).map(_.split('.'))
+          policyId <- policyIdAndName.lift(0)
+          tokenName <- policyIdAndName.lift(1).flatMap(Base16String.validate)
+        } yield NativeAsset(tokenName, tokenAmount, policyId)
+
+        UTXO(data(0), data(1).toInt, data(2).toLong, maybeAssets.toList)
       }
   }
 
@@ -77,7 +87,7 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) extends AnyVal {
     fee: Long,
     txIns: NonEmptyList[TxIn],
     txOuts: NonEmptyList[TxOut],
-    maybeMinting: Option[(NativeAssets, File)],
+    maybeMinting: Option[(NonEmptyList[NativeAsset], File)] = None,
     outFile: File
   ): Unit = {
     cardanoCli
@@ -93,7 +103,9 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) extends AnyVal {
             .mintScriptFile(mintScriptFile)
       })
       .outFile(outFile)
+      .tap(x => println(x.stringRepr))
       .runOrFail()
+
   }
 
   def calculateFee(
@@ -132,6 +144,7 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) extends AnyVal {
       .pipe(c => if (testnet) c.testnetMagic else c)
       .txBodyFile(txBody)
       .outFile(outFile)
+      .tap(x => println(x.stringRepr))
       .runOrFail()
   }
 
@@ -144,6 +157,7 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) extends AnyVal {
       .submit
       .txFile(signedTx)
       .pipe(c => if (testnet) c.testnetMagic else c)
+      .tap(x => println(x.stringRepr))
       .runOrFail()
   }
 }
