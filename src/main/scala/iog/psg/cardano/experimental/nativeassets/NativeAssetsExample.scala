@@ -1,8 +1,9 @@
 package iog.psg.cardano.experimental.nativeassets
 
+import cats.Monoid
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.CardanoCli
-import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, NativeAssets, TxIn, TxOut, UTXO}
+import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, TxIn, TxOut, UTXO}
 import iog.psg.cardano.experimental.cli.util.NetworkChooser
 
 import java.io.File
@@ -61,7 +62,7 @@ object NativeAssetsExample extends App {
     val policyId: String = cardano.policyId(policyScript)
 
     val mintTx = fileFactory("tx.raw")
-    val nativeAssets = NativeAssets(policyId,  NonEmptyList.of(NativeAsset(tokenBase16, tokenAmount)))
+    val nativeAssets = NonEmptyList.of(NativeAsset(tokenBase16, tokenAmount, policyId))
 
     val txIns: NonEmptyList[TxIn] = NonEmptyList.of(
       TxIn(utxo.txHash, utxo.txIx)
@@ -71,7 +72,7 @@ object NativeAssetsExample extends App {
       TxOut(
         paymentAddress,
         utxo.lovelace,
-        Some(nativeAssets)
+        nativeAssets.toList
       )
     )
 
@@ -97,7 +98,7 @@ object NativeAssetsExample extends App {
       TxOut(
         paymentAddress,
         utxo.lovelace - fee,
-        Some(nativeAssets)
+        nativeAssets.toList
       )
     )
 
@@ -134,21 +135,277 @@ object NativeAssetsExample extends App {
   val paymentVerKey: File = fileFactory("payment.vkey")
   val paymentSignKey: File = fileFactory("payment.skey")
 
-  val paymentAddr: String = cardano.genPaymentKeysAndAddress(paymentVerKey, paymentSignKey)
+  // val paymentAddr: String = cardano.genPaymentKeysAndAddress(paymentVerKey, paymentSignKey)
 
-  println(s"Please fund this address: $paymentAddr")
+  // println(s"Please fund this address: $paymentAddr")
+  "addr_test1vz4avxtgfzw3tjl4aeaqn9rsce0smln6lgp8tgj6u8daqhg2s7udv"
 
   import scala.concurrent.duration._
-  Thread.sleep(2.minutes.toMillis)
+ // Thread.sleep(2.minutes.toMillis)
 
-  mint(
+//  mint(
+//    tokenName = "TestTokenPSG-4",
+//    tokenAmount = 160,
+//    cardano,
+//    paymentVerKey,
+//    paymentSignKey,
+//    paymentAddr,
+//    fileFactory
+//  )
+
+  def sendToken(
+    fromAddress: String,
+    tokenName: String,
+    tokenAmount: Int,
+    toAddress: String,
+    paymentSignKey: File,
+    txFile: File
+  ): Unit = {
+
+    val base16TokenName = Base16String(tokenName)
+
+    val utxo = cardano
+      .utxo(fromAddress, testnet = true)
+      .find(_.assets.exists(_.tokenName == base16TokenName))
+      .getOrElse(throw new RuntimeException("token not found"))
+
+    val asset = utxo.assets
+      .find(_.tokenName == base16TokenName)
+      .filter(_.tokenAmount > tokenAmount)
+      .getOrElse(throw new RuntimeException("insufficient token amount"))
+
+    val toTransfer = asset.copy(tokenAmount = tokenAmount)
+    val change = asset.copy(tokenAmount = asset.tokenAmount - tokenAmount)
+
+    val txIns = NonEmptyList.of(
+      TxIn(utxo.txHash, utxo.txIx)
+    )
+
+    val txOuts = NonEmptyList.of(
+      TxOut(
+        address = toAddress,
+        output = 1500000,
+        assets = toTransfer :: Nil
+      ),
+      TxOut(
+        address = fromAddress,
+        output = utxo.lovelace,
+        assets = change :: Nil
+      )
+    )
+
+    cardano.buildTx(
+      fee = 0,
+      txIns = txIns,
+      txOuts = txOuts,
+      outFile = txFile
+    )
+
+    val protocolFile = fileFactory("protocol.json")
+    cardano.protocolParams(protocolFile, testnet = true)
+
+    val fee = cardano.calculateFee(
+      txBody = txFile,
+      protocolParams = protocolFile,
+      txInCount = txIns.size,
+      txOutCount = txOuts.size,
+      witnessCount = 0,
+      testnet = true
+    )
+
+    val newTxOuts = NonEmptyList.of(
+      TxOut(
+        address = toAddress,
+        output = 1500000,
+        assets = toTransfer :: Nil
+      ),
+      TxOut(
+        address = fromAddress,
+        output = utxo.lovelace - fee - 1500000,
+        assets = change :: Nil
+      )
+    )
+
+    cardano.buildTx(
+      fee = fee,
+      txIns = txIns,
+      txOuts = newTxOuts,
+      outFile = txFile
+    )
+
+    val signed = fileFactory("signed-tx-to-transfer")
+
+    cardano.signTx(
+      keys = NonEmptyList.of(paymentSignKey),
+      txBody = txFile,
+      outFile = signed,
+      testnet = true,
+    )
+
+    cardano.submitTx(signed, testnet = true)
+  }
+
+  println(cardano.utxo("addr_test1vz4avxtgfzw3tjl4aeaqn9rsce0smln6lgp8tgj6u8daqhg2s7udv", true))
+
+
+  def formTxIns(
+                utxos: List[UTXO],
+                outs: List[TxOut],
+                change: (Long, List[NativeAsset]) => Option[TxOut]
+              ): (List[TxIn], Option[TxOut]) = {
+    import cats.implicits._
+
+    val (totalLovelace, nativeAssets, tokenPolicies) = {
+      outs
+        .map(o => (
+          o.output,
+          o.assets.map(a => (a.tokenName, a.tokenAmount)).toMap,
+          o.assets.map(a => (a.tokenName, a.policyId))
+        ))
+        .combineAll
+    }
+
+    val tokenToPolicy = tokenPolicies.toMap
+
+    val sortedUTXOs = utxos.sortBy(utxo => (utxo.lovelace, utxo.assets.map(_.tokenAmount))).toVector
+
+    var first = true
+
+    val txOuts = sortedUTXOs
+      .scanLeft((0L, Map.empty[Base16String, Long])) {
+        (acc, utxo) =>
+          acc.combine((utxo.lovelace, utxo.assets.map(a => (a.tokenName, a.tokenAmount)).toMap))
+      }
+      .tail
+      .zip(sortedUTXOs)
+      .takeWhile {
+        case ((lovelace, tokenToAmount), _) =>
+           lovelace < totalLovelace ||
+            nativeAssets.exists {
+              case (token, amount) =>
+                tokenToAmount
+                  .get(token)
+                  .fold(true)(_ < amount)
+            } || {
+            val x = first
+            first = false
+            x
+          }
+
+      }
+
+    val txIns = txOuts
+      .map { case (_, utxo) => utxo }
+      .map(t => TxIn(t.txHash, t.txIx))
+
+    val (consumedLovelace, consumedAssets) = txOuts.last._1
+
+    val lovelaceChange = consumedLovelace - totalLovelace
+    println(consumedLovelace)
+    println(totalLovelace)
+
+    val assetsChange = consumedAssets.map {
+      case (token, amount) =>
+        val tokenChange = nativeAssets
+          .get(token)
+          .fold(amount)(amount - _)
+
+        NativeAsset(token, tokenChange, tokenToPolicy(token))
+    }.toList
+
+    (txIns.toList, change(lovelaceChange, assetsChange))
+  }
+
+
+  val d = formTxIns(
+    List(
+      UTXO("asdasd", 1, 150),
+      UTXO("22123123", 2, 2),
+    ),
+    List(
+      TxOut("address_1", 1)
+    ),
+    (x1, x2) => Some(TxOut("addr_change", x1, x2))
+  )
+
+  def burnToken(
+    fromAddress: String,
+    tokenName: String,
+    tokenAmount: Int,
+    signKey: File,
+    policy: File,
+    policyKey: File,
+    txFile: File
+  ): Unit = {
+
+    val base16TokenName = Base16String(tokenName)
+
+    val utxo = cardano
+      .utxo(fromAddress, testnet = true)
+      .find(_.assets.exists(_.tokenName == base16TokenName))
+      .getOrElse(throw new RuntimeException("token not found"))
+
+    val asset = utxo.assets
+      .find(_.tokenName == base16TokenName)
+      .filter(_.tokenAmount > tokenAmount)
+      .getOrElse(throw new RuntimeException("insufficient token amount"))
+
+    val left = asset.tokenAmount - tokenAmount
+
+    val txIns = NonEmptyList.of(TxIn(utxo.txHash, utxo.txIx))
+    val txOuts = NonEmptyList.of(TxOut(fromAddress, utxo.lovelace, asset.copy(tokenAmount = left) :: Nil))
+
+    cardano.buildTx(
+      fee = 0,
+      txIns = txIns,
+      txOuts = txOuts,
+      maybeMinting = Some((NonEmptyList.of(asset.copy(tokenAmount = -tokenAmount)), policy)),
+      outFile = txFile
+    )
+
+    val protocolFile = fileFactory("protocol.json")
+    cardano.protocolParams(protocolFile, testnet = true)
+
+    val fee = cardano.calculateFee(txFile, protocolFile, txIns.size, txOuts.size, 2, true)
+
+    val newTxOuts = NonEmptyList.of(TxOut(fromAddress, utxo.lovelace - fee, asset.copy(tokenAmount = left) :: Nil))
+    cardano.buildTx(
+      fee = fee,
+      txIns = txIns,
+      txOuts = newTxOuts,
+      maybeMinting = Some((NonEmptyList.of(asset.copy(tokenAmount = -tokenAmount)), policy)),
+      outFile = txFile
+    )
+
+    val signedTx = fileFactory("signed-burning-tx")
+    cardano.signTx(
+      NonEmptyList.of(signKey, policyKey),
+      txFile,
+      signedTx,
+      true
+    )
+
+    cardano.submitTx(signedTx, true)
+  }
+
+
+//  sendToken(
+//    fromAddress = "addr_test1vz4avxtgfzw3tjl4aeaqn9rsce0smln6lgp8tgj6u8daqhg2s7udv",
+//    tokenName = "TestTokenPSG-4",
+//    tokenAmount = 5,
+//    toAddress = "addr_test1qzrcqxz4kmlngqceeru58vc5cragym0pv5gdh6v0t0r5yac67xch0swzl6qyheq3zmvysnw775lva5cjcganffnvdn8qp7k6cs",
+//    paymentSignKey = paymentSignKey,
+//    txFile = fileFactory("transfer-tx-file")
+//  )
+
+  burnToken(
+    fromAddress = "addr_test1vz4avxtgfzw3tjl4aeaqn9rsce0smln6lgp8tgj6u8daqhg2s7udv",
     tokenName = "TestTokenPSG-4",
-    tokenAmount = 160,
-    cardano,
-    paymentVerKey,
+    tokenAmount = 10,
     paymentSignKey,
-    paymentAddr,
-    fileFactory
+    fileFactory("policy.script"),
+    fileFactory("policy.skey"),
+    fileFactory("burning-tx")
   )
 }
 
