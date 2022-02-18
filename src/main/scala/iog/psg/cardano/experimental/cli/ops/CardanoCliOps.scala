@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.ops
 
 import cats.data.NonEmptyList
-import iog.psg.cardano.experimental.cli.command.CardanoCli
+import iog.psg.cardano.experimental.cli.command.{CardanoCli, CardanoCliCmdAddressBuild, CardanoCliCmdAddressKeyGenNormalKey, CardanoCliCmdAddressKeyHash, CardanoCliCmdQueryProtocol, CardanoCliCmdTransactionBuildRaw, CardanoCliCmdTransactionMinFee, CardanoCliCmdTransactionPolicyId, CardanoCliCmdTransactionSign, CardanoCliCmdTransactionSubmit}
 import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, TxIn, TxOut, UTXO}
 import iog.psg.cardano.experimental.cli.util.{NetworkChooser, Regexes}
 
@@ -10,49 +10,42 @@ import java.io.File
 
 final class CardanoCliOps(private val cardanoCli: CardanoCli) {
 
-  implicit val networkChooser: NetworkChooser = ???
-
-  def hashKey(paymentVerKeyFile: File): String = {
+  def hashKey(paymentVerKeyFile: File): CardanoCliCmdAddressKeyHash = {
     cardanoCli
       .address
       .keyHash
       .paymentVerificationKeyFile(paymentVerKeyFile)
-      .res
   }
 
-  def genKeys(verKey: File, signKey: File): Unit = {
-
+  def genKeys(verKey: File, signKey: File): CardanoCliCmdAddressKeyGenNormalKey = {
     cardanoCli
       .address
       .keyGen
       .verificationKeyFile(verKey)
       .signingKeyFile(signKey)
       .normalKey
-      .runOrFail
   }
 
-  def genPaymentAddress(verKey: File): String = {
+  def genPaymentAddress(verKey: File): CardanoCliCmdAddressBuild = {
     cardanoCli
       .address
       .build
       .paymentVerificationKeyFile(verKey)
-      .res
   }
 
-  def genPaymentKeysAndAddress(verKey: File, signKey: File): String = {
-    genKeys(verKey, signKey)
-    genPaymentAddress(verKey)
+  def genPaymentKeysAndAddress(verKey: File, signKey: File)(implicit net: NetworkChooser): String = {
+    genKeys(verKey, signKey).run[Unit]
+    genPaymentAddress(verKey).run[String]
   }
 
-  def policyId(policyScriptFile: File): String = {
+  def policyId(policyScriptFile: File): CardanoCliCmdTransactionPolicyId = {
     cardanoCli
       .transaction
       .policid
       .scriptFile(policyScriptFile)
-      .res
   }
 
-  def utxo(address: String): List[UTXO] = {
+  def utxo(address: String)(implicit net: NetworkChooser): List[UTXO] = {
     cardanoCli
       .query
       .utxo
@@ -75,21 +68,20 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) {
       }
   }
 
-  def protocolParams(outFile: File): Unit = {
+  def protocolParams(outFile: File): CardanoCliCmdQueryProtocol = {
     cardanoCli
       .query
       .protocolParameters
       .outFile(outFile)
-      .runOrFail
   }
 
   def buildTx(
-               fee: Long,
-               txIns: NonEmptyList[TxIn],
-               txOuts: NonEmptyList[TxOut],
-               maybeMinting: Option[(NonEmptyList[NativeAsset], File)] = None,
-               outFile: File
-             ): Unit = {
+    fee: Long,
+    txIns: NonEmptyList[TxIn],
+    txOuts: NonEmptyList[TxOut],
+    maybeMinting: Option[(NonEmptyList[NativeAsset], File)] = None,
+    outFile: File
+  ): CardanoCliCmdTransactionBuildRaw = {
     cardanoCli
       .transaction
       .buildRaw
@@ -103,18 +95,15 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) {
             .mintScriptFile(mintScriptFile)
       })
       .outFile(outFile)
-      .tap(x => println(x.stringRepr))
-      .runOrFail
   }
 
   def calculateFee(
-                    txBody: File,
-                    protocolParams: File,
-                    txInCount: Int,
-                    txOutCount: Int,
-                    witnessCount: Int,
-
-                  ): Long = {
+    txBody: File,
+    protocolParams: File,
+    txInCount: Int,
+    txOutCount: Int,
+    witnessCount: Int,
+  ): CardanoCliCmdTransactionMinFee = {
     cardanoCli
       .transaction
       .calculateMinFee
@@ -122,43 +111,32 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) {
       .txInCount(txInCount)
       .txOutCount(txOutCount)
       .witnessCount(witnessCount)
-
       .protocolParamsFile(protocolParams)
-      .res
-      .pipe(Regexes.spaces.split(_))
-      .apply(0)
-      .toLong
   }
 
   def signTx(
-              keys: NonEmptyList[File],
-              txBody: File,
-              outFile: File
-            ): Unit = {
+    keys: NonEmptyList[File],
+    txBody: File,
+    outFile: File
+  ): CardanoCliCmdTransactionSign = {
     cardanoCli
       .transaction
       .sign
       .pipe(keys.foldLeft(_)(_.signingKeyFile(_)))
-
       .txBodyFile(txBody)
       .outFile(outFile)
-      .tap(x => println(x.stringRepr))
-      .runOrFail
   }
 
-  def submitTx(
-                signedTx: File,
-              ): Unit = {
+  def submitTx(signedTx: File): CardanoCliCmdTransactionSubmit = {
     cardanoCli
       .transaction
       .submit
       .txFile(signedTx)
-      .runOrFail
   }
 }
 
 trait CardanoCliSyntax {
 
-  implicit def toCardanoCliOps(cardanoCli: CardanoCli)(implicit networkChooser: NetworkChooser): CardanoCliOps =
+  implicit def toCardanoCliOps(cardanoCli: CardanoCli): CardanoCliOps =
     new CardanoCliOps(cardanoCli)
 }

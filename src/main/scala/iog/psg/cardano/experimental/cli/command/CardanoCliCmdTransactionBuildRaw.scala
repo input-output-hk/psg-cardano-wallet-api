@@ -50,10 +50,11 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
   def run(implicit net: NetworkChooser): Int = exitValue
 
   private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
-//    assets.iterator
-//      .map(a => s"${a.tokenAmount} ${a.policyId}.${a.tokenName.value}")
-//      .mkString(" + ")
-    "BORKEN"
+    assets.toList.iterator
+      .map(a => s"${a.tokenAmount} ${a.policyId}.${a.tokenName.value}")
+      .mkString(" + ")
+
+    // question for Alan: why do you think it's broken?
   }
 
   override type Out = CardanoCliCmdTransactionBuildRaw

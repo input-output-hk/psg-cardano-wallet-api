@@ -1,13 +1,12 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.command
-import iog.psg.cardano.experimental.cli.util.{CliCmd, CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmd, NetworkChooser, ProcessBuilderHelper}
 
 import java.nio.file.Path
 
 
-
-case class CardanoCli(val builder: ProcessBuilderHelper) extends CliCmd {
+case class CardanoCli(builder: ProcessBuilderHelper) extends CliCmd {
 
   lazy val help: CardanoCliCmdHelp = command.CardanoCliCmdHelp(builder.withCommand("help"))
   lazy val key: CardanoCliCmdKey = command.CardanoCliCmdKey(builder.withCommand("key"))
@@ -18,12 +17,10 @@ case class CardanoCli(val builder: ProcessBuilderHelper) extends CliCmd {
   val CARDANO_NODE_SOCKET_PATH = "CARDANO_NODE_SOCKET_PATH"
 
   def withCardanoNodeSocketPath(path: String): CardanoCli =
-    CardanoCli(builder.withEnv(CARDANO_NODE_SOCKET_PATH, path))
+    copy(builder = builder.withEnv(CARDANO_NODE_SOCKET_PATH, path))
 
   def withSudo(value: Boolean = true): CardanoCli =
-    CardanoCli(builder.withSudo(value))
-
-
+    copy(builder = builder.withSudo(value))
 }
 
 object CardanoCli {

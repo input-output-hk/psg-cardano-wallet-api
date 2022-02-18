@@ -26,7 +26,6 @@ object TemplateClient2 {
 
       import session._
 
-      genKeys.run
 
       setPaymentScript("DIFFERENT")
 
