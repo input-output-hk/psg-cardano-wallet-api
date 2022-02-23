@@ -2,7 +2,7 @@ package iog.psg.cardano.experimental.cli.ops
 
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.{CardanoCli, CardanoCliCmdAddressBuild, CardanoCliCmdAddressKeyGenNormalKey, CardanoCliCmdAddressKeyHash, CardanoCliCmdQueryProtocol, CardanoCliCmdTransactionBuildRaw, CardanoCliCmdTransactionMinFee, CardanoCliCmdTransactionPolicyId, CardanoCliCmdTransactionSign, CardanoCliCmdTransactionSubmit}
-import iog.psg.cardano.experimental.cli.model.{Base16String, NativeAsset, TxIn, TxOut, UTXO}
+import iog.psg.cardano.experimental.cli.model.{AssetId, Base16String, NativeAsset, TxIn, TxOut, UTXO}
 import iog.psg.cardano.experimental.cli.util.{NetworkChooser, Regexes}
 
 import scala.util.chaining._
@@ -53,18 +53,33 @@ final class CardanoCliOps(private val cardanoCli: CardanoCli) {
       .run[List[String]]
       .drop(2) // drop headers
       .map { line =>
-        val data = Regexes.spaces.split(line)
+        val data = Regexes.utxoPartSeparator.split(line)
 
-        def get(ix: Int): Option[String] = data.lift(ix)
+        val nativeAssets: List[NativeAsset] = {
+          data
+            .tail
+            .iterator
+            .flatMap { asset =>
+              val tokenAmountAndTokenInfo = Regexes.spaces.split(asset)
 
-        val maybeAssets = for {
-          tokenAmount <- get(5).flatMap(_.toIntOption)
-          policyIdAndName <- get(6).map(_.split('.'))
-          policyId <- policyIdAndName.lift(0)
-          tokenName <- policyIdAndName.lift(1).flatMap(Base16String.validate)
-        } yield NativeAsset(tokenName, tokenAmount, policyId)
+              for {
+                tokenAmount <- tokenAmountAndTokenInfo.headOption.flatMap(_.toIntOption)
+                policyIdAndName <- tokenAmountAndTokenInfo.lift(1).map(_.split('.'))
+                policyId <- policyIdAndName.headOption
+                tokenName <- policyIdAndName.lift(1).flatMap(Base16String.validate)
+              } yield NativeAsset(AssetId(policyId, tokenName), tokenAmount)
+            }
+            .toList
+        }
 
-        UTXO(data(0), data(1).toInt, data(2).toLong, maybeAssets.toList)
+        val txHashTxIdLovelace: Array[String] = Regexes.spaces.split(data(0))
+
+        UTXO(
+          txHash = txHashTxIdLovelace(0),
+          txIx = txHashTxIdLovelace(1).toInt,
+          lovelace = txHashTxIdLovelace(2).toLong,
+          assets = nativeAssets
+        )
       }
   }
 

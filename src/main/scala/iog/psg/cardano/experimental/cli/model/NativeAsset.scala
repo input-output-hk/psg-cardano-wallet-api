@@ -1,7 +1,8 @@
 package iog.psg.cardano.experimental.cli.model
 
+case class AssetId(policyId: String, name: Base16String)
+
 case class NativeAsset(
-  tokenName: Base16String,
-  tokenAmount: Long,
-  policyId: String
+  assetId: AssetId,
+  tokenAmount: Long
 )

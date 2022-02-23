@@ -51,7 +51,7 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
     assets.toList.iterator
-      .map(a => s"${a.tokenAmount} ${a.policyId}.${a.tokenName.value}")
+      .map(a => s"${a.tokenAmount} ${a.assetId.policyId}.${a.assetId.name.value}")
       .mkString(" + ")
 
     // question for Alan: why do you think it's broken?
