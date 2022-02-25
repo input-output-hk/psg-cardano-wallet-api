@@ -1,8 +1,9 @@
-package iog.psg.cardano.experimental.nativeassets
+package iog.psg.cardano.experimental.cli.model
 
 import cats.data.NonEmptyList
 import io.circe._
 import io.circe.syntax._
+
 
 sealed trait Policy
 

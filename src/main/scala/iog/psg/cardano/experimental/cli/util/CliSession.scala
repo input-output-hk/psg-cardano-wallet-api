@@ -1,14 +1,13 @@
 package iog.psg.cardano.experimental.cli.util
 
-
 import iog.psg.cardano.experimental.cli.command.{CardanoCli, CardanoCliCmdAddressKeyGen, CardanoCliCmdAddressKeyGenNormalKey, CardanoCliCmdQueryProtocol}
+import iog.psg.cardano.experimental.cli.implicits.toCardanoCliOps
 import iog.psg.cardano.experimental.cli.param.{OutFile, PaymentScriptFile, PaymentVerificationKeyFile, SigningKeyFile}
 
 import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import scala.io.Source
 import scala.util.Using
-
 
 case class CliSession private (
   private val workingFolder: Path = Paths.get("."),
@@ -62,7 +61,6 @@ case class CliSession private (
     println("CLOSE")
   }
 
-  import iog.psg.cardano.experimental.cli.implicits._
 
   def genPolicyKeys(implicit cardanoCli: CardanoCli): CardanoCliCmdAddressKeyGenNormalKey = {
     cardanoCli.genKeys(
