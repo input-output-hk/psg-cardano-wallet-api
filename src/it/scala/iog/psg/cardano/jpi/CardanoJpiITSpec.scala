@@ -1,8 +1,5 @@
 package iog.psg.cardano.jpi
 
-import java.time.ZonedDateTime
-import java.util.concurrent.TimeUnit
-
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TestWalletsConfig
 import iog.psg.cardano.TestWalletsConfig.baseUrl
@@ -12,6 +9,8 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.ZonedDateTime
+import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
 class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with ModelCompare with BeforeAndAfterAll {

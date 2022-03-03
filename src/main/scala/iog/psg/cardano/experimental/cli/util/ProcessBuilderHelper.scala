@@ -36,6 +36,12 @@ case class ProcessBuilderHelper(
       .mkString(" ")
   }
 
-  lazy val processBuilder: ProcessBuilder =
-    Process(command ++ parameters, None, extraEnv = env.toSeq: _*)
+  lazy val processBuilder: ProcessBuilder = {
+
+    val cmdWithSudoOpt = if(sudo) {
+      "sudo" +: command
+    } else command
+
+    Process(cmdWithSudoOpt ++ parameters, None, extraEnv = env.toSeq: _*)
+  }
 }

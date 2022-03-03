@@ -1,15 +1,14 @@
 package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.experimental.cli.param.{OutFile, TxBodyFile, WitnessFile}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.param.{CanRun, OutFile, TxBodyFile, WitnessFile}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 case class CardanoCliCmdTransactionAssemble(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
     with TxBodyFile
     with OutFile
-    with WitnessFile {
-
-  def run(implicit net: NetworkChooser): Int = exitValue
+    with WitnessFile
+    with CanRun {
 
   override type Out = CardanoCliCmdTransactionAssemble
 

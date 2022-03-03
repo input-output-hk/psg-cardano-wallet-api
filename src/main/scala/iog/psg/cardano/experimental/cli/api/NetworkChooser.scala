@@ -1,4 +1,6 @@
-package iog.psg.cardano.experimental.cli.util
+package iog.psg.cardano.experimental.cli.api
+
+import iog.psg.cardano.experimental.cli.util.ProcessBuilderHelper
 
 trait NetworkChooser {
   def withNetwork(processBuilderHelper: ProcessBuilderHelper): ProcessBuilderHelper

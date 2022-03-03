@@ -1,10 +1,9 @@
 package iog.psg.cardano.experimental.cli.param
 
 
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, FileParam}
+import iog.psg.cardano.experimental.cli.util.CliCmdBuilder
 
 import java.io.File
-import java.nio.file.Files
 
 
 trait PaymentScriptFile {
@@ -14,8 +13,4 @@ trait PaymentScriptFile {
     build(_.withParam("--payment-script-file", file))
   }
 
-
-  def paymentScriptFile(implicit fp: FileParam[PaymentScriptFile]): Out = {
-    paymentScriptFile(fp.file)
-  }
 }

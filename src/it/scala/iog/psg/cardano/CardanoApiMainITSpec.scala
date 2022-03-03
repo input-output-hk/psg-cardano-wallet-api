@@ -1,11 +1,8 @@
 package iog.psg.cardano
 
-import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
 import io.circe.generic.auto._
-import io.circe.parser.{decode, _}
-import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
+import io.circe.parser._
 import iog.psg.cardano.CardanoApiCodec.WalletAddressId
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.TestWalletsConfig.baseUrl
@@ -17,6 +14,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time._
 
+import java.time.ZonedDateTime
 import scala.io.Source
 
 class CardanoApiMainITSpec extends AnyFlatSpec with Matchers with Configure with ScalaFutures with BeforeAndAfterAll with Eventually {

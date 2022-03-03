@@ -5,7 +5,7 @@ import io.circe.jawn.decode
 import io.circe.syntax._
 import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec._
-import iog.psg.cardano.util.{ CustomPatienceConfiguration, DummyModel, ResourceFiles }
+import iog.psg.cardano.util.{CustomPatienceConfiguration, DummyModel, ResourceFiles}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

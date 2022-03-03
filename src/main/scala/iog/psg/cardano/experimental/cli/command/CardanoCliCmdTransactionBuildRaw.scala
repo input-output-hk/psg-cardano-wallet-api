@@ -2,15 +2,16 @@ package iog.psg.cardano.experimental.cli.command
 
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.model.{NativeAsset, TxIn, TxOut}
-import iog.psg.cardano.experimental.cli.param.{MaryEra, OutFile}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.param.{CanRun, MaryEra, OutFile}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 import java.io.File
 
 case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
     with OutFile
-    with MaryEra {
+    with MaryEra
+    with CanRun {
 
   def ttl(value: Long): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--ttl", value.toString))
@@ -47,14 +48,10 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
   def txinScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--txin-script-file", file))
 
-  def run(implicit net: NetworkChooser): Int = exitValue
-
   private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
     assets.toList.iterator
       .map(a => s"${a.tokenAmount} ${a.assetId.policyId}.${a.assetId.name.value}")
       .mkString(" + ")
-
-    // question for Alan: why do you think it's broken?
   }
 
   override type Out = CardanoCliCmdTransactionBuildRaw

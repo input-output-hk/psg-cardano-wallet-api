@@ -3,13 +3,24 @@ package iog.psg.cardano.experimental.cli.model
 import cats.data.NonEmptyList
 import io.circe._
 import io.circe.syntax._
+import iog.psg.cardano.experimental.cli.api.{InFile, KeyType}
+import iog.psg.cardano.experimental.cli.util.RandomTempFolder
 
 
-sealed trait Policy
+
+
+case class PolicyId(value: String) extends AnyVal
+
+sealed trait Policy extends InFile
 
 object Policy {
-  case class All(scripts: NonEmptyList[Script]) extends Policy
-  case class Script(keyHash: String)
+  case class All(scripts: NonEmptyList[Script])(implicit val rootFolder: RandomTempFolder) extends Policy {
+    override val content: String = Policy.asString(this)
+  }
+
+  case class Script(keyHash: KeyHash[_ <: KeyType])
+
+  def asString(policy: Policy): String = policy.asJson.noSpaces
 
   implicit val encoder: Encoder[Policy] = {
     val allType = ("type", "all".asJson)
@@ -22,7 +33,7 @@ object Policy {
           ("scripts", scripts.map { s =>
             Json.obj(
               sigType,
-              ("keyHash", s.keyHash.asJson)
+              ("keyHash", s.keyHash.content.asJson)
             )
           }.asJson)
         )

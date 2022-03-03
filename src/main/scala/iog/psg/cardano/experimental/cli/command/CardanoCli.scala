@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.command
 
 import iog.psg.cardano.experimental.cli.command
-import iog.psg.cardano.experimental.cli.util.{CliCmd, NetworkChooser, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmd, ProcessBuilderHelper}
 
 import java.nio.file.Path
 

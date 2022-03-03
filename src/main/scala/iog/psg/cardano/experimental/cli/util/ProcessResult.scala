@@ -3,6 +3,7 @@ package iog.psg.cardano.experimental.cli.util
 import scala.sys.process._
 import scala.util.Try
 
+
 trait ProcessResult[A] {
   def apply(process: ProcessBuilder): A
   def map[B](f: A => B): ProcessResult[B] = a => f(apply(a))

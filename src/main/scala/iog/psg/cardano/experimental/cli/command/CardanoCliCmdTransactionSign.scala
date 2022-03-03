@@ -1,14 +1,15 @@
 package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.experimental.cli.param.{OutFile, SigningKeyFile, TestnetMagic, TxBodyFile}
+import iog.psg.cardano.experimental.cli.param._
 import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 case class CardanoCliCmdTransactionSign(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
-    with TestnetMagic
+    with ChooseNetwork
     with SigningKeyFile
     with TxBodyFile
-    with OutFile {
+    with OutFile
+    with CanRun {
 
   override type Out = CardanoCliCmdTransactionSign
 

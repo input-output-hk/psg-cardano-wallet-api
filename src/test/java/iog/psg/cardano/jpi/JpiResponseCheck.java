@@ -6,12 +6,13 @@ import scala.Enumeration;
 import scala.Option;
 import scala.concurrent.Future;
 import scala.jdk.CollectionConverters;
+import scala.util.Either;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
-import static scala.compat.java8.FutureConverters.*;
-import scala.util.Either;
+
+import static scala.compat.java8.FutureConverters.toJava;
 
 public class JpiResponseCheck {
 

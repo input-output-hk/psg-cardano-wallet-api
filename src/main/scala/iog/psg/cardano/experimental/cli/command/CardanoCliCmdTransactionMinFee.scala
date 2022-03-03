@@ -1,14 +1,15 @@
 package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.experimental.cli.param.{TestnetMagic, TxBodyFile}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.param.{CanRun, ChooseNetwork, TxBodyFile}
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 import java.io.File
 
 case class CardanoCliCmdTransactionMinFee(protected val builder: ProcessBuilderHelper)
   extends CliCmdBuilder
     with TxBodyFile
-    with TestnetMagic {
+    with ChooseNetwork
+    with CanRun {
 
   def protocolParamsFile(protocolParams: File): CardanoCliCmdTransactionMinFee =
     copy(builder.withParam("--protocol-params-file", protocolParams))
@@ -21,8 +22,6 @@ case class CardanoCliCmdTransactionMinFee(protected val builder: ProcessBuilderH
 
   def witnessCount(witnessCount: Int): CardanoCliCmdTransactionMinFee =
     copy(builder.withParam("--witness-count", witnessCount))
-
-  def res(implicit net: NetworkChooser): String = run[String]
 
   override type Out = CardanoCliCmdTransactionMinFee
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdTransactionMinFee = copy(b)

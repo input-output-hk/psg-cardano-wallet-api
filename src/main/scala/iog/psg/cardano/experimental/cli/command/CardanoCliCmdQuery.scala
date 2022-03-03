@@ -1,6 +1,6 @@
 package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.experimental.cli.util.{CliCmd, CliCmdBuilder, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.util.{CliCmd, ProcessBuilderHelper}
 
 case class CardanoCliCmdQuery(protected val builder: ProcessBuilderHelper) extends CliCmd {
 

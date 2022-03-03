@@ -1,16 +1,15 @@
 package iog.psg.cardano.experimental.cli.command
 
-import iog.psg.cardano.experimental.cli.param.{MaryEra, OutFile, ShelleyMode, TestnetMagic}
-import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, NetworkChooser, ProcessBuilderHelper}
+import iog.psg.cardano.experimental.cli.param._
+import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 case class CardanoCliCmdQueryProtocol(builder: ProcessBuilderHelper)
   extends CliCmdBuilder
-    with TestnetMagic
+    with ChooseNetwork
     with ShelleyMode
     with MaryEra
-    with OutFile {
-
-  def res(implicit net: NetworkChooser): String = run[String]
+    with OutFile
+    with CanRun {
 
   override type Out = CardanoCliCmdQueryProtocol
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdQueryProtocol = copy(b)
