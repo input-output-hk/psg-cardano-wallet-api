@@ -6,6 +6,7 @@ import iog.psg.cardano.experimental.cli.api._
 import iog.psg.cardano.experimental.cli.command.CardanoCli
 import iog.psg.cardano.experimental.cli.model.{Key, Policy, TxIn, TxOut}
 import iog.psg.cardano.experimental.cli.util.RandomFolderFactory
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -15,13 +16,18 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.sys.process
 
 
-class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures {
+class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with BeforeAndAfterAll{
 
   val cardanoCli = CardanoCli()
   implicit val networkChooser: NetworkChooser = NetworkChooser.DefaultTestnet
   import concurrent.ExecutionContext.Implicits.global
   val factory = RandomFolderFactory(Files.createTempDirectory("tests"))
   implicit val root = factory.folder
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    factory.close()
+  }
 
   var list: List[String] = List.empty
 

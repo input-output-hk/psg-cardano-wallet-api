@@ -2,7 +2,8 @@ package iog.psg.cardano
 
 import akka.actor.ActorSystem
 import io.circe.generic.auto._
-import io.circe.parser._
+import io.circe.parser.{decode, _}
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 import iog.psg.cardano.CardanoApiCodec.WalletAddressId
 import iog.psg.cardano.CardanoApiMain.CmdLine
 import iog.psg.cardano.TestWalletsConfig.baseUrl
