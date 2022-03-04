@@ -13,7 +13,7 @@ import scala.util.chaining.scalaUtilChainingOps
 case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: NetworkChooser,
                                                  runner: ProcessBuilderRunner,
                                                  ec: ExecutionContext,
-                                                 randomTempFolder: RandomTempFolder) {
+                                                 val cliApiRootFolder: RandomTempFolder) {
 
   def protocolParams: CliApiRequest[ProtocolParams] = new CliApiRequest[ProtocolParams] {
 
