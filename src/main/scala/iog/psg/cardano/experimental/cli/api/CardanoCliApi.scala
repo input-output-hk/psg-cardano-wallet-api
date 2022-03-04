@@ -51,7 +51,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
 
   }
 
-  def genVerificationAndSigningKeys(): CliApiRequest[(Key[Verification], Key[Signing])] = new CliApiRequest[(Key[Verification], Key[Signing])]  {
+  def generateKeyPair(): CliApiRequest[(Key[Verification], Key[Signing])] = new CliApiRequest[(Key[Verification], Key[Signing])]  {
 
     val verKey = Key[Verification]()
     val signKey = Key[Signing]()

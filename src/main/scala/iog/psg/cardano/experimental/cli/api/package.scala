@@ -30,7 +30,7 @@ package object api {
     def runListString(processBuilder: ProcessBuilder): List[String]
   }
 
-  private def generateRandomFileName(): String = Random.nextLong().toString
+  private def generateRandomFileName(): String = Random.nextLong(Long.MaxValue).toString
 
   trait IsFile {
     implicit val rootFolder: RandomTempFolder
@@ -63,10 +63,17 @@ package object api {
       }
     }
 
-    implicit class ReadFrom(outFile: OutFile)(implicit randomFolderFactory: RandomFolderFactory) {
+    implicit class ReadFrom(outFile: OutFile) {
 
       def read: String = {
-        val bufferedSource = Source.fromFile(outFile.file)
+        outFile.file.read
+      }
+    }
+
+    implicit class ReadFromFile(file: File) {
+
+      def read: String = {
+        val bufferedSource = Source.fromFile(file)
         try {
           bufferedSource.getLines().mkString
         } finally {

@@ -78,7 +78,7 @@ class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with
   "commands" should "match the expected command lines" in {
 
     val (paymentVerKey: Key[Verification], policyVerKey: Key[Signing]) = sut
-      .genVerificationAndSigningKeys()
+      .generateKeyPair()
       .executeBlockingUnsafe
 
     val s = s"[./cardano-cli, address, key-gen, --verification-key-file, ${paymentVerKey.file.toString}, --signing-key-file, ${policyVerKey.file.toString}, --normal-key]"
