@@ -2,7 +2,7 @@ package iog.psg.cardano.experimental.cli.command
 
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.model.{NativeAsset, TxIn, TxOut}
-import iog.psg.cardano.experimental.cli.param.{CanRun, MaryEra, OutFile}
+import iog.psg.cardano.experimental.cli.param.{CanRun, MaryEra, MetadataJsonFile, OutFile}
 import iog.psg.cardano.experimental.cli.util.{CliCmdBuilder, ProcessBuilderHelper}
 
 import java.io.File
@@ -11,6 +11,7 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
   extends CliCmdBuilder
     with OutFile
     with MaryEra
+    with MetadataJsonFile
     with CanRun {
 
   def ttl(value: Long): CardanoCliCmdTransactionBuildRaw =
@@ -18,6 +19,7 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
 
   def fee(value: Long): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--fee", value.toString))
+
 
   def txIn(value: String): CardanoCliCmdTransactionBuildRaw =
     copy(builder.withParam("--tx-in", value))

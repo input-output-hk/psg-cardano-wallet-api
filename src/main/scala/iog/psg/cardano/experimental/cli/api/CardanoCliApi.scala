@@ -3,6 +3,7 @@ package iog.psg.cardano.experimental.cli.api
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.CardanoCli
 import iog.psg.cardano.experimental.cli.model._
+import iog.psg.cardano.experimental.cli.param.MetadataJsonFile
 import iog.psg.cardano.experimental.cli.util.{RandomTempFolder, Regexes}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -157,6 +158,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
                fee: Long,
                txIns: NonEmptyList[TxIn],
                txOuts: NonEmptyList[TxOut],
+               maybeMetadata: Option[MetadataJson] = None,
                maybeMinting: Option[(NonEmptyList[NativeAsset], Policy)] = None,
              ): CliApiRequest[Tx] = new CliApiRequest[Tx] {
     override def execute: Future[Tx] = Future {
@@ -167,6 +169,9 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
         .transaction
         .buildRaw
         .fee(fee)
+        .pipe(builder => maybeMetadata.fold(builder){ meta =>
+          builder.metadataJsonFile(meta.file)
+        })
         .pipe(txIns.foldLeft(_)(_.txIn(_)))
         .pipe(txOuts.foldLeft(_)(_.txOut(_)))
         .pipe(builder => maybeMinting.fold(builder) {
