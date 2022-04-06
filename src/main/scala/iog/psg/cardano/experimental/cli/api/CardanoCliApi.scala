@@ -3,7 +3,8 @@ package iog.psg.cardano.experimental.cli.api
 import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.command.CardanoCli
 import iog.psg.cardano.experimental.cli.model._
-import iog.psg.cardano.experimental.cli.param.MetadataJsonFile
+import iog.psg.cardano.experimental.cli.processrunner.BlockingProcessRunner
+import iog.psg.cardano.experimental.cli.processrunner.Ops._
 import iog.psg.cardano.experimental.cli.util.{RandomTempFolder, Regexes}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,7 +13,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 
 case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: NetworkChooser,
-                                                 runner: ProcessBuilderRunner,
+                                                 runner: BlockingProcessRunner,
                                                  ec: ExecutionContext,
                                                  val cliApiRootFolder: RandomTempFolder) {
 
@@ -28,7 +29,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
         .outFile(outFile.file)
         .withNetwork
 
-      runner.runUnit(cmd.processBuilder)
+      runner(cmd.processBuilder)
 
       outFile
     }
@@ -46,7 +47,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
         .processBuilder
 
     override def execute: Future[KeyHash[A]] = Future {
-      val result = runner.runString(processBuilder)
+      val result = runner(processBuilder).asUnsafe[String]
       KeyHash(result)
     }
 
@@ -67,7 +68,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
         .processBuilder
 
     override def execute: Future[(Key[Verification], Key[Signing])] = Future {
-      runner.runUnit(processBuilder)
+      runner(processBuilder).asUnsafe[Unit]
       (verKey, signKey)
     }
 
@@ -77,14 +78,14 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
 
     override def execute: Future[Address] = Future {
 
-      Address(runner.runString(
+      Address(runner(
         cardanoCli
           .address
           .build
           .paymentVerificationKeyFile(paymentVerificationKey.file)
           .withNetwork
           .processBuilder
-      ))
+      ).asUnsafe[String])
     }
   }
 
@@ -93,12 +94,12 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
     override def execute: Future[PolicyId] = Future {
 
       PolicyId(
-        runner.runString(cardanoCli
+        runner(cardanoCli
           .transaction
           .policid
           .scriptFile(policy.file)
           .processBuilder
-        )
+        ).asUnsafe[String]
       )
 
     }
@@ -109,7 +110,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
 
     override def execute: Future[List[Utxo]] = Future {
 
-      val utxos = runner.runListString(
+      val utxos = runner(
 
         cardanoCli
           .query
@@ -118,7 +119,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
           .withNetwork
           .processBuilder
 
-      )
+      ).asUnsafe[List[String]]
 
       utxos
         .drop(2) // drop headers
@@ -165,7 +166,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
 
       val tx = Tx()
 
-      runner.runUnit(cardanoCli
+      runner(cardanoCli
         .transaction
         .buildRaw
         .fee(fee)
@@ -181,7 +182,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
               .mintScriptFile(mintScriptFile.file)
         })
         .outFile(tx.file)
-        .processBuilder)
+        .processBuilder).asUnsafe[Unit]
 
       tx
     }
@@ -195,7 +196,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
                     witnessCount: Int): CliApiRequest[String] = new CliApiRequest[String] {
 
     override def execute: Future[String] = Future {
-      runner.runString(
+      runner(
         cardanoCli
           .transaction
           .calculateMinFee
@@ -206,7 +207,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
           .withNetwork
           .protocolParamsFile(protocolParams.file)
           .processBuilder
-      )
+      ).asUnsafe[String]
     }
   }
 
@@ -217,7 +218,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
 
     override def execute: Future[SignedTx] = Future {
       val signed = SignedTx()
-      runner.runUnit(
+      runner(
         cardanoCli
           .transaction
           .sign
@@ -226,7 +227,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
           .outFile(signed.file)
           .withNetwork
           .processBuilder
-      )
+      ).asUnsafe[Unit]
       signed
     }
   }
@@ -234,14 +235,14 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
   def submitTx(signedTx: SignedTx): CliApiRequest[Unit] = new CliApiRequest[Unit] {
 
     override def execute: Future[Unit] = Future {
-      runner.runUnit(
+      runner(
         cardanoCli
           .transaction
           .submit
           .txFile(signedTx.file)
           .withNetwork
           .processBuilder
-      )
+      ).asUnsafe[Unit]
     }
   }
 
