@@ -11,7 +11,7 @@ case class CardanoCliCmdQueryUtxo(protected val builder: ProcessBuilderHelper)
     with CanRun {
 
   def address(address: String): CardanoCliCmdQueryUtxo =
-    copy(builder.withParam("--address", address))
+    withParam("--address", address)
 
   override type Out = CardanoCliCmdQueryUtxo
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdQueryUtxo = copy(b)

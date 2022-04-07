@@ -8,5 +8,5 @@ trait ScriptFile {
   self: CliCmdBuilder =>
 
   def scriptFile(file: File): Out =
-    build(_.withParam("--script-file", file))
+    withParam("--script-file", file)
 }

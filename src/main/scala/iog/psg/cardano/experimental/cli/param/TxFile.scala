@@ -8,5 +8,5 @@ trait TxFile {
   self: CliCmdBuilder =>
 
   def txFile(file: File): Out =
-    build(_.withParam("--tx-file", file))
+    withParam("--tx-file", file)
 }

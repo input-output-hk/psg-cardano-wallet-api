@@ -8,5 +8,5 @@ trait WitnessFile {
   self: CliCmdBuilder =>
 
   def witnessFile(txBody: File): Out =
-    build(_.withParam("--witness-file", txBody))
+    withParam("--witness-file", txBody)
 }

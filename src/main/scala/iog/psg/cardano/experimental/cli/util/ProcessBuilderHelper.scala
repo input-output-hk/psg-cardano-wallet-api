@@ -1,5 +1,8 @@
 package iog.psg.cardano.experimental.cli.util
 
+import cats.Foldable
+import cats.implicits._
+
 import iog.psg.cardano.experimental.cli.param.ParamValueEncoder
 
 import scala.sys.process.{Process, ProcessBuilder}
@@ -22,6 +25,9 @@ case class ProcessBuilderHelper(
 
   def withParam[V: ParamValueEncoder](param: String, value: V): ProcessBuilderHelper =
     copy(parameters = parameters :+ param :+ ParamValueEncoder[V].apply(value))
+
+  def withParams[C[_]: Foldable, V: ParamValueEncoder](param: String, values: C[V]): ProcessBuilderHelper =
+    values.foldLeft(this) { case (b, v) => b.withParam(param, ParamValueEncoder[V].apply(v)) }
 
   def withEnv(envName: String, value: String): ProcessBuilderHelper =
     copy(env = env + (envName -> value))

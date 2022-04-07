@@ -10,7 +10,7 @@ trait PaymentScriptFile {
   this: CliCmdBuilder =>
 
   def paymentScriptFile(file: File): Out = {
-    build(_.withParam("--payment-script-file", file))
+    withParam("--payment-script-file", file)
   }
 
 }

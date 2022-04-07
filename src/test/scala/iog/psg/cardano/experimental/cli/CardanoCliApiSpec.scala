@@ -94,10 +94,10 @@ class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with
       s"[./cardano-cli, address, key-hash, --payment-verification-key-file, ${policyVerKey.file.toString}]",
     )
 
-    val policy = Policy.All(
+    val policy = Policy.all(
       NonEmptyList.of(
-        Policy.Script(paymentVerKeyHash),
-        Policy.Script(policyVerKeyHash)
+        Policy.Script.Signature(paymentVerKeyHash),
+        Policy.Script.Signature(policyVerKeyHash)
       )
     )
 
