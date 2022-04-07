@@ -6,5 +6,5 @@ trait MaryEra {
   self: CliCmdBuilder =>
 
   lazy val maryEra: Out =
-    build(_.withParam("--mary-era"))
+    withParam("--mary-era")
 }

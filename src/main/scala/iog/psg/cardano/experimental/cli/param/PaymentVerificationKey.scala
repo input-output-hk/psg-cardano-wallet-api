@@ -6,5 +6,5 @@ trait PaymentVerificationKey {
   this: CliCmdBuilder =>
 
   def paymentVerificationKey(value: String): Out =
-    build(_.withParam("--payment-verification-key", value))
+    withParam("--payment-verification-key", value)
 }

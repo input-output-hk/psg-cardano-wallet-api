@@ -8,5 +8,5 @@ trait TxBodyFile {
   self: CliCmdBuilder =>
 
   def txBodyFile(txBody: File): Out =
-    build(_.withParam("--tx-body-file", txBody))
+    withParam("--tx-body-file", txBody)
 }

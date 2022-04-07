@@ -15,20 +15,22 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
     with CanRun {
 
   def ttl(value: Long): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--ttl", value.toString))
+    withParam("--ttl", value)
 
   def fee(value: Long): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--fee", value.toString))
-
+    withParam("--fee", value)
 
   def txIn(value: String): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--tx-in", value))
+    withParam("--tx-in", value)
 
   def txIn(in: TxIn): CardanoCliCmdTransactionBuildRaw =
     txIn(s"${in.txHash}#${in.txIx}")
 
+  def txIns(values: NonEmptyList[TxIn]): CardanoCliCmdTransactionBuildRaw =
+    values.foldLeft(this)(_.txIn(_))
+
   def txOut(value: String): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--tx-out", value))
+    withParam("--tx-out", value)
 
   def txOut(out: TxOut): CardanoCliCmdTransactionBuildRaw = {
     val addressOutput = s"${out.address}+${out.output}"
@@ -37,18 +39,32 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
     txOut(finalParam)
   }
 
-  def mint(value: String): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--mint", value))
+  def txOuts(values: NonEmptyList[TxOut]): CardanoCliCmdTransactionBuildRaw =
+    values.foldLeft(this)(_.txOut(_))
 
-  def mint(assets: NonEmptyList[NativeAsset]): CardanoCliCmdTransactionBuildRaw = {
+  def mint(value: String): CardanoCliCmdTransactionBuildRaw =
+    withParam("--mint", value)
+
+  def mint(assets: NonEmptyList[NativeAsset]): CardanoCliCmdTransactionBuildRaw =
     mint(mintParam(assets))
-  }
 
   def mintScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--minting-script-file", file))
+    withParam("--minting-script-file", file)
 
   def txinScriptFile(file: File): CardanoCliCmdTransactionBuildRaw =
-    copy(builder.withParam("--txin-script-file", file))
+    withParam("--txin-script-file", file)
+
+  /**
+   * Time that transaction is valid from (in slots)
+   */
+  def invalidBefore(slot: Int): CardanoCliCmdTransactionBuildRaw =
+    withParam("--invalid-before", slot)
+
+  /**
+   * Time that transaction is valid until (in slots)
+   */
+  def invalidHereafter(slot: Int): CardanoCliCmdTransactionBuildRaw =
+    withParam("--invalid-hereafter", slot)
 
   private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
     assets.toList.iterator

@@ -8,5 +8,5 @@ trait PaymentVerificationKeyFile {
   this: CliCmdBuilder =>
 
   def paymentVerificationKeyFile(value: File): Out =
-    build(_.withParam("--payment-verification-key-file", value))
+    withParam("--payment-verification-key-file", value)
 }

@@ -12,16 +12,16 @@ case class CardanoCliCmdTransactionMinFee(protected val builder: ProcessBuilderH
     with CanRun {
 
   def protocolParamsFile(protocolParams: File): CardanoCliCmdTransactionMinFee =
-    copy(builder.withParam("--protocol-params-file", protocolParams))
+    withParam("--protocol-params-file", protocolParams)
 
   def txInCount(in: Int): CardanoCliCmdTransactionMinFee =
-    copy(builder.withParam("--tx-in-count", in))
+    withParam("--tx-in-count", in)
 
   def txOutCount(out: Int): CardanoCliCmdTransactionMinFee =
-    copy(builder.withParam("--tx-out-count", out))
+    withParam("--tx-out-count", out)
 
   def witnessCount(witnessCount: Int): CardanoCliCmdTransactionMinFee =
-    copy(builder.withParam("--witness-count", witnessCount))
+    withParam("--witness-count", witnessCount)
 
   override type Out = CardanoCliCmdTransactionMinFee
   override protected def withBuilder(b: ProcessBuilderHelper): CardanoCliCmdTransactionMinFee = copy(b)

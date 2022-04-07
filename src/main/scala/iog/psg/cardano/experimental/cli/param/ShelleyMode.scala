@@ -6,5 +6,5 @@ trait ShelleyMode {
   self: CliCmdBuilder =>
 
   lazy val shelleyMode: Out =
-    build(_.withParam("--shelley-mode"))
+    withParam("--shelley-mode")
 }

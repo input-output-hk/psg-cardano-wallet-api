@@ -155,31 +155,31 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
   }
 
   def buildTx(
-               fee: Long,
-               txIns: NonEmptyList[TxIn],
-               txOuts: NonEmptyList[TxOut],
-               maybeMetadata: Option[MetadataJson] = None,
-               maybeMinting: Option[(NonEmptyList[NativeAsset], Policy)] = None,
-             ): CliApiRequest[Tx] = new CliApiRequest[Tx] {
+    fee: Long,
+    txIns: NonEmptyList[TxIn],
+    txOuts: NonEmptyList[TxOut],
+    maybeMetadata: Option[MetadataJson] = None,
+    maybeMinting: Option[(NonEmptyList[NativeAsset], Policy)] = None,
+    invalidBefore: Option[Int] = None,
+    invalidHereafter: Option[Int] = None,
+  ): CliApiRequest[Tx] = new CliApiRequest[Tx] {
     override def execute: Future[Tx] = Future {
 
       val tx = Tx()
+
+      val (maybeNativeAssets, maybePolicy) = maybeMinting.unzip
 
       runner.runUnit(cardanoCli
         .transaction
         .buildRaw
         .fee(fee)
-        .pipe(builder => maybeMetadata.fold(builder){ meta =>
-          builder.metadataJsonFile(meta.file)
-        })
-        .pipe(txIns.foldLeft(_)(_.txIn(_)))
-        .pipe(txOuts.foldLeft(_)(_.txOut(_)))
-        .pipe(builder => maybeMinting.fold(builder) {
-          case (assets, mintScriptFile) =>
-            builder
-              .mint(assets)
-              .mintScriptFile(mintScriptFile.file)
-        })
+        .txIns(txIns)
+        .txOuts(txOuts)
+        .optional(_.metadataJsonFile)(maybeMetadata.map(_.file))
+        .optional[NonEmptyList[NativeAsset]](_.mint)(maybeNativeAssets)
+        .optional(_.mintScriptFile)(maybePolicy.map(_.file))
+        .optional(_.invalidBefore)(invalidBefore)
+        .optional(_.invalidHereafter)(invalidHereafter)
         .outFile(tx.file)
         .processBuilder)
 
@@ -221,7 +221,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
         cardanoCli
           .transaction
           .sign
-          .pipe(keys.map(_.file).foldLeft(_)(_.signingKeyFile(_)))
+          .signingKeyFiles(keys.map(_.file))
           .txBodyFile(txBody.file)
           .outFile(signed.file)
           .withNetwork
