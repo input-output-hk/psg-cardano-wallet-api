@@ -29,6 +29,7 @@ class PolicySpec extends AnyFlatSpec with Matchers {
 
       assertResult(expectedPolicy.kind)(actualPolicy.kind)
       assertResult(expectedPolicy.scripts)(actualPolicy.scripts)
+      assertResult(expectedPolicy)(actualPolicy)
     }
 
     List(Policy.Kind.All, Policy.Kind.AtLeast(10), Policy.Kind.Any).foreach(assert)

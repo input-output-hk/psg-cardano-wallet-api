@@ -24,12 +24,6 @@ package object api {
     def execute: Future[B]
   }
 
-  trait ProcessBuilderRunner {
-    def runString(processBuilder: ProcessBuilder): String
-    def runUnit(processBuilder: ProcessBuilder): Unit
-    def runListString(processBuilder: ProcessBuilder): List[String]
-  }
-
   private def generateRandomFileName(): String = Random.nextLong(Long.MaxValue).toString
 
   trait IsFile {

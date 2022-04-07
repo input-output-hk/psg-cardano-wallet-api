@@ -5,6 +5,7 @@ import iog.psg.cardano.experimental.cli.api.Ops.CliApiReqOps
 import iog.psg.cardano.experimental.cli.api._
 import iog.psg.cardano.experimental.cli.command.CardanoCli
 import iog.psg.cardano.experimental.cli.model.{Key, Policy, TxIn, TxOut}
+import iog.psg.cardano.experimental.cli.processrunner.{BlockingProcessResult, BlockingProcessRunner}
 import iog.psg.cardano.experimental.cli.util.RandomFolderFactory
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -14,6 +15,7 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.sys.process
+import scala.sys.process.ProcessBuilder
 
 
 class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with BeforeAndAfterAll{
@@ -50,26 +52,21 @@ class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with
     }
     list = List.empty
   }
-  implicit val dummyRunner: ProcessBuilderRunner = new ProcessBuilderRunner {
 
-    def addCmdToList(processBuilder: process.ProcessBuilder): Unit = {
+  //declare to avoid illegal cyclic ref error.
+  implicit val dummyRunner: BlockingProcessRunner = new BlockingProcessRunner {
+
+    private def addCmdToList(processBuilder: process.ProcessBuilder): Unit = {
       list = list :+ processBuilder.toString
     }
 
-    override def runString(processBuilder: process.ProcessBuilder): String = {
-      addCmdToList(processBuilder)
-      ""
-    }
-
-    override def runUnit(processBuilder: process.ProcessBuilder): Unit = {
-      addCmdToList(processBuilder)
-    }
-
-    override def runListString(processBuilder: process.ProcessBuilder): List[String] = {
-      addCmdToList(processBuilder)
-      list
+    override def apply(process: ProcessBuilder): processrunner.BlockingProcessResult = {
+      addCmdToList(process)
+      BlockingProcessResult(0, Nil, None)
     }
   }
+
+
 
   implicit val timeout: FiniteDuration = 10.seconds
 
