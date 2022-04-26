@@ -15,4 +15,7 @@ case class CardanoCliCmdQuery(protected val builder: ProcessBuilderHelper) exten
   lazy val utxo: CardanoCliCmdQueryUtxo =
     CardanoCliCmdQueryUtxo(builder.withCommand("utxo"))
 
+  lazy val tip: CardanoCliCmdQueryTip =
+    CardanoCliCmdQueryTip(builder.withCommand("tip"))
+
 }

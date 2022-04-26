@@ -232,9 +232,22 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
     }
   }
 
-  def submitTx(signedTx: SignedTx): CliApiRequest[Unit] = new CliApiRequest[Unit] {
+  def txId(signedTx: SignedTx): CliApiRequest[String] = new CliApiRequest[String] {
 
-    override def execute: Future[Unit] = Future {
+    override def execute: Future[String] = Future {
+      runner(
+        cardanoCli
+          .transaction
+          .txId
+          .txFile(signedTx.file)
+          .processBuilder
+      ).asUnsafe[String]
+    }
+  }
+
+  def submitTx(signedTx: SignedTx): CliApiRequest[String] = new CliApiRequest[String] {
+
+    override def execute: Future[String] = Future {
       runner(
         cardanoCli
           .transaction
@@ -243,7 +256,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
           .withNetwork
           .processBuilder
       ).asUnsafe[Unit]
-    }
+    }.flatMap(_ => txId(signedTx).execute)
   }
 
 }
