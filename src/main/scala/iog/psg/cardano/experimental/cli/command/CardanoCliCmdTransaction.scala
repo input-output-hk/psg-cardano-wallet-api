@@ -24,4 +24,10 @@ case class CardanoCliCmdTransaction(protected val builder: ProcessBuilderHelper)
 
   lazy val sign: CardanoCliCmdTransactionSign =
     CardanoCliCmdTransactionSign(builder.withCommand("sign"))
+
+  lazy val txId: CardanoCliCmdTransactionId =
+    CardanoCliCmdTransactionId(builder.withCommand("txid"))
+
+  lazy val view: CardanoCliCmdTransactionView =
+    CardanoCliCmdTransactionView(builder.withCommand("view"))
 }
