@@ -155,7 +155,8 @@ class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with
 
     listShouldBe(
       s"[./cardano-cli, transaction, calculate-min-fee, --tx-body-file, ${tx.file.toString}, --tx-in-count, 1, --tx-out-count, 1, --witness-count, 2, --testnet-magic, 1097911063, --protocol-params-file, ${params.file.toString}]",
-       s"[./cardano-cli, transaction, submit, --tx-file, ${signedTx.file.toString}, --testnet-magic, 1097911063]",
+      s"[./cardano-cli, transaction, submit, --tx-file, ${signedTx.file.toString}, --testnet-magic, 1097911063]",
+      s"[./cardano-cli, transaction, txid, --tx-file, ${signedTx.file.toString}]"
     )
 
   }
