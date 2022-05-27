@@ -32,7 +32,11 @@ jobs:
       - name: Configure GPG Key
         run: |
             mkdir -p ~/.gnupg/
+            chown -R $(whoami) ~/.gnupg/
+            # Also correct the permissions and access rights on the directory
+            chmod 700 ~/.gnupg
             printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
+            chmod 600 ~/.gnupg/*
             gpg --import --no-tty --batch --yes ~/.gnupg/private.key
       - name: Package
         uses: actions/setup-java@v1.4.3
