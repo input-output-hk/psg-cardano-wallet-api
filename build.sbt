@@ -21,6 +21,7 @@ lazy val rootProject = (project in file("."))
       Developer("maciejbak85", "Maciej Bak", "maciej.bak@iohk.io", url("https://github.com/maciejbak85"))
     ),
     publishMavenStyle := true,
+    updateOptions := updateOptions.value.withGigahorse(false),
     licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
     description := "A java/scala wrapper for the cardano wallet backend API",
     usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F"),
