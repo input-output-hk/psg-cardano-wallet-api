@@ -1,9 +1,7 @@
 package iog.psg.cardano
 
-import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshalling.{ Marshal, Marshaller }
+import akka.http.scaladsl.marshalling.{Marshal, Marshaller}
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model._
@@ -12,13 +10,14 @@ import io.circe.generic.auto._
 import io.circe.generic.extras.Configuration
 import iog.psg.cardano.CardanoApi.Order.Order
 
-import scala.concurrent.{ ExecutionContext, Future }
+import java.time.ZonedDateTime
+import scala.concurrent.{ExecutionContext, Future}
 
 private class CardanoApiImpl(baseUriWithPort: String)(implicit ec: ExecutionContext, as: ActorSystem)
     extends CardanoApi {
 
-  import CardanoApiCodec._
   import CardanoApiCodec.ImplicitCodecs._
+  import CardanoApiCodec._
   import AddressFilter.AddressFilter
   import iog.psg.cardano.CardanoApi._
 

@@ -1,13 +1,12 @@
 package iog.psg.cardano.experimental.cli.param
 
-import iog.psg.cardano.experimental.cli.CopyShim
-import iog.psg.cardano.util.CliCmd
+import iog.psg.cardano.experimental.cli.util.CliCmdBuilder
 
 import java.io.File
 
 trait TxFile {
-  self: CliCmd with CopyShim =>
+  self: CliCmdBuilder =>
 
-  def txFile(txFile: File): CONCRETECASECLASS =
-    copier.copy(builder.withParam("--tx-file", txFile))
+  def txFile(file: File): Out =
+    withParam("--tx-file", file)
 }

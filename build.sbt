@@ -37,11 +37,11 @@ lazy val rootProject = (project in file("."))
     "oss.sonatype.org",
     sys.env.getOrElse("SONA_USER", ""),
     sys.env.getOrElse("SONA_PASS", "")),
-    dynverSonatypeSnapshots in ThisBuild := true,
+    ThisBuild / dynverSonatypeSnapshots  := true,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations"),
-    parallelExecution in Test := true,
-    parallelExecution in IntegrationTest := false,
+    Test / parallelExecution := true,
+    IntegrationTest / parallelExecution := false,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -54,10 +54,10 @@ lazy val rootProject = (project in file("."))
       "commons-codec" % "commons-codec" % commonsCodecVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "it, test",
     ),
-    assemblyMergeStrategy in assembly := {
+    assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
       case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        val oldStrategy = (assembly / assemblyMergeStrategy).value
         oldStrategy(x)
     }
 )

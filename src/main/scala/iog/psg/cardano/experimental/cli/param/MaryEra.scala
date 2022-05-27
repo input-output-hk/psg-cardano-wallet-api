@@ -1,11 +1,10 @@
 package iog.psg.cardano.experimental.cli.param
 
-import iog.psg.cardano.experimental.cli.CopyShim
-import iog.psg.cardano.util.CliCmd
+import iog.psg.cardano.experimental.cli.util.CliCmdBuilder
 
 trait MaryEra {
-  self: CliCmd with CopyShim =>
+  self: CliCmdBuilder =>
 
-  lazy val maryEra: CONCRETECASECLASS =
-    copier.copy(builder.withParam("--mary-era"))
+  lazy val maryEra: Out =
+    withParam("--mary-era")
 }

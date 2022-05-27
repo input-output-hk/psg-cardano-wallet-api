@@ -1,16 +1,14 @@
 package iog.psg.cardano
 
-import java.nio.file.Paths
-import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import iog.psg.cardano.CardanoApi.ErrorMessage
 import iog.psg.cardano.CardanoApiCodec.{AddressFilter, CreateTransactionResponse}
 import iog.psg.cardano.util._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.ZonedDateTime
 
 class CardanoApiSpec
     extends AnyFlatSpec

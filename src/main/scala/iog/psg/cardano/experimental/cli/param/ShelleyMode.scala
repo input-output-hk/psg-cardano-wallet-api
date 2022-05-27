@@ -1,11 +1,10 @@
 package iog.psg.cardano.experimental.cli.param
 
-import iog.psg.cardano.experimental.cli.CopyShim
-import iog.psg.cardano.util.CliCmd
+import iog.psg.cardano.experimental.cli.util.CliCmdBuilder
 
 trait ShelleyMode {
-  self: CliCmd with CopyShim =>
+  self: CliCmdBuilder =>
 
-  lazy val shelleyMode: CONCRETECASECLASS =
-    copier.copy(builder.withParam("--shelley-mode"))
+  lazy val shelleyMode: Out =
+    withParam("--shelley-mode")
 }

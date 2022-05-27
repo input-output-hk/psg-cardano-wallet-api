@@ -1,12 +1,12 @@
 package iog.psg.cardano.util
 
-import java.time.ZonedDateTime
-import java.util.UUID
-
 import io.circe.parser.parse
 import iog.psg.cardano.CardanoApiCodec._
 import iog.psg.cardano.TxMetadataOut
 import org.scalatest.Assertions
+
+import java.time.ZonedDateTime
+import java.util.UUID
 
 trait DummyModel { self: Assertions =>
 

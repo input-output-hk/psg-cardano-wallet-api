@@ -1,25 +1,24 @@
 package iog.psg.cardano.util
 
-import java.io.File
-import java.time.ZonedDateTime
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.util.ByteString
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.circe.{ parser, Json }
+import io.circe.{Json, parser}
 import iog.psg.cardano.CardanoApi.Order.Order
-import iog.psg.cardano.CardanoApi.{ CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order }
-import iog.psg.cardano.CardanoApiCodec.{ GenericMnemonicSecondaryFactor, GenericMnemonicSentence }
+import iog.psg.cardano.CardanoApi.{CardanoApiRequest, CardanoApiResponse, ErrorMessage, Order}
+import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
+import iog.psg.cardano.CardanoApiCodec.{GenericMnemonicSecondaryFactor, GenericMnemonicSentence}
 import iog.psg.cardano.jpi.CardanoApiException
-import iog.psg.cardano.{ ApiRequestExecutor, CardanoApi }
+import iog.psg.cardano.{ApiRequestExecutor, CardanoApi}
 import org.scalatest.Assertions
 import org.scalatest.concurrent.ScalaFutures
-import iog.psg.cardano.CardanoApiCodec.ImplicitCodecs._
 
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
+import java.io.File
+import java.time.ZonedDateTime
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait InMemoryCardanoApi {
   this: ScalaFutures with Assertions with ResourceFiles with DummyModel =>

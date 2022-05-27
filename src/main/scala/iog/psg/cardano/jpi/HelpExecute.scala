@@ -1,14 +1,13 @@
 package iog.psg.cardano.jpi
 
-import java.util.concurrent.CompletionStage
-
-import iog.psg.cardano.ApiRequestExecutor
-import iog.psg.cardano.jpi.{ApiRequestExecutor => JApiRequestExecutor}
 import akka.actor.ActorSystem
+import iog.psg.cardano.ApiRequestExecutor
 import iog.psg.cardano.CardanoApi.CardanoApiOps.CardanoApiRequestOps
 import iog.psg.cardano.CardanoApi.{CardanoApiResponse, ErrorMessage}
 import iog.psg.cardano.CardanoApiCodec.{MetadataValue, MetadataValueStr}
+import iog.psg.cardano.jpi.{ApiRequestExecutor => JApiRequestExecutor}
 
+import java.util.concurrent.CompletionStage
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.jdk.javaapi.FutureConverters

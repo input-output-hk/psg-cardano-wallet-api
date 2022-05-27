@@ -1,11 +1,10 @@
 package iog.psg.cardano.util
 
-import java.io.{BufferedWriter, File, FileWriter}
-
 import io.circe.Encoder
-
-import scala.util.Try
 import io.circe.syntax._
+
+import java.io.{BufferedWriter, File, FileWriter}
+import scala.util.Try
 
 trait Trace extends AutoCloseable { parent =>
 
