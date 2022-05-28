@@ -1,9 +1,9 @@
-val akkaVersion = "2.6.8"
-val akkaHttpVersion = "10.2.0"
-val akkaHttpCirce = "1.31.0"
-val akkaJsonStreaming = "2.0.2"
-val circeVersion = "0.13.0"
-val scalaTestVersion = "3.1.2"
+val akkaVersion = "2.6.19"
+val akkaHttpVersion = "10.2.9"
+val akkaHttpCirce = "1.39.2"
+val akkaJsonStreaming = "3.0.4"
+val circeVersion = "0.14.2"
+val scalaTestVersion = "3.2.11"
 val commonsCodecVersion = "1.15"
 
 lazy val rootProject = (project in file("."))
