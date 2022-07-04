@@ -13,7 +13,7 @@ sealed trait MetadataJson extends InFile
 
 object MetadataJson {
 
-  case class Nft(label: String,
+  case class Nft(assetName: String,
                  name: String,
                  image: Seq[String],
                  mediaType: Option[String],
@@ -21,8 +21,8 @@ object MetadataJson {
                  files: Seq[NftFile])
 
   object Nft {
-    def apply(label: String, name: String, image: String) =
-      new Nft(label = label, name = name, image = Seq(image), mediaType = None, description = Seq.empty, files = Seq.empty)
+    def apply(assetName: String, name: String, image: String) =
+      new Nft(assetName = assetName, name = name, image = Seq(image), mediaType = None, description = Seq.empty, files = Seq.empty)
   }
 
   case class NftFile(name: String, mediaType: String, src: Seq[String])
@@ -47,7 +47,7 @@ object MetadataJson {
       Json.obj(("721",
       Json.obj(
         (policyId.value, Json.obj(nfts.map(nft =>
-          (nft.label, Json.obj(
+          (nft.assetName, Json.obj(
             ("name", nft.name.asJson),
             ("image", nft.image.asJson),
             ("mediaType", nft.mediaType.asJson),
