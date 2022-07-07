@@ -9,7 +9,7 @@ import iog.psg.cardano.experimental.cli.util.RandomTempFolder
 
 
 
-sealed trait MetadataJson extends InFile
+trait MetadataJson extends InFile
 
 object MetadataJson {
 
