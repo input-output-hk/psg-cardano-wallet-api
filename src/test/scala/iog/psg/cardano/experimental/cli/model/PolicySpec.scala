@@ -37,7 +37,7 @@ class PolicySpec extends AnyFlatSpec with Matchers with EitherValues {
     List(Policy.Kind.All, Policy.Kind.AtLeast(10), Policy.Kind.Any).foreach(assert)
   }
 
-  "A DISH policy by string" should "parse" in {
+  "A policy added by string" should "parse correctly" in {
 
     val keyHash = "3e6ea29f537e0783f469077723b9ef6f740993e84f616db36ad355a9"
     val slot = 56894689
