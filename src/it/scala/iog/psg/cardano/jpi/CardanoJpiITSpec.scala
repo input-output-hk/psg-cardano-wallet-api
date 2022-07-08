@@ -23,7 +23,7 @@ class CardanoJpiITSpec extends AnyFlatSpec with Matchers with Configure with Mod
     super.afterAll()
   }
 
-  private val timeoutValue: Long = 120
+  private val timeoutValue: Long = 180
   private val timeoutUnits = TimeUnit.SECONDS
   private lazy val sut = new JpiResponseCheck(new CardanoApiFixture(baseUrl).getJpi, timeoutValue, timeoutUnits)
 
