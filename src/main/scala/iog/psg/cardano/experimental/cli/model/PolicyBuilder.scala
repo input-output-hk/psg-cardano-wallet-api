@@ -21,10 +21,16 @@ case class PolicyBuilder(
 
 
   def withBeforeConstraint(slot: Long): PolicyBuilder =
-    this.copy(scripts = scripts :+ Policy.Script.Bound(slot, after = false))
+    this.copy(scripts = scripts.filter {
+      case Policy.Script.Bound(_, false) => false
+      case _ => true
+    } :+ Policy.Script.Bound(slot, after = false))
 
   def withAfterConstraint(slot: Long): PolicyBuilder =
-    this.copy(scripts = scripts :+ Policy.Script.Bound(slot, after = true))
+    this.copy(scripts = scripts.filter {
+      case Policy.Script.Bound(_, true) => false
+      case _ => true
+    } :+ Policy.Script.Bound(slot, after = true))
 
   def build(implicit rootFolder: RandomTempFolder): Policy = {
     require(

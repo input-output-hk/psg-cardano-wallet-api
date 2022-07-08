@@ -85,4 +85,21 @@ class PolicyBuilderSpec extends AnyFlatSpec with Matchers with EitherValues {
     p.scripts.toList.size shouldBe(3)
   }
 
+  it should "only allow one before and one after slot bound" in {
+    val kh = KeyHash[Verification]("somestring")
+
+    val p = PolicyBuilder()
+      .withSignatureOf(kh)
+      .withAfterConstraint(400)
+      .withAfterConstraint(200)
+      .withBeforeConstraint(800)
+      .withBeforeConstraint(900)
+      .build
+
+    p.scripts.toList should contain (Signature(kh))
+    p.scripts.toList should contain (Bound(200, after = true))
+    p.scripts.toList should contain (Bound(900, after = false))
+    p.scripts.toList.size shouldBe(3)
+  }
+
 }
