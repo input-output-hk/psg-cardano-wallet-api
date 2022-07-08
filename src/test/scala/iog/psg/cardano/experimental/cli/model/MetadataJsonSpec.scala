@@ -21,7 +21,7 @@ class MetadataJsonSpec extends AnyFlatSpec with Matchers with ScalaFutures {
 
   implicit val rootFolder = RandomTempFolder(Files.createTempDirectory("testNFTMeta"))
 
-  val meta = NftMetadataJson(policyId, nfts)
+  val meta = NftMetadataJson(policyId, nfts.toIndexedSeq)
 
   "the encoding" should "work as expected" in {
     val str = asString(meta)
