@@ -9,6 +9,7 @@ import iog.psg.cardano.experimental.cli.util.RandomTempFolder
 
 case class PolicyId(value: String) extends AnyVal
 
+
 case class Policy(
   scripts: NonEmptyList[Policy.Script],
   kind: Policy.Kind
@@ -21,21 +22,6 @@ case class Policy(
 
 object Policy {
 
-  def all(scripts: NonEmptyList[Script])(implicit f: RandomTempFolder): Policy =
-    Policy(scripts, Policy.Kind.All)
-
-  def any(scripts: NonEmptyList[Script])(implicit f: RandomTempFolder): Policy =
-    Policy(scripts, Policy.Kind.Any)
-
-  def atLeast(value: Int, scripts: NonEmptyList[Script])(implicit f: RandomTempFolder): Policy =
-    Policy(scripts, Policy.Kind.AtLeast(value))
-
-  def after(slot: Int, signatures: NonEmptyList[Script.Signature])(implicit f: RandomTempFolder): Policy =
-    all(Script.Bound(slot, after = true) :: signatures)
-
-  def before(slot: Int, signatures: NonEmptyList[Script.Signature])(implicit f: RandomTempFolder): Policy =
-    all(Script.Bound(slot, after = false) :: signatures)
-
   sealed trait Kind
   object Kind {
     case object All extends Kind
@@ -46,7 +32,7 @@ object Policy {
   sealed trait Script
   object Script {
     case class Signature(keyHash: KeyHash[_ <: KeyType]) extends Script
-    case class Bound(slot: Int, after: Boolean) extends Script
+    case class Bound(slot: Long, after: Boolean) extends Script
   }
 
   def asString(policy: Policy): String = codec(policy.rootFolder)(policy).noSpaces

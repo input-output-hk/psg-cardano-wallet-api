@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import iog.psg.cardano.experimental.cli.api.Ops.CliApiReqOps
 import iog.psg.cardano.experimental.cli.api._
 import iog.psg.cardano.experimental.cli.command.CardanoCli
-import iog.psg.cardano.experimental.cli.model.{Key, Policy, TxIn, TxOut}
+import iog.psg.cardano.experimental.cli.model.{Key, PolicyBuilder, TxIn, TxOut}
 import iog.psg.cardano.experimental.cli.processrunner.{BlockingProcessResult, BlockingProcessRunner}
 import iog.psg.cardano.experimental.cli.util.RandomFolderFactory
 import org.scalatest.BeforeAndAfterAll
@@ -94,12 +94,12 @@ class CardanoCliApiSpec extends AnyFlatSpec with Matchers with ScalaFutures with
       s"[./cardano-cli, address, key-hash, --payment-verification-key-file, ${policyVerKey.file.toString}]",
     )
 
-    val policy = Policy.all(
-      NonEmptyList.of(
-        Policy.Script.Signature(paymentVerKeyHash),
-        Policy.Script.Signature(policyVerKeyHash)
-      )
-    )
+
+    val policy = PolicyBuilder()
+      .withSignatureOf(paymentVerKeyHash)
+      .withSignatureOf(policyVerKeyHash)
+      .withAllSigsRequired()
+      .build
 
     val policyId = sut
       .policyId(policy)
