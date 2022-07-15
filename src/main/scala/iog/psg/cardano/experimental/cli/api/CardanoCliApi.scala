@@ -161,8 +161,8 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
     txOuts: NonEmptyList[TxOut],
     maybeMetadata: Option[MetadataJson] = None,
     maybeMinting: Option[(NonEmptyList[NativeAsset], Policy)] = None,
-    invalidBefore: Option[Int] = None,
-    invalidHereafter: Option[Int] = None,
+    invalidBefore: Option[Long] = None,
+    invalidHereafter: Option[Long] = None,
   ): CliApiRequest[Tx] = new CliApiRequest[Tx] {
     override def execute: Future[Tx] = Future {
 

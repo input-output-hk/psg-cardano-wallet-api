@@ -32,13 +32,6 @@ class PolicyBuilderSpec extends AnyFlatSpec with Matchers with EitherValues {
     p.kind shouldBe Policy.Kind.All
   }
 
-  it should "create a minimal policy (default kind ALL sigs required) with one key" in {
-    val kh = KeyHash[Verification]("somestring")
-    val p = PolicyBuilder().withSignatureOf(kh).build
-    p.scripts.toList shouldBe List(Signature(kh))
-    p.kind shouldBe Policy.Kind.All
-  }
-
   it should "respect the `kind`" in {
     val kh = KeyHash[Verification]("somestring")
     var p = PolicyBuilder().withSignatureOf(kh).withAllSigsRequired().build

@@ -57,13 +57,13 @@ case class CardanoCliCmdTransactionBuildRaw(protected val builder: ProcessBuilde
   /**
    * Time that transaction is valid from (in slots)
    */
-  def invalidBefore(slot: Int): CardanoCliCmdTransactionBuildRaw =
+  def invalidBefore(slot: Long): CardanoCliCmdTransactionBuildRaw =
     withParam("--invalid-before", slot)
 
   /**
    * Time that transaction is valid until (in slots)
    */
-  def invalidHereafter(slot: Int): CardanoCliCmdTransactionBuildRaw =
+  def invalidHereafter(slot: Long): CardanoCliCmdTransactionBuildRaw =
     withParam("--invalid-hereafter", slot)
 
   private def mintParam(assets: NonEmptyList[NativeAsset]): String = {
