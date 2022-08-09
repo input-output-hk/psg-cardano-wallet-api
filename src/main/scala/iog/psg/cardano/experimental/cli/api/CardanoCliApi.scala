@@ -134,7 +134,7 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
                 val tokenAmountAndTokenInfo = Regexes.spaces.split(asset)
 
                 for {
-                  tokenAmount <- tokenAmountAndTokenInfo.headOption.flatMap(_.toIntOption)
+                  tokenAmount <- tokenAmountAndTokenInfo.headOption.flatMap(_.toLongOption)
                   policyIdAndName <- tokenAmountAndTokenInfo.lift(1).map(_.split('.'))
                   policyId <- policyIdAndName.headOption
                   tokenName <- policyIdAndName.lift(1).flatMap(Base16String.validate)
