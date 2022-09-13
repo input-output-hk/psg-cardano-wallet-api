@@ -9,6 +9,7 @@ import iog.psg.cardano.experimental.cli.util.RandomTempFolder
 
 case class PolicyId(value: String) extends AnyVal
 
+case class PolicyWithId(policy: Policy, policyId: PolicyId)
 
 case class Policy(
   scripts: NonEmptyList[Policy.Script],
