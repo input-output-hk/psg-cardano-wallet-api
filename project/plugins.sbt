@@ -5,5 +5,5 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 // sbt-sonatype plugin used to publish artifact to maven central via sonatype nexus
 // sbt-pgp plugin used to sign the artifcat with pgp keys
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.4")
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.1.2")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
