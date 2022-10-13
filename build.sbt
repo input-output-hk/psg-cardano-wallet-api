@@ -12,7 +12,7 @@ lazy val rootProject = (project in file("."))
     Defaults.itSettings,
     IntegrationTest / dependencyClasspath := (IntegrationTest / dependencyClasspath).value ++ (Test / exportedProducts).value,
     name:= "psg-cardano-wallet-api",
-    scalaVersion := "2.13.3",
+    scalaVersion := "2.13.9",
     organization := "solutions.iog",
     homepage := Some(url("https://github.com/input-output-hk/psg-cardano-wallet-api")),
     scmInfo := Some(ScmInfo(url("https://github.com/input-output-hk/psg-cardano-wallet-api"), "scm:git@github.com:input-output-hk/psg-cardano-wallet-api.git")),
@@ -24,7 +24,7 @@ lazy val rootProject = (project in file("."))
     updateOptions := updateOptions.value.withGigahorse(false),
     licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
     description := "A java/scala wrapper for the cardano wallet backend API",
-    usePgpKeyHex("75E12F006A3F08C757EE8343927AE95EEEF4A02F"),
+    usePgpKeyHex("F4ED23D42A612E27F11A6B5AF75482A04B0D9486"),
     isSnapshot := false,
     publishTo := Some {
       // publish to the sonatype repository

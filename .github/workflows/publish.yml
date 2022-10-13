@@ -29,6 +29,7 @@ jobs:
             echo 'EOF' >> $GITHUB_ENV
             echo 'SONA_USER=${{ secrets.SONA_USER }}' >> $GITHUB_ENV
             echo 'SONA_PASS=${{ secrets.SONA_PASS }}' >> $GITHUB_ENV
+            echo 'PGP_PASSPHRASE=${{ secrets.PGP_PASSPHRASE }}' >> $GITHUB_ENV
       - name: Configure GPG Key
         run: |
             mkdir -p ~/.gnupg/
