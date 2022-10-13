@@ -19,6 +19,8 @@ case class PolicyBuilder(
   def withSignatureOf(keyHash: KeyHash[_ <: KeyType]): PolicyBuilder =
     this.copy(scripts = scripts :+ Policy.Script.Signature(keyHash))
 
+  def withSignaturesOf[T <: KeyType](keyHashes: Set[KeyHash[T]]): PolicyBuilder =
+    this.copy(scripts = scripts ++ keyHashes.map(Policy.Script.Signature))
 
   def withBeforeConstraint(slot: Long): PolicyBuilder =
     this.copy(scripts = scripts.filter {

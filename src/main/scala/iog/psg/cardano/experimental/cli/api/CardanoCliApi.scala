@@ -1,7 +1,7 @@
 package iog.psg.cardano.experimental.cli.api
 
 import cats.data.NonEmptyList
-import iog.psg.cardano.experimental.cli.command.CardanoCli
+import iog.psg.cardano.experimental.cli.command.{CardanoCli, CardanoCliCmdTransactionId}
 import iog.psg.cardano.experimental.cli.model._
 import iog.psg.cardano.experimental.cli.processrunner.BlockingProcessRunner
 import iog.psg.cardano.experimental.cli.processrunner.Ops._
@@ -9,7 +9,6 @@ import iog.psg.cardano.experimental.cli.util.{RandomTempFolder, Regexes}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process.ProcessBuilder
-import scala.util.chaining.scalaUtilChainingOps
 
 
 case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: NetworkChooser,
@@ -232,14 +231,15 @@ case class CardanoCliApi(cardanoCli: CardanoCli)(implicit networkChooser: Networ
     }
   }
 
-  def txId(signedTx: SignedTx): CliApiRequest[String] = new CliApiRequest[String] {
+  def txId(signedTx: SignedTx): CliApiRequest[String] = txId(_.txFile(signedTx.file))
+  def txId(tx: Tx): CliApiRequest[String] = txId(_.txBodyFile(tx.file))
 
+  private def txId(fileCmd: CardanoCliCmdTransactionId => CardanoCliCmdTransactionId) = new CliApiRequest[String] {
     override def execute: Future[String] = Future {
       runner(
-        cardanoCli
+        fileCmd(cardanoCli
           .transaction
-          .txId
-          .txFile(signedTx.file)
+          .txId)
           .processBuilder
       ).asUnsafe[String]
     }
