@@ -69,6 +69,18 @@ trait DummyModel { self: Assertions =>
                                  |          },
                                  |          {
                                  |            "string": "1337"
+                                 |          },
+                                 |          {
+                                 |            "map": [
+                                 |              {
+                                 |                "k": {
+                                 |                  "int":1
+                                 |                },
+                                 |                "v":{
+                                 |                  "int": 3
+                                 |                }
+                                 |              }
+                                 |            ]
                                  |          }
                                  |        ]
                                  |      },

@@ -82,7 +82,8 @@ class TxMetadataCodecSpec extends AnyFlatSpec with Matchers with DummyModel {
       3 -> MetadataValueArray(Seq(
         MetadataValueLong(14),
         MetadataValueByteString(ByteString("2512a00e9653fe49a44a5886202e24d77eeb998f")),
-        MetadataValueStr("1337")
+        MetadataValueStr("1337"),
+        MetadataValueMap(Map(MetadataValueLong(1) -> MetadataValueLong(3)))
       )),
       4 -> MetadataValueMap(
         Map(

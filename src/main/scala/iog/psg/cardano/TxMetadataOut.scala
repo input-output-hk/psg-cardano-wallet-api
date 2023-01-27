@@ -52,6 +52,12 @@ final case class TxMetadataOut(json: Json) {
           case Some(ValueTypeBytes)  =>
             extractBytesField(cursor)
 
+          case Some(ValueTypeList) =>
+            extractListField(cursor, key)
+
+          case Some(ValueTypeMap) =>
+            extractMapField(cursor, key)
+
           case Some(valueType) => Left(DecodingFailure(s"Invalid type '$valueType'", List(DownField(key))))
 
           case None => Left(DecodingFailure("Missing value under key", List(DownField(key))))
